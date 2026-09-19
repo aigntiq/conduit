@@ -19,14 +19,30 @@ export interface AccountInfo {
     updatedAt: number;
 }
 
-export interface ExecuteRequest {
-    connector: string;
-    operation: string;
+/** Per operation id: its inputs and output types. */
+export type OperationTypesMap = Record<string, { inputs: Record<string, unknown>; output: unknown }>;
+
+/**
+ * Per connector id: its operations' types. The default is untyped;
+ * `createConduit<CatalogOf<typeof gmail | typeof acme>>()` makes `execute`
+ * check connector ids, operation ids, inputs and outputs.
+ */
+export type Catalog = Record<string, OperationTypesMap>;
+
+/** Build a catalog from builder-authored (or emitted) connector types. */
+export type CatalogOf<C> = {
+    [K in C as K extends { readonly id: infer Id extends string } ? Id : never]: K extends { readonly '~types'?: infer Ops } ? NonNullable<Ops> : never;
+};
+
+type InputsOf<I> = Record<string, never> extends I ? { inputs?: I } : { inputs: I };
+
+interface ExecuteBase<K extends string, O extends string> {
+    connector: K;
+    operation: O;
     /** Account id. Required unless the operation declares `auth: false` or the connector has no auth. */
     account?: string;
     /** When given, the account must belong to this owner. */
     owner?: string;
-    inputs?: Record<string, unknown>;
     /** Extra `env` values for this call, merged over the host's. */
     env?: Record<string, unknown>;
     signal?: AbortSignal;
@@ -38,8 +54,14 @@ export interface ExecuteRequest {
     paging?: { mode?: 'all' | 'page'; cursor?: unknown; maxPages?: number };
 }
 
-export interface ExecuteResult {
-    output: unknown;
+export type ExecuteRequest<
+    Cat extends Catalog = Catalog,
+    K extends keyof Cat & string = keyof Cat & string,
+    O extends keyof Cat[K] & string = keyof Cat[K] & string
+> = ExecuteBase<K, O> & InputsOf<Cat[K][O]['inputs']>;
+
+export interface ExecuteResult<Out = unknown> {
+    output: Out;
     /** In `page` mode: where the next page starts, or undefined at the end. */
     next?: unknown;
     pages?: number;

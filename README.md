@@ -60,6 +60,7 @@ Planned: `@sigx/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
 - [Expressions](docs/expressions.md) — the `{{ }}` language and standard library
 - [UI hints, forms and validation](docs/ui-hints.md) — generating UIs from a connector; one validator for browser and server
 - [Writing a connector](docs/writing-a-connector.md)
+- [Authoring in TypeScript](docs/authoring-in-typescript.md) — the typed builder that compiles to JSON
 - [Integrating](docs/integrating.md) — Express, Hono, fetch runtimes
 
 ## Contributing

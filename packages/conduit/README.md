@@ -36,6 +36,7 @@ const { output } = await conduit.execute({
 | `@sigx/conduit/schema` | the `conduit/1` JSON Schema (also shipped as `schema/conduit-1.schema.json`) |
 | `@sigx/conduit/oauth` | PKCE, sealed state and token helpers, standalone |
 | `@sigx/conduit/server` | `createFetchHandler` — `Request → Response` for Hono, Bun, Deno, Workers, Next.js |
+| `@sigx/conduit/builder` | author connectors in TypeScript — typed inputs and templates, compiled to JSON; typed `execute` via `CatalogOf` |
 | `@sigx/conduit/node` | `createNodeHandler` (Express/Connect) and `fileSource` |
 
 No runtime dependencies. Node `^20.19.0 || >=22.12.0`, or any runtime with

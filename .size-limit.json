@@ -13,5 +13,10 @@
     "name": "@sigx/conduit/server",
     "path": "packages/conduit/dist/server.prod.js",
     "limit": "3 KB"
+  },
+  {
+    "name": "@sigx/conduit/builder",
+    "path": "packages/conduit/dist/builder.prod.js",
+    "limit": "5 KB"
   }
 ]

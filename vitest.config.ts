@@ -26,6 +26,7 @@ export default defineConfig({
             '@sigx/conduit/oauth': src('oauth/index.ts'),
             '@sigx/conduit/server': src('server/index.ts'),
             '@sigx/conduit/node': src('node/index.ts'),
+            '@sigx/conduit/builder': src('builder/index.ts'),
             '@sigx/conduit/testing': src('testing/index.ts'),
             '@sigx/conduit': src('index.ts')
         }

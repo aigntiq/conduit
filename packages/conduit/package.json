@@ -36,6 +36,12 @@
             "production": "./dist/server.prod.js",
             "import": "./dist/server.js"
         },
+        "./builder": {
+            "types": "./dist/builder/index.d.ts",
+            "development": "./dist/builder.js",
+            "production": "./dist/builder.prod.js",
+            "import": "./dist/builder.js"
+        },
         "./node": {
             "types": "./dist/node/index.d.ts",
             "development": "./dist/node.js",

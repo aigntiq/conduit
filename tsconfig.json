@@ -18,6 +18,7 @@
       "@sigx/conduit/oauth": ["./packages/conduit/src/oauth/index.ts"],
       "@sigx/conduit/server": ["./packages/conduit/src/server/index.ts"],
       "@sigx/conduit/node": ["./packages/conduit/src/node/index.ts"],
+      "@sigx/conduit/builder": ["./packages/conduit/src/builder/index.ts"],
       "@sigx/conduit/testing": ["./packages/conduit/src/testing/index.ts"]
     }
   },

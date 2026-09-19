@@ -22,6 +22,7 @@ import { PluginHost, type ConduitPlugin, type ConduitRoute } from './plugins';
 import { ConnectorRegistry, type LoadedConnector } from './registry';
 import type {
     AccountInfo,
+    Catalog,
     ConnectorDescription,
     ConnectorSummary,
     ExecuteRequest,
@@ -96,7 +97,7 @@ export interface ConnectRequest {
     account?: string;
 }
 
-export interface Conduit {
+export interface Conduit<Cat extends Catalog = Catalog> {
     readonly connectors: {
         list(): Promise<ConnectorSummary[]>;
         get(id: string): Promise<ConnectorSpec>;
@@ -132,9 +133,9 @@ export interface Conduit {
         /** Revoke at the provider (best effort) and delete the account. */
         revoke(accountId: string, owner?: string): Promise<void>;
     };
-    execute(request: ExecuteRequest): Promise<ExecuteResult>;
+    execute<K extends keyof Cat & string, O extends keyof Cat[K] & string>(request: ExecuteRequest<Cat, K, O>): Promise<ExecuteResult<Cat[K][O]['output']>>;
     /** Run an `options` operation and return `{label, value}` items. */
-    options(request: ExecuteRequest): Promise<OptionItem[]>;
+    options<K extends keyof Cat & string, O extends keyof Cat[K] & string>(request: ExecuteRequest<Cat, K, O>): Promise<OptionItem[]>;
     /** Routes contributed by plugins, served by `createFetchHandler`. */
     readonly routes: readonly ConduitRoute[];
     /** Stop watching sources. */
@@ -154,7 +155,7 @@ interface Stash {
     inputs: string;
 }
 
-export function createConduit(options: ConduitOptions): Conduit {
+export function createConduit<Cat extends Catalog = Catalog>(options: ConduitOptions): Conduit<Cat> {
     if (!options.secret || options.secret.length < 32) throw new ConduitError('config_invalid', 'createConduit needs a secret of at least 32 characters');
 
     const plugins = new PluginHost();
@@ -217,7 +218,7 @@ export function createConduit(options: ConduitOptions): Conduit {
         return toInfo(account);
     }
 
-    const conduit: Conduit = {
+    const conduit: Conduit<Catalog> = {
         connectors: {
             async list() {
                 const out: ConnectorSummary[] = [];
@@ -420,7 +421,7 @@ export function createConduit(options: ConduitOptions): Conduit {
             registry.close();
         }
     };
-    return conduit;
+    return conduit as unknown as Conduit<Cat>;
 }
 
 function summary(spec: ConnectorSpec): ConnectorSummary {

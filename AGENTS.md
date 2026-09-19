@@ -172,6 +172,8 @@ To run an example: `pnpm --filter <example-name> dev`.
   - `./schema` — the `conduit/1` JSON Schema object.
   - `./oauth` — standalone OAuth2 helpers (PKCE, sealed state, URL building).
   - `./server` — `createFetchHandler`: WinterCG `Request → Response` routes.
+  - `./builder` — author connectors in TypeScript (typed inputs, refs, `$`/`expr`
+    templates); compiles to plain JSON; `emitTypes` for JSON-shipped connectors.
   - `./node` — `createNodeHandler` (connect-style) and `fileSource(dir)`.
     **The only entry allowed to import `node:` built-ins.**
   - `./testing` — alias-only inside this workspace (never published):
