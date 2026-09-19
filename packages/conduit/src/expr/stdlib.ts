@@ -48,7 +48,8 @@ function isEmpty(v: unknown): boolean {
 
 function toDate(ctx: CallContext, v: unknown): Date {
     if (v instanceof Date) return v;
-    if (typeof v === 'number') return new Date(v);
+    // Epoch numbers: below 1e11 they are seconds (1e11 ms is only 1973), above it millis.
+    if (typeof v === 'number') return new Date(Math.abs(v) < 1e11 ? v * 1000 : v);
     if (typeof v === 'string') {
         // All-digit strings are epoch values: 10 digits → seconds, 13 → millis.
         if (/^\d{9,11}$/.test(v)) return new Date(Number(v) * 1000);

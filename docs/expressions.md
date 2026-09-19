@@ -102,7 +102,7 @@ Wherever a function takes `fn`, a property path works too: `map(items, 'id')`,
 
 **Numbers:** `round(n, digits?)` · `floor` · `ceil` · `abs`
 
-**Dates** (always ISO-8601 text in and out; all-digit strings are read as epoch seconds or milliseconds):
+**Dates** (always ISO-8601 text in and out; epoch numbers and all-digit strings are read as seconds below 10¹¹, as milliseconds above it):
 `now()` · `date(v)` · `addTime(date, amount, unit)` (`ms s m h d w`) ·
 `formatDate(date, 'iso' | 'date' | 'unix' | 'unixMs')` · `unix(date?)`
 
