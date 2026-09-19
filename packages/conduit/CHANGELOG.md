@@ -19,5 +19,7 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 - `buildForm`, `prepareForm` and `validateForm`: one renderer-agnostic form model and one validator for browser and server, with coded issues, hidden fields dropped, and three-valued handling of inputs a host binds at run time. Served as `conduit.connectors.form()` and `GET {base}/connectors/:id/forms/:operation`.
 - `format` is now validated (`email`, `uri`, `date`, `date-time`, `uuid`).
 - `@sigx/conduit/builder`: author connectors in TypeScript. Field helpers carry UI hints and constraints; typed refs, `$` and `expr` build templates (a misspelled input does not compile); every builder returns plain `conduit/1` JSON. `emitTypes` writes declarations for JSON-shipped connectors.
+- `mime()` and `flattenTree()` in the expression standard library.
+- The `email` format accepts `Name <address>` as well as a bare address.
 - Typed `execute`: `createConduit<CatalogOf<typeof connector>>()` checks connector and operation ids, inputs and outputs.
 - Error rules can attribute a failure to an input (`field`); the HTTP surface answers 422 with the issues.

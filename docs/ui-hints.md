@@ -20,7 +20,7 @@ where it doesn't.
 | `readOnly`, `deprecated` | standard |
 | `enum` | plain choices |
 | `oneOf: [{ const, title, description? }]` | labelled choices: `{ "const": "INBOX", "title": "Inbox" }` |
-| `format` | `email`, `uri`, `date`, `date-time` and `uuid` are **validated**; `password` marks a secret |
+| `format` | `email` (a bare address or `Name <address>`), `uri`, `date`, `date-time` and `uuid` are **validated**; `password` marks a secret |
 | `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems` | constraints |
 | `x-widget` | how to render (see below). Default: inferred |
 | `x-placeholder` | placeholder text |

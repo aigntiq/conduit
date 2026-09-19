@@ -47,7 +47,8 @@ const { output } = await conduit.execute({
 
 | Package | What it is |
 |---|---|
-| [`@sigx/conduit`](packages/conduit) | The runtime: spec, validation, expressions, auth/OAuth, executor, ports, fetch + Node handlers |
+| [`@sigx/conduit`](packages/conduit) | The runtime: spec, validation, forms, expressions, auth/OAuth, executor, ports, fetch + Node handlers, the TypeScript builder |
+| [`@sigx/conduit-connectors`](packages/conduit-connectors) | Ready-made connectors in one package — pick the ones you use (Gmail, …) |
 
 Planned: `@sigx/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
 `@sigx/conduit-actors`, `@sigx/conduit-ui`, `@sigx/conduit-mcp`,

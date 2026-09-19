@@ -57,8 +57,11 @@ function describe(v: unknown): string {
     return s === undefined ? String(v) : s.length > 40 ? `${s.slice(0, 37)}...` : s;
 }
 
+const ADDRESS = /^[^\s@<>(),;:"]+@[^\s@<>(),;:"]+\.[^\s@<>(),;:"]+$/;
+
 const FORMATS: Record<string, (v: string) => boolean> = {
-    email: (v) => /^[^\s@<>(),;:"]+@[^\s@<>(),;:"]+\.[^\s@<>(),;:"]+$/.test(v),
+    // A bare address, or a mailbox with a display name: `Ada <ada@example.com>`.
+    email: (v) => ADDRESS.test(/^[^<>]*<([^<>]+)>$/.exec(v.trim())?.[1] ?? v),
     uri: (v) => {
         try {
             return /^[a-z][a-z0-9+.-]*:/i.test(v) && !!new URL(v);

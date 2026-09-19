@@ -36,6 +36,7 @@ const rootDir = join(__dirname, '..');
 // Examples are private and stay out.
 const PACKAGES = [
     'packages/conduit',
+    'packages/conduit-connectors',
 ];
 
 const args = process.argv.slice(2);

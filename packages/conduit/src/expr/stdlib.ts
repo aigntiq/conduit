@@ -8,6 +8,7 @@
  * a missing field should read as missing, not crash the call.
  */
 import { fromBase64, fromUtf8, toBase64, toBase64Url, toHex, utf8 } from '../util/bytes';
+import { buildMime, flattenTree, type MimeMessage } from './mime';
 import { digest, hmac, signJwt, type DigestAlgorithm, type JwtAlgorithm, JWT_ALGORITHMS } from '../util/crypto';
 import { deepEqual, describeType, display, getMember, isPlainObject, type CallContext, type ExprFunction, type FunctionRegistry } from './evaluate';
 
@@ -481,6 +482,25 @@ export const STANDARD_FUNCTIONS: Record<string, ExprFunction> = {
         2
     ),
     unix: define('unix(date?)', 'Epoch seconds of a date (default: now).', ([v], ctx) => Math.floor((isNil(v) ? ctx.now() : toDate(ctx, v).getTime()) / 1000), 0, 1),
+
+    // ── messages & trees ────────────────────────────────────────────────
+    mime: define(
+        'mime(message)',
+        'An RFC 5322 email: {from, to, cc, bcc, replyTo, subject, text, html, attachments: [{filename, contentType, base64}], inReplyTo, references, messageId, date, headers}.',
+        ([v], ctx) => {
+            if (!isPlainObject(v)) return ctx.fail('expects a message object');
+            return buildMime(v as MimeMessage);
+        },
+        1,
+        1
+    ),
+    flattenTree: define(
+        'flattenTree(tree, childrenKey?)',
+        'Every node of a tree, depth first, root included (default childrenKey "parts").',
+        ([v, key]) => flattenTree(v, isNil(key) ? 'parts' : asString(key)),
+        1,
+        2
+    ),
 
     // ── crypto ──────────────────────────────────────────────────────────
     uuid: define('uuid()', 'A random v4 UUID.', () => crypto.randomUUID(), 0, 0),

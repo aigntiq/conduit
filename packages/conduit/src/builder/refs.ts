@@ -85,11 +85,39 @@ function source(value: unknown): string {
  * ``expr`${inputs.to} | join(', ')` `` → `"{{inputs.to | join(', ')}}"`.
  */
 export function expr(strings: TemplateStringsArray, ...values: unknown[]): Expr {
-    let out = strings[0]!;
+    let out = collapse(strings[0]!);
     values.forEach((v, i) => {
-        out += source(v) + strings[i + 1]!;
+        out += source(v) + collapse(strings[i + 1]!);
     });
     return { [EXPR]: out.trim() };
+}
+
+/**
+ * Multi-line expressions are formatting: fold each line break and its
+ * indentation into one space, outside string literals, so the compiled JSON
+ * stays on one readable line.
+ */
+function collapse(text: string): string {
+    let out = '';
+    let quote: string | null = null;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i]!;
+        if (quote) {
+            out += c;
+            if (c === '\\') out += text[++i] ?? '';
+            else if (c === quote) quote = null;
+        } else if (c === "'" || c === '"') {
+            quote = c;
+            out += c;
+        } else if (c === '\n' || c === '\r') {
+            out = out.replace(/[ \t]+$/, '');
+            while (i + 1 < text.length && /\s/.test(text[i + 1]!)) i++;
+            out += ' ';
+        } else {
+            out += c;
+        }
+    }
+    return out;
 }
 
 /**

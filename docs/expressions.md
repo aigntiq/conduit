@@ -106,6 +106,8 @@ Wherever a function takes `fn`, a property path works too: `map(items, 'id')`,
 `now()` · `date(v)` · `addTime(date, amount, unit)` (`ms s m h d w`) ·
 `formatDate(date, 'iso' | 'date' | 'unix' | 'unixMs')` · `unix(date?)`
 
+**Messages and trees:** `mime({ from, to, cc, bcc, replyTo, subject, text, html, attachments, inReplyTo, references, messageId, date, headers })` builds an RFC 5322 email (RFC 2047 headers, base64 bodies, alternative/mixed multipart, header injection stripped); pipe it into `base64url` for raw-message APIs. `flattenTree(tree, childrenKey = "parts")` lists every node depth first, e.g. the parts of a MIME payload.
+
 **Crypto:** `uuid()` · `sha256(text, encoding?)` · `hash(text, 'sha1' | 'sha256' | 'sha384' | 'sha512', encoding?)` ·
 `hmac(text, key, algorithm = 'sha256', encoding = 'hex')` ·
 `signJwt(claims, key, algorithm = 'RS256', header?)` — `HS*` take a shared secret; `RS*`/`ES*`

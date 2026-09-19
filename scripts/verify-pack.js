@@ -30,7 +30,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
 // Keep in step with scripts/publish.js.
-const PACKAGES = ['packages/conduit'];
+const PACKAGES = ['packages/conduit', 'packages/conduit-connectors'];
 
 // Entries that must run on ANY WinterCG runtime — no `node:` specifier may
 // appear in their built output (or in a chunk they pull in). `./node` is the
@@ -56,7 +56,11 @@ function checkExportTargets(pkgDir, pkg) {
     for (const [subpath, target] of Object.entries(pkg.exports ?? {})) {
         const targets = typeof target === 'string' ? [target] : Object.values(target);
         for (const t of targets) {
-            if (!existsSync(join(pkgDir, t))) missing.push(`${subpath} → ${t}`);
+            // A wildcard target (`./json/*`) must name a directory with files in it.
+            const ok = t.includes('*')
+                ? existsSync(join(pkgDir, t.slice(0, t.indexOf('*')))) && readdirSync(join(pkgDir, t.slice(0, t.indexOf('*')))).length > 0
+                : existsSync(join(pkgDir, t));
+            if (!ok) missing.push(`${subpath} → ${t}`);
         }
     }
     if (missing.length) {
@@ -111,7 +115,7 @@ function main() {
         if (!tarball) throw new Error(`${pkg.name}: no tarball produced`);
         deps[pkg.name] = `file:${join(tarballDir, tarball).replace(/\\/g, '/')}`;
         for (const sub of Object.keys(pkg.exports)) {
-            if (sub === './package.json') continue;
+            if (sub === './package.json' || sub.includes('*')) continue;
             smoke.push(sub === '.' ? pkg.name : `${pkg.name}/${sub.slice(2)}`);
         }
     }

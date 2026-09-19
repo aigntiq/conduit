@@ -1,0 +1,69 @@
+{
+    "name": "@sigx/conduit-connectors",
+    "version": "0.1.0",
+    "description": "Ready-made Conduit connectors in one package — pick the ones you use",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "development": "./dist/index.js",
+            "production": "./dist/index.prod.js",
+            "import": "./dist/index.js"
+        },
+        "./gmail": {
+            "types": "./dist/generated/gmail.d.ts",
+            "development": "./dist/gmail.js",
+            "production": "./dist/gmail.prod.js",
+            "import": "./dist/gmail.js"
+        },
+        "./json/*": "./json/*",
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist",
+        "json",
+        "CHANGELOG.md"
+    ],
+    "sideEffects": false,
+    "scripts": {
+        "generate": "node scripts/generate.mjs",
+        "build": "node scripts/generate.mjs && vite build && vite build --mode prod-dist && tsc -p tsconfig.build.json",
+        "dev": "vite build --watch"
+    },
+    "keywords": [
+        "sigx",
+        "conduit",
+        "connectors",
+        "integrations",
+        "gmail"
+    ],
+    "author": "Andreas Ekdahl",
+    "license": "MIT",
+    "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/signalxjs/conduit.git",
+        "directory": "packages/conduit-connectors"
+    },
+    "homepage": "https://sigx.dev/conduit/",
+    "bugs": {
+        "url": "https://github.com/signalxjs/conduit/issues"
+    },
+    "peerDependencies": {
+        "@sigx/conduit": "^0.1.0"
+    },
+    "devDependencies": {
+        "@sigx/conduit": "workspace:*",
+        "@sigx/vite": "catalog:",
+        "@types/node": "^26.6.1",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

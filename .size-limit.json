@@ -7,7 +7,7 @@
   {
     "name": "@sigx/conduit/expr",
     "path": "packages/conduit/dist/expr.prod.js",
-    "limit": "11 KB"
+    "limit": "12 KB"
   },
   {
     "name": "@sigx/conduit/server",

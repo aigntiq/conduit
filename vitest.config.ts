@@ -28,7 +28,9 @@ export default defineConfig({
             '@sigx/conduit/node': src('node/index.ts'),
             '@sigx/conduit/builder': src('builder/index.ts'),
             '@sigx/conduit/testing': src('testing/index.ts'),
-            '@sigx/conduit': src('index.ts')
+            '@sigx/conduit': src('index.ts'),
+            '@sigx/conduit-connectors/gmail': resolve(__dirname, 'packages/conduit-connectors/src/generated/gmail.ts'),
+            '@sigx/conduit-connectors': resolve(__dirname, 'packages/conduit-connectors/src/index.ts')
         }
     }
 });

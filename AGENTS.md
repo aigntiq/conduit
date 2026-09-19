@@ -182,6 +182,13 @@ To run an example: `pnpm --filter <example-name> dev`.
 Path aliases: `tsconfig.json` and `vitest.config.ts` map `@sigx/conduit/*` to
 `packages/conduit/src`, so tests and typecheck run against source, not dist.
 
+- `packages/conduit-connectors` → `@sigx/conduit-connectors` — ready-made connectors in
+  one package. Authored with the builder in `connectors/<id>/index.ts`; `pnpm --filter
+  @sigx/conduit-connectors generate` compiles them to `src/generated/` and `json/`
+  (committed; a test fails on drift) and rewrites the package exports. A connector with
+  ANY validation diagnostic fails the build. Every connector needs replay tests against
+  a scripted HTTP stub (`__tests__/gmail.test.ts`).
+
 Examples (private, not published), each with an end-to-end test against the
 mock provider:
 

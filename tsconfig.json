@@ -19,12 +19,16 @@
       "@sigx/conduit/server": ["./packages/conduit/src/server/index.ts"],
       "@sigx/conduit/node": ["./packages/conduit/src/node/index.ts"],
       "@sigx/conduit/builder": ["./packages/conduit/src/builder/index.ts"],
-      "@sigx/conduit/testing": ["./packages/conduit/src/testing/index.ts"]
+      "@sigx/conduit/testing": ["./packages/conduit/src/testing/index.ts"],
+      "@sigx/conduit-connectors": ["./packages/conduit-connectors/src/index.ts"],
+      "@sigx/conduit-connectors/*": ["./packages/conduit-connectors/src/generated/*.ts"]
     }
   },
   "include": [
     "packages/*/src/**/*.ts",
     "packages/*/__tests__/**/*.ts",
+    "packages/*/connectors/**/*.ts",
+    "packages/*/scripts/**/*.ts",
     "examples/*/src/**/*.ts",
     "examples/*/__tests__/**/*.ts"
   ],
