@@ -175,6 +175,15 @@ describe('semantic validation', () => {
     });
 });
 
+describe('request encodings', () => {
+    it('accepts built-ins and host-registered encodings only', () => {
+        const spec = base();
+        if (spec.operations[0]!.kind === 'action') spec.operations[0]!.request = { url: '/p', method: 'POST', body: {}, encoding: 'csv' };
+        expect(errorsOf(spec)).toEqual([['operations[0].request.encoding', 'encoding_unknown']]);
+        expect(validateConnector(spec, { encodings: ['csv'] }).valid).toBe(true);
+    });
+});
+
 describe('assertValidConnector', () => {
     it('throws a ConduitSpecError that lists the errors', () => {
         const spec = { ...base(), operations: [{ id: 'ping', kind: 'action', label: 'Ping', request: { url: '{{ 1 + }}' } }] };

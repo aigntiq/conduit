@@ -161,6 +161,7 @@ export function createConduit(options: ConduitOptions): Conduit {
     const registry = new ConnectorRegistry({
         sources,
         pluginFunctions: () => plugins.functions,
+        pluginEncodings: () => plugins.encoders.keys(),
         config: options.config ?? {},
         env,
         allowHosts: options.allowHosts ?? []

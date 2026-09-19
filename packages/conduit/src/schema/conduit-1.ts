@@ -46,7 +46,9 @@ const requestProperties = {
     query: { anyOf: [templateMap, templateString] },
     headers: templateMap,
     body: template,
-    encoding: { enum: ['json', 'form', 'multipart', 'text', 'binary'] },
+    // Built-ins: json, form, multipart, text, binary. Plugins can add more,
+    // so the name is checked semantically (validateConnector), not here.
+    encoding: { type: 'string', pattern: '^[a-z][a-z0-9-]*$' },
     responseType: { enum: ['auto', 'json', 'text', 'binary'] },
     timeoutMs: { type: 'integer', minimum: 1 },
     auth: { type: 'boolean' }

@@ -112,8 +112,8 @@ export interface RequestSpec {
     query?: Record<string, Template> | TemplateString;
     headers?: Record<string, Template>;
     body?: Template;
-    /** How `body` is sent. Default `json`. */
-    encoding?: RequestEncoding;
+    /** How `body` is sent. Default `json`. Plugins may register more encodings. */
+    encoding?: RequestEncoding | (string & {});
     /** How the response body is read. Default `auto` (by `Content-Type`). */
     responseType?: ResponseType;
     timeoutMs?: number;

@@ -311,6 +311,38 @@ describe('plugins', () => {
         expect(accountEvents).toEqual(['created', 'deleted']);
     });
 
+    it('lets a plugin add a request encoding that connectors can use', async () => {
+        const csv = definePlugin({
+            name: 'csv',
+            setup: (r) =>
+                r.addEncoding('csv', (body, headers) => {
+                    headers.set('content-type', 'text/csv');
+                    return (body as unknown[][]).map((row) => row.join(',')).join('\n');
+                })
+        });
+        const spec: ConnectorSpec = {
+            spec: 'conduit/1',
+            id: 'importer',
+            name: 'Importer',
+            version: '1.0.0',
+            http: { baseUrl: 'https://import.example' },
+            operations: [
+                { id: 'upload', kind: 'action', label: 'Upload', request: { method: 'POST', url: '/rows', encoding: 'csv', body: '{{inputs.rows}}' } }
+            ]
+        };
+        const conduit = createConduit({
+            sources: memorySource([spec]),
+            secret: SECRET,
+            plugins: [csv],
+            http: async (r) => Response.json({ type: r.headers.get('content-type'), body: await r.text() })
+        });
+        const { output } = await conduit.execute({ connector: 'importer', operation: 'upload', inputs: { rows: [['a', 1], ['b', 2]] } });
+        expect(output).toEqual({ type: 'text/csv', body: 'a,1\nb,2' });
+        // Without the plugin the connector does not validate.
+        const plain = createConduit({ sources: memorySource([spec]), secret: SECRET });
+        await expect(plain.connectors.get('importer')).rejects.toThrow(/no request encoding "csv"/);
+    });
+
     it('rejects duplicate plugins and duplicate functions', () => {
         const p = definePlugin({ name: 'p', setup: (r) => r.addFunctions({ f: { call: () => 1 } }) });
         expect(() => createConduit({ sources: memorySource(), secret: SECRET, plugins: [p, p] })).toThrow(/installed twice/);

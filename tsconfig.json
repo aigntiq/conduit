@@ -10,6 +10,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
     "paths": {
       "@sigx/conduit": ["./packages/conduit/src/index.ts"],
       "@sigx/conduit/expr": ["./packages/conduit/src/expr/index.ts"],

@@ -1,0 +1,17 @@
+{
+    "name": "conduit-example-express",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Conduit mounted in an Express app",
+    "type": "module",
+    "scripts": {
+        "dev": "node --watch src/main.ts"
+    },
+    "dependencies": {
+        "@sigx/conduit": "workspace:*",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.6"
+    }
+}

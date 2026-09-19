@@ -28,6 +28,7 @@ export interface LoadedConnector {
 export interface RegistryOptions {
     sources: readonly ConnectorSource[];
     pluginFunctions: () => ReadonlyMap<string, ExprFunction>;
+    pluginEncodings: () => Iterable<string>;
     config: Record<string, Record<string, unknown>>;
     env: Record<string, unknown>;
     allowHosts: readonly string[];
@@ -109,7 +110,7 @@ export class ConnectorRegistry {
         if (!spec) throw new ConduitError('connector_unknown', `no connector "${id}"`);
 
         const plugin = this.options.pluginFunctions();
-        const result = validateConnector(spec, { functions: plugin });
+        const result = validateConnector(spec, { functions: plugin, encodings: this.options.pluginEncodings() });
         if (!result.valid) {
             const errors = result.diagnostics.filter((d) => d.severity === 'error');
             const lines = errors.slice(0, 10).map((d) => `  ${d.path || '(root)'}: ${d.message}`);

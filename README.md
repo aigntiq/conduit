@@ -20,17 +20,21 @@ in-memory defaults — and the HTTP surface is a plain `Request → Response`
 handler that mounts in Express, Hono, Fastify, Bun, Deno, Workers or Next.
 
 ```ts
-import { createConduit, memoryAccounts, memoryTransient, webCryptoCipher } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
+import { createConduit } from '@sigx/conduit';
+import { createNodeHandler, fileSource } from '@sigx/conduit/node';
 
 const conduit = createConduit({
-    sources: [fileSource('./connectors')],
-    accounts: memoryAccounts(),
-    transient: memoryTransient(),
-    cipher: await webCryptoCipher(process.env.CONDUIT_KEY!),
-    secret: process.env.CONDUIT_STATE_SECRET!
+    sources: fileSource('./connectors'),
+    secret: process.env.CONDUIT_SECRET!,           // signs OAuth state, seals credentials
+    redirectUri: 'https://app.example/conduit/auth/callback',
+    clients: { 'acme-crm': { id: '…', secret: '…' } }
+    // production: accounts, transient, locks, cipher → durable adapters
 });
 
+// Connect accounts, OAuth callback, dynamic options:
+app.use(createNodeHandler(conduit, { resolveOwner: (req) => req.session?.userId }));
+
+// Call operations from your own code:
 const { output } = await conduit.execute({
     connector: 'acme-crm',
     operation: 'create-contact',

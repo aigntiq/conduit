@@ -19,7 +19,11 @@ import type { AuthMethod, ConnectorSpec, InputSchema, OperationSpec, RequestSpec
 export interface ValidateOptions {
     /** Host-provided expression functions (from plugins), in addition to the standard library. */
     functions?: FunctionRegistry | ReadonlySet<string>;
+    /** Host-provided request encodings (from plugins), in addition to the built-ins. */
+    encodings?: Iterable<string>;
 }
+
+const BUILTIN_ENCODINGS = ['json', 'form', 'multipart', 'text', 'binary'];
 
 export interface ValidationResult {
     valid: boolean;
@@ -58,7 +62,10 @@ export const SCOPE_ROOTS = {
 class Collector {
     readonly diagnostics: Diagnostic[] = [];
 
-    constructor(readonly functions: ReadonlySet<string>) {}
+    constructor(
+        readonly functions: ReadonlySet<string>,
+        readonly encodings: ReadonlySet<string>
+    ) {}
 
     error(path: string, code: string, message: string): void {
         this.diagnostics.push({ path, code, message, severity: 'error' });
@@ -86,6 +93,9 @@ class Collector {
             if (!/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(request.method)) {
                 this.error(`${path}.method`, 'method_invalid', `"${request.method}" is not an HTTP method`);
             }
+        }
+        if (request.encoding !== undefined && !this.encodings.has(request.encoding)) {
+            this.error(`${path}.encoding`, 'encoding_unknown', `no request encoding "${request.encoding}" (available: ${[...this.encodings].join(', ')})`);
         }
     }
 
@@ -260,7 +270,7 @@ export function validateConnector(spec: unknown, options: ValidateOptions = {}):
         };
     }
     const connector = spec as ConnectorSpec;
-    const c = new Collector(withFunctionNames(connector, options));
+    const c = new Collector(withFunctionNames(connector, options), new Set([...BUILTIN_ENCODINGS, ...(options.encodings ?? [])]));
 
     for (const [name, fn] of Object.entries(connector.functions ?? {})) {
         const path = `functions.${name}`;

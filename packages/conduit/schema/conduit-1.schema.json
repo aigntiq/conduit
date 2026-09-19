@@ -251,13 +251,8 @@
           "description": "A template: any JSON value; strings may contain {{ expressions }}."
         },
         "encoding": {
-          "enum": [
-            "json",
-            "form",
-            "multipart",
-            "text",
-            "binary"
-          ]
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
         },
         "responseType": {
           "enum": [
@@ -316,13 +311,8 @@
           "description": "A template: any JSON value; strings may contain {{ expressions }}."
         },
         "encoding": {
-          "enum": [
-            "json",
-            "form",
-            "multipart",
-            "text",
-            "binary"
-          ]
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
         },
         "responseType": {
           "enum": [
@@ -1134,13 +1124,8 @@
                   "description": "A template: any JSON value; strings may contain {{ expressions }}."
                 },
                 "encoding": {
-                  "enum": [
-                    "json",
-                    "form",
-                    "multipart",
-                    "text",
-                    "binary"
-                  ]
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
                 },
                 "responseType": {
                   "enum": [

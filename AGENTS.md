@@ -180,6 +180,17 @@ To run an example: `pnpm --filter <example-name> dev`.
 Path aliases: `tsconfig.json` and `vitest.config.ts` map `@sigx/conduit/*` to
 `packages/conduit/src`, so tests and typecheck run against source, not dist.
 
+Examples (private, not published), each with an end-to-end test against the
+mock provider:
+
+- `examples/express` — `createNodeHandler` in Express plus a server-side `execute` route.
+- `examples/hono` — `createFetchHandler` in Hono (the Workers/Bun/Deno shape).
+
+Test fixtures: `packages/conduit/test/fixtures/connectors` holds two
+fictional connectors (`acme-crm`, `weather`) that `mockProvider()` serves.
+They must validate with zero diagnostics — a test enforces it. After editing
+`src/schema/conduit-1.ts`, run `pnpm gen:schema`; a test fails on drift.
+
 ## Architecture (read before changing the runtime)
 
 The long form is `docs/architecture.md`; the spec is `docs/spec-reference.md`;
