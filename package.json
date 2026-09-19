@@ -10,6 +10,7 @@
         "sync:core": "node scripts/sync-core.mjs",
         "verify:catalog": "node scripts/check-catalog.mjs",
         "verify:names": "node scripts/check-names.mjs",
+        "gen:schema": "node scripts/gen-schema.mjs",
         "build": "pnpm -r --filter ./packages/* run build",
         "test": "vitest run",
         "test:watch": "vitest",

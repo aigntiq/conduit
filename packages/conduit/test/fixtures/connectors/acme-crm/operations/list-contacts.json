@@ -1,0 +1,25 @@
+{
+    "kind": "search",
+    "label": "List contacts",
+    "inputs": {
+        "type": "object",
+        "properties": {
+            "query": { "type": "string", "title": "Search" },
+            "maxPages": { "type": "integer", "default": 5, "minimum": 1 }
+        }
+    },
+    "request": {
+        "url": "/contacts",
+        "query": { "q": "{{inputs.query}}" }
+    },
+    "paginate": {
+        "style": "cursor",
+        "param": "cursor",
+        "pageSize": 2,
+        "pageSizeParam": "limit",
+        "items": "{{response.body.data}}",
+        "next": "{{response.body.meta.next_cursor}}",
+        "maxPages": 5
+    },
+    "output": "{{items | map(c => toContact(c))}}"
+}

@@ -1,0 +1,6 @@
+{
+    "kind": "options",
+    "label": "Owners",
+    "request": { "url": "/owners" },
+    "output": "{{response.body.owners | map(o => {label: o.name, value: o.id})}}"
+}

@@ -1,0 +1,20 @@
+{
+    "kind": "action",
+    "label": "Get contact",
+    "inputs": {
+        "type": "object",
+        "properties": { "id": { "type": "string", "title": "Contact id", "minLength": 1 } },
+        "required": ["id"]
+    },
+    "steps": [
+        {
+            "name": "owner",
+            "url": "/owners/{{inputs.ownerId}}",
+            "when": "{{inputs.ownerId}}",
+            "output": "{{response.body.name}}"
+        }
+    ],
+    "request": { "url": "/contacts/{{urlEncode(inputs.id)}}" },
+    "errors": [{ "when": "{{response.status == 404}}", "error": "notFound", "message": "No contact {{inputs.id}}" }],
+    "output": "{{merge(toContact(response.body), {ownerName: steps.owner})}}"
+}

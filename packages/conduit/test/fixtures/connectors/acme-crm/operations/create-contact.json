@@ -1,0 +1,31 @@
+{
+    "kind": "action",
+    "label": "Create contact",
+    "description": "Create a contact, optionally assigned to an owner.",
+    "inputs": {
+        "type": "object",
+        "properties": {
+            "email": { "type": "string", "title": "Email", "format": "email", "minLength": 3 },
+            "firstName": { "type": "string", "title": "First name" },
+            "lastName": { "type": "string", "title": "Last name" },
+            "ownerId": { "type": "string", "title": "Owner", "x-options": { "operation": "list-owners" } },
+            "tags": { "type": "array", "title": "Tags", "items": { "type": "string" } }
+        },
+        "required": ["email"]
+    },
+    "request": {
+        "method": "POST",
+        "url": "/contacts",
+        "body": {
+            "email": "{{inputs.email}}",
+            "first_name": "{{inputs.firstName}}",
+            "last_name": "{{inputs.lastName}}",
+            "owner_id": "{{inputs.ownerId}}",
+            "tags": "{{inputs.tags}}"
+        }
+    },
+    "errors": [
+        { "when": "{{response.status == 409}}", "error": "conflict", "message": "A contact with {{inputs.email}} already exists" }
+    ],
+    "output": "{{toContact(response.body)}}"
+}

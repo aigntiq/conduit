@@ -1,0 +1,18 @@
+{
+    "kind": "trigger",
+    "label": "Contact created",
+    "trigger": {
+        "type": "webhook",
+        "subscribe": {
+            "method": "POST",
+            "url": "/webhooks",
+            "body": { "url": "{{subscription.callbackUrl}}", "events": ["contact.created"], "secret": "{{subscription.secret}}" },
+            "output": { "hookId": "{{response.body.id}}" }
+        },
+        "unsubscribe": { "method": "DELETE", "url": "/webhooks/{{subscription.data.hookId}}" },
+        "verify": { "type": "hmac", "header": "X-Acme-Signature", "prefix": "sha256=" },
+        "filter": "{{request.body.type == 'contact.created'}}",
+        "event": "{{toContact(request.body.data)}}",
+        "dedupeKey": "{{request.body.id}}"
+    }
+}
