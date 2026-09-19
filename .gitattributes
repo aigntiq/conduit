@@ -1,0 +1,10 @@
+# Text is stored and checked out with LF on every platform. `eol=lf` beats
+# `core.autocrlf`, which otherwise turns Windows checkouts CRLF and makes
+# staged edits whole-file rewrites.
+* text=auto eol=lf
+
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.woff2 binary
+*.gz   binary

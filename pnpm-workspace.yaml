@@ -1,0 +1,13 @@
+packages:
+  - packages/*
+  - examples/*
+
+onlyBuiltDependencies:
+  - esbuild
+
+# Single source of truth for the sigx core version. Conduit's runtime has NO
+# dependency on sigx core — the only core package here is the library build
+# helper — but it still flows through the catalog so `pnpm sync:core` and
+# `pnpm verify:catalog` keep working the same way they do in every sigx repo.
+catalog:
+  "@sigx/vite": ^0.15.0

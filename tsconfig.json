@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@sigx/conduit": ["./packages/conduit/src/index.ts"],
+      "@sigx/conduit/expr": ["./packages/conduit/src/expr/index.ts"],
+      "@sigx/conduit/schema": ["./packages/conduit/src/schema/index.ts"],
+      "@sigx/conduit/oauth": ["./packages/conduit/src/oauth/index.ts"],
+      "@sigx/conduit/server": ["./packages/conduit/src/server/index.ts"],
+      "@sigx/conduit/node": ["./packages/conduit/src/node/index.ts"],
+      "@sigx/conduit/testing": ["./packages/conduit/src/testing/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/__tests__/**/*.ts",
+    "examples/*/src/**/*.ts",
+    "examples/*/__tests__/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "packages/*/dist"]
+}
