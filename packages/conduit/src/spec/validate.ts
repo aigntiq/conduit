@@ -275,6 +275,34 @@ export function validateConnector(spec: unknown, options: ValidateOptions = {}):
         }
     }
 
+    // Connector functions may call each other, but not recursively: a cycle
+    // would only end at the evaluator's budget, one nested run at a time.
+    const calls = new Map<string, Set<string>>();
+    for (const [name, fn] of Object.entries(connector.functions ?? {})) {
+        const used = analyzeExpression(fn.body).functions;
+        calls.set(name, new Set([...used].filter((f) => Object.hasOwn(connector.functions!, f))));
+    }
+    const visiting = new Set<string>();
+    const done = new Set<string>();
+    const reportedCycle = new Set<string>();
+    const visit = (name: string, trail: string[]): void => {
+        if (done.has(name)) return;
+        if (visiting.has(name)) {
+            const cycle = [...trail.slice(trail.indexOf(name)), name];
+            const key = [...new Set(cycle)].sort().join(',');
+            if (!reportedCycle.has(key)) {
+                reportedCycle.add(key);
+                c.error(`functions.${name}`, 'function_recursive', `functions call each other in a cycle: ${cycle.join(' → ')}`);
+            }
+            return;
+        }
+        visiting.add(name);
+        for (const callee of calls.get(name) ?? []) visit(callee, [...trail, name]);
+        visiting.delete(name);
+        done.add(name);
+    };
+    for (const name of calls.keys()) visit(name, []);
+
     const authIds = new Set<string>();
     const operations = new Map<string, OperationSpec>();
     connector.operations.forEach((op, i) => {

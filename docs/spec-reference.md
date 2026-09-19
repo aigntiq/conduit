@@ -150,7 +150,10 @@ connect inputs), `expiresIn` (*template*, seconds), and a required `apply`.
 
 `accessToken`, `refreshToken`, `expiresIn` (seconds), `expiresAt` (absolute;
 wins), `tokenType`, `scope`, `data` (extra values stored as `auth.*`). Scope:
-`response` is the token endpoint's response.
+`response` is the token endpoint's reply, `{ status, headers, body }`, where
+`body` is parsed from JSON or form encoding. The defaults read
+`response.body.access_token`, `refresh_token`, `expires_in`, `token_type` and
+`scope`. A refresh that returns no new refresh token keeps the old one.
 
 ## Operations
 
