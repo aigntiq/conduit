@@ -13,8 +13,8 @@ import { analyzeExpression, analyzeTemplate } from '../expr/analyze';
 import type { FunctionRegistry } from '../expr/evaluate';
 import { STANDARD_FUNCTIONS } from '../expr/stdlib';
 import { conduitSchema } from '../schema/conduit-1';
-import { validateAgainstSchema } from '../schema/validator';
-import type { AuthMethod, ConnectorSpec, InputSchema, OperationSpec, RequestSpec, StepSpec } from './types';
+import { validateAgainstSchema, type SchemaNode } from '../schema/validator';
+import type { AuthMethod, ConnectorSpec, InputProperty, InputSchema, InputType, OperationSpec, RequestSpec, StepSpec, Widget } from './types';
 
 export interface ValidateOptions {
     /** Host-provided expression functions (from plugins), in addition to the standard library. */
@@ -56,7 +56,8 @@ export const SCOPE_ROOTS = {
     delivery: roots('inputs', 'auth', 'account', 'config', 'env', 'request', 'subscription'),
     poll: roots(...BASE, 'state'),
     pollResult: roots(...BASE, 'state', 'response', 'item'),
-    optionsInputs: roots('inputs', 'config', 'env')
+    optionsInputs: roots('inputs', 'config', 'env'),
+    rules: roots('inputs')
 } as const;
 
 class Collector {
@@ -121,37 +122,99 @@ function withFunctionNames(spec: ConnectorSpec, options: ValidateOptions): Set<s
     return names;
 }
 
+/** Which input types each widget can render. `*` renders anything. */
+const WIDGET_TYPES: Record<Widget, readonly InputType[] | '*'> = {
+    text: ['string'],
+    textarea: ['string'],
+    richtext: ['string'],
+    markdown: ['string'],
+    code: ['string'],
+    password: ['string'],
+    number: ['number', 'integer'],
+    toggle: ['boolean'],
+    select: ['string', 'number', 'integer', 'boolean'],
+    multiselect: ['array'],
+    combobox: ['string', 'number', 'integer'],
+    date: ['string'],
+    datetime: ['string'],
+    email: ['string'],
+    url: ['string'],
+    emails: ['array'],
+    file: ['object', 'array'],
+    json: '*',
+    keyvalue: ['object'],
+    list: ['array'],
+    fieldset: ['object'],
+    hidden: '*'
+};
+
+function checkConditions(c: Collector, prop: InputProperty, p: string, siblings: ReadonlySet<string>): void {
+    for (const key of ['x-visibleWhen', 'x-requiredWhen'] as const) {
+        for (const name of Object.keys(prop[key] ?? {})) {
+            if (!siblings.has(name)) c.error(`${p}.${key}.${name}`, 'condition_unknown', `"${name}" is not a field next to this one`);
+        }
+    }
+}
+
+function checkProperty(c: Collector, prop: InputProperty, p: string, siblings: ReadonlySet<string> | undefined, top: ReadonlySet<string>, operations: Map<string, OperationSpec>): void {
+    if (prop.pattern !== undefined) {
+        try {
+            new RegExp(prop.pattern, 'u');
+        } catch {
+            c.error(`${p}.pattern`, 'pattern_invalid', `"${prop.pattern}" is not a valid regular expression`);
+        }
+    }
+    const widget = prop['x-widget'];
+    if (widget) {
+        const types = WIDGET_TYPES[widget];
+        if (types !== '*' && !types.includes(prop.type)) {
+            c.error(`${p}.x-widget`, 'widget_type', `the "${widget}" widget cannot render a ${prop.type} (it renders ${types.join(', ')})`);
+        }
+    }
+    if (prop.default !== undefined) {
+        const [issue] = validateAgainstSchema(prop as unknown as SchemaNode, prop.default);
+        if (issue) c.error(`${p}.default`, 'default_invalid', `the default ${issue.path ? `at ${issue.path} ` : ''}${issue.message}`);
+    }
+    if (siblings) checkConditions(c, prop, p, siblings);
+
+    const options = prop['x-options'];
+    if (options) {
+        const target = operations.get(options.operation);
+        if (!target) c.error(`${p}.x-options.operation`, 'operation_unknown', `no operation "${options.operation}"`);
+        else if (target.kind !== 'options') {
+            c.error(`${p}.x-options.operation`, 'operation_kind', `"${options.operation}" is a ${target.kind} operation, not options`);
+        } else if (options.search && !Object.hasOwn(target.inputs?.properties ?? {}, options.search)) {
+            c.error(`${p}.x-options.search`, 'input_unknown', `"${options.operation}" has no input "${options.search}" to receive the search text`);
+        }
+        for (const dep of options.dependsOn ?? []) {
+            if (!top.has(dep)) c.error(`${p}.x-options.dependsOn`, 'input_unknown', `"${dep}" is not an input of this form`);
+        }
+        c.templates(options.inputs, `${p}.x-options.inputs`, SCOPE_ROOTS.optionsInputs);
+    }
+
+    if (prop.type === 'object' && prop.properties) checkLevel(c, prop.properties, prop.required ?? [], p, top, operations);
+    if (prop.items) checkProperty(c, prop.items, `${p}.items`, undefined, top, operations);
+}
+
+function checkLevel(c: Collector, properties: Record<string, InputProperty>, required: readonly string[], path: string, top: ReadonlySet<string>, operations: Map<string, OperationSpec>): void {
+    for (const req of required) {
+        if (!Object.hasOwn(properties, req)) c.error(`${path}.required`, 'input_unknown', `"${req}" is required but not defined in properties`);
+    }
+    const siblings = new Set(Object.keys(properties));
+    for (const [name, prop] of Object.entries(properties)) checkProperty(c, prop, `${path}.properties.${name}`, siblings, top, operations);
+}
+
 function checkInputs(c: Collector, inputs: InputSchema | undefined, path: string, operations: Map<string, OperationSpec>): void {
     if (!inputs) return;
-    for (const req of inputs.required ?? []) {
-        if (!Object.hasOwn(inputs.properties, req)) {
-            c.error(`${path}.required`, 'input_unknown', `"${req}" is required but not defined in properties`);
+    const top = new Set(Object.keys(inputs.properties));
+    checkLevel(c, inputs.properties, inputs.required ?? [], path, top, operations);
+    (inputs['x-rules'] ?? []).forEach((rule, i) => {
+        // Rules run in the browser too: they see only `inputs`.
+        c.templates(rule.check, `${path}.x-rules[${i}].check`, SCOPE_ROOTS.rules);
+        for (const f of rule.fields ?? []) {
+            if (!top.has(f)) c.error(`${path}.x-rules[${i}].fields`, 'input_unknown', `"${f}" is not an input of this form`);
         }
-    }
-    for (const [name, prop] of Object.entries(inputs.properties)) {
-        const p = `${path}.properties.${name}`;
-        if (prop.pattern !== undefined) {
-            try {
-                new RegExp(prop.pattern, 'u');
-            } catch {
-                c.error(`${p}.pattern`, 'pattern_invalid', `"${prop.pattern}" is not a valid regular expression`);
-            }
-        }
-        const options = prop['x-options'];
-        if (options) {
-            const target = operations.get(options.operation);
-            if (!target) c.error(`${p}.x-options.operation`, 'operation_unknown', `no operation "${options.operation}"`);
-            else if (target.kind !== 'options') {
-                c.error(`${p}.x-options.operation`, 'operation_kind', `"${options.operation}" is a ${target.kind} operation, not options`);
-            }
-            c.templates(options.inputs, `${p}.x-options.inputs`, SCOPE_ROOTS.optionsInputs);
-        }
-        for (const key of Object.keys(prop['x-visibleWhen'] ?? {})) {
-            if (!Object.hasOwn(inputs.properties, key)) {
-                c.warn(`${p}.x-visibleWhen.${key}`, 'input_unknown', `"${key}" is not an input of this schema`);
-            }
-        }
-    }
+    });
 }
 
 function checkAuth(c: Collector, method: AuthMethod, path: string, operations: Map<string, OperationSpec>): void {

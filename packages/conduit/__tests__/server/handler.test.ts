@@ -102,6 +102,38 @@ describe('createFetchHandler', () => {
         expect(limited.headers.get('retry-after')).toBe('7');
     });
 
+    it('serves form models and maps field-attributed remote errors to 422', async () => {
+        const fielded: ConnectorSpec = {
+            spec: 'conduit/1',
+            id: 'forms',
+            name: 'Forms',
+            version: '1.0.0',
+            http: { baseUrl: 'https://api.forms.example', retry: { attempts: 1 } },
+            operations: [
+                {
+                    id: 'invite',
+                    kind: 'action',
+                    label: 'Invite',
+                    inputs: { type: 'object', properties: { email: { type: 'string', format: 'email' } }, required: ['email'] },
+                    request: { method: 'POST', url: '/invite', body: { email: '{{inputs.email}}' } },
+                    errors: [{ when: "{{ response.body.error == 'bad_recipient' }}", error: 'validation', field: 'email', message: 'That address bounces' }]
+                }
+            ]
+        };
+        const conduit = createConduit({
+            sources: memorySource([fielded]),
+            secret: SECRET,
+            http: async () => Response.json({ error: 'bad_recipient' }, { status: 400 })
+        });
+        const h = createFetchHandler(conduit, { resolveOwner: () => 'u1', exposeExecute: true });
+        const form = (await (await h(new Request('https://app.example/conduit/connectors/forms/forms/invite'))).json()) as { groups: { fields: { name: string; widget: string }[] }[] };
+        expect(form.groups[0]!.fields).toMatchObject([{ name: 'email', widget: 'email' }]);
+
+        const res = await h(post('/conduit/execute', { connector: 'forms', operation: 'invite', inputs: { email: 'x@y.co' } }));
+        expect(res.status).toBe(422);
+        expect(await res.json()).toMatchObject({ error: { kind: 'validation', issues: [{ path: 'inputs.email', code: 'remote', message: 'That address bounces' }] } });
+    });
+
     it('refuses a plain start link for methods that connect without a redirect', async () => {
         const { handler } = setup();
         const res = await handler()(new Request('https://app.example/conduit/auth/svc/t/start', { headers: { 'x-user': 'u' } }));

@@ -38,6 +38,9 @@ export interface ConnectorSpec {
     icon?: string;
     homepage?: string;
     categories?: string[];
+    /** Brand colour for UIs, `#rrggbb`. */
+    brandColor?: string;
+    helpUrl?: string;
     /** Static, non-secret configuration, readable as `{{ config.x }}`. */
     config?: Record<string, unknown>;
     /** Defaults applied to every request this connector makes. */
@@ -98,6 +101,8 @@ export interface ErrorRule {
     message?: TemplateString;
     /** Override whether this failure is retried. */
     retryable?: boolean;
+    /** Attribute a `validation` failure to this input, so forms can show it on the field. */
+    field?: string;
 }
 
 export type RequestEncoding = 'json' | 'form' | 'multipart' | 'text' | 'binary';
@@ -135,12 +140,59 @@ export interface StepSpec extends RequestSpec {
 export type InputType = 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
 
 /** A JSON Schema (2020-12) subset, plus `x-` UI hints. */
+/** The closed widget vocabulary renderers implement. See docs/ui-hints.md. */
+export const WIDGETS = [
+    'text',
+    'textarea',
+    'richtext',
+    'markdown',
+    'code',
+    'password',
+    'number',
+    'toggle',
+    'select',
+    'multiselect',
+    'combobox',
+    'date',
+    'datetime',
+    'email',
+    'url',
+    'emails',
+    'file',
+    'json',
+    'keyvalue',
+    'list',
+    'fieldset',
+    'hidden'
+] as const;
+export type Widget = (typeof WIDGETS)[number];
+
+/**
+ * A condition over sibling inputs. Every key must hold (AND):
+ * `{ mode: 'advanced' }`, `{ mode: { in: ['a', 'b'] } }`,
+ * `{ threadId: { notEmpty: true } }`, `{ cc: { empty: true } }`.
+ */
+export type Condition = Record<string, unknown>;
+
+/** A labelled choice (standard JSON Schema `oneOf` + `const` + `title`). */
+export interface Choice {
+    const: unknown;
+    title?: string;
+    description?: string;
+}
+
+/** A JSON Schema (2020-12) subset, plus `x-` UI hints. See docs/ui-hints.md. */
 export interface InputProperty {
     type: InputType;
     title?: string;
     description?: string;
     default?: unknown;
+    examples?: unknown[];
+    readOnly?: boolean;
+    deprecated?: boolean;
     enum?: unknown[];
+    /** Labelled choices. Use instead of `enum` when values need display names. */
+    oneOf?: Choice[];
     format?: string;
     items?: InputProperty;
     properties?: Record<string, InputProperty>;
@@ -154,19 +206,52 @@ export interface InputProperty {
     maxItems?: number;
     /** Masked in UIs and traces; stored sealed when it is an auth input. */
     'x-secret'?: boolean;
-    /** A rendering hint for UIs: `textarea`, `code`, `select`, … */
-    'x-widget'?: string;
+    /** How to render. Default: inferred from type and format. */
+    'x-widget'?: Widget;
     'x-placeholder'?: string;
-    /** Show only when other inputs have these values. */
-    'x-visibleWhen'?: Record<string, unknown>;
+    /** Section the field belongs to. */
+    'x-group'?: string;
+    /** Sort key within its group; ties keep declaration order. */
+    'x-order'?: number;
+    /** Collapsed under "Advanced". */
+    'x-advanced'?: boolean;
+    /** Show (and validate, and send) only when this holds. */
+    'x-visibleWhen'?: Condition;
+    /** Required only when this holds. */
+    'x-requiredWhen'?: Condition;
     /** Dynamic choices, from an `options` operation of this connector. */
-    'x-options'?: { operation: string; inputs?: Record<string, Template> };
+    'x-options'?: {
+        operation: string;
+        /** Inputs for the options operation — templates over this form's `inputs`. */
+        inputs?: Record<string, Template>;
+        /** Fields whose change reloads the choices. */
+        dependsOn?: string[];
+        /** The options operation input that receives what the user types (searchable combobox). */
+        search?: string;
+    };
+    /** `file` fields: accepted types (`image/*,.pdf`) and size cap. */
+    'x-accept'?: string;
+    'x-maxBytes'?: number;
+    /** `code` fields: the language. */
+    'x-language'?: string;
+    /** Per-keyword message overrides: `{ pattern: "Must look like ABC-123" }`. */
+    'x-errorMessage'?: Record<string, string>;
+}
+
+/** A cross-field rule, evaluated against `inputs`. */
+export interface InputRule {
+    /** Template; the inputs are valid when it is truthy. */
+    check: TemplateString;
+    message: string;
+    /** Fields the message belongs to (UIs highlight them). */
+    fields?: string[];
 }
 
 export interface InputSchema {
     type: 'object';
     properties: Record<string, InputProperty>;
     required?: string[];
+    'x-rules'?: InputRule[];
 }
 
 export type JsonSchema = Record<string, unknown>;
@@ -204,6 +289,9 @@ interface AuthMethodBase {
     identity?: IdentitySpec;
     /** Refresh this many seconds before expiry. Default 60. */
     refreshSkewSec?: number;
+    /** Markdown instructions for whoever sets this up (register an app, redirect URI, scopes, …). */
+    setup?: string;
+    helpUrl?: string;
 }
 
 /** How a token endpoint response maps onto credentials. Scope: `response` (the token response). */
@@ -320,6 +408,11 @@ interface OperationBase {
     /** Hide from catalogs (still callable). `options` operations are hidden by default. */
     hidden?: boolean;
     tags?: string[];
+    /** Catalog grouping, e.g. "Messages", "Labels". */
+    group?: string;
+    /** Deletes or irreversibly changes data — UIs ask for confirmation. */
+    destructive?: boolean;
+    helpUrl?: string;
 }
 
 export interface ActionOperation extends OperationBase {

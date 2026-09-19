@@ -85,6 +85,9 @@ function toErrorResponse(error: unknown): Response {
         const headers: Record<string, string> = error.retryAfterMs === undefined ? {} : { 'retry-after': String(Math.ceil(error.retryAfterMs / 1000)) };
         return json(429, { error: { code: error.code, message: error.message } }, headers);
     }
+    if (error instanceof ConduitRequestError && error.issues?.length) {
+        return json(422, { error: { code: error.code, kind: error.kind, message: error.message, issues: error.issues } });
+    }
     if (error instanceof ConduitRequestError) {
         return json(502, { error: { code: error.code, kind: error.kind, status: error.status, message: error.message } });
     }
@@ -151,6 +154,8 @@ export function createFetchHandler(conduit: Conduit, options: FetchHandlerOption
     const routes = [
         owned('GET', '/connectors', async () => json(200, { connectors: await conduit.connectors.list() })),
         owned('GET', '/connectors/:id', async (_r, p) => json(200, await conduit.connectors.describe(p.id!))),
+        owned('GET', '/connectors/:id/forms/:operation', async (_r, p) => json(200, await conduit.connectors.form(p.id!, { operation: p.operation! }))),
+        owned('GET', '/connectors/:id/auth/:method/form', async (_r, p) => json(200, await conduit.connectors.form(p.id!, { authMethod: p.method! }))),
         owned('GET', '/accounts', async (_r, _p, owner, url) =>
             json(200, { accounts: await conduit.accounts.list({ owner, connector: url.searchParams.get('connector') ?? undefined }) })
         ),

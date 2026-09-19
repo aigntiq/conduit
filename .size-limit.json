@@ -2,7 +2,7 @@
   {
     "name": "@sigx/conduit (runtime)",
     "path": "packages/conduit/dist/index.prod.js",
-    "limit": "31 KB"
+    "limit": "34 KB"
   },
   {
     "name": "@sigx/conduit/expr",

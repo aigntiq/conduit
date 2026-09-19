@@ -80,11 +80,13 @@ export class ConduitRequestError extends ConduitError {
     readonly retryable: boolean;
     /** The parsed response body, when there was one. May contain remote detail. */
     readonly body: unknown;
+    /** Set when an error rule attributed the failure to an input (`field`). */
+    readonly issues: readonly InputIssue[] | undefined;
 
     constructor(
         kind: ErrorKind,
         message: string,
-        init: { status?: number; retryable?: boolean; body?: unknown } & ConduitErrorOptions = {}
+        init: { status?: number; retryable?: boolean; body?: unknown; issues?: InputIssue[] } & ConduitErrorOptions = {}
     ) {
         super(`request_${kind}`, message, init);
         this.name = 'ConduitRequestError';
@@ -92,6 +94,7 @@ export class ConduitRequestError extends ConduitError {
         this.status = init.status;
         this.retryable = init.retryable ?? (kind === 'transient' || kind === 'rateLimited');
         this.body = init.body;
+        this.issues = init.issues;
     }
 }
 
@@ -136,6 +139,9 @@ export interface Diagnostic {
 export interface InputIssue {
     path: string;
     message: string;
+    /** Machine-readable reason: `required`, `format`, `minLength`, `rule`, `remote`, … */
+    code?: string;
+    params?: Record<string, unknown>;
 }
 
 export function isConduitError(value: unknown): value is ConduitError {

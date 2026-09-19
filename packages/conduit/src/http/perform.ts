@@ -184,6 +184,7 @@ function toError(failure: Failure, view: ResponseView | undefined, retryAfter: n
         status: failure.status,
         body: view?.body,
         retryable: failure.retryable,
+        issues: failure.field === undefined ? undefined : [{ path: `inputs.${failure.field}`, code: 'remote', message: failure.message }],
         cause
     });
 }

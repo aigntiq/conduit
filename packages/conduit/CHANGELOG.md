@@ -15,3 +15,7 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 - The plugin API (`definePlugin`): expression functions, body encodings, request middleware, execute and account events, routes.
 - HTTP surface: `createFetchHandler` (`./server`) and `createNodeHandler` (`./node`).
 - Standalone OAuth helpers (`./oauth`).
+- UI hints and forms: a closed widget vocabulary, groups, ordering, advanced fields, conditions (`x-visibleWhen`, `x-requiredWhen`), labelled choices (`oneOf`), dependent and searchable options, file hints, message overrides, cross-field `x-rules`, plus `destructive`/`group` on operations, `setup` on auth methods and `brandColor` on connectors.
+- `buildForm`, `prepareForm` and `validateForm`: one renderer-agnostic form model and one validator for browser and server, with coded issues, hidden fields dropped, and three-valued handling of inputs a host binds at run time. Served as `conduit.connectors.form()` and `GET {base}/connectors/:id/forms/:operation`.
+- `format` is now validated (`email`, `uri`, `date`, `date-time`, `uuid`).
+- Error rules can attribute a failure to an input (`field`); the HTTP surface answers 422 with the issues.

@@ -194,7 +194,8 @@ They must validate with zero diagnostics — a test enforces it. After editing
 ## Architecture (read before changing the runtime)
 
 The long form is `docs/architecture.md`; the spec is `docs/spec-reference.md`;
-the expression language is `docs/expressions.md`. The invariants:
+the expression language is `docs/expressions.md`; forms and validation are
+`docs/ui-hints.md`. The invariants:
 
 - **One execution pipeline.** Every outbound call — operation, options lookup,
   auth test, identity fetch, token exchange/refresh — goes through the same

@@ -58,6 +58,7 @@ Planned: `@sigx/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
 - [Architecture](docs/architecture.md) — ports, the execution pipeline, security
 - [Spec reference](docs/spec-reference.md) — every field of `conduit/1`
 - [Expressions](docs/expressions.md) — the `{{ }}` language and standard library
+- [UI hints, forms and validation](docs/ui-hints.md) — generating UIs from a connector; one validator for browser and server
 - [Writing a connector](docs/writing-a-connector.md)
 - [Integrating](docs/integrating.md) — Express, Hono, fetch runtimes
 

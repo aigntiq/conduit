@@ -6,6 +6,7 @@
  * at that file (or at `"$schema": "https://sigx.dev/conduit/schema/conduit-1.json"`)
  * for completion while writing a connector.
  */
+import { WIDGETS } from '../spec/types';
 import type { SchemaNode } from './validator';
 
 const template = { description: 'A template: any JSON value; strings may contain {{ expressions }}.' };
@@ -22,7 +23,9 @@ const authBase = {
     apply: { $ref: '#/$defs/apply' },
     test: { $ref: '#/$defs/request' },
     identity: { $ref: '#/$defs/identity' },
-    refreshSkewSec: { type: 'integer', minimum: 0 }
+    refreshSkewSec: { type: 'integer', minimum: 0 },
+    setup: { type: 'string' },
+    helpUrl: { type: 'string' }
 };
 
 const operationBase = {
@@ -37,7 +40,10 @@ const operationBase = {
     errors: { type: 'array', items: { $ref: '#/$defs/errorRule' } },
     retry: { anyOf: [{ $ref: '#/$defs/retry' }, { const: false }] },
     hidden: { type: 'boolean' },
-    tags: { type: 'array', items: { type: 'string' } }
+    tags: { type: 'array', items: { type: 'string' } },
+    group: { type: 'string', minLength: 1 },
+    destructive: { type: 'boolean' },
+    helpUrl: { type: 'string' }
 };
 
 const requestProperties = {
@@ -70,6 +76,8 @@ export const conduitSchema: SchemaNode = {
         description: { type: 'string' },
         icon: { type: 'string' },
         homepage: { type: 'string' },
+        brandColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+        helpUrl: { type: 'string' },
         categories: { type: 'array', items: { type: 'string' } },
         config: { type: 'object' },
         http: { $ref: '#/$defs/http' },
@@ -124,7 +132,8 @@ export const conduitSchema: SchemaNode = {
                 when: templateString,
                 error: errorKind,
                 message: templateString,
-                retryable: { type: 'boolean' }
+                retryable: { type: 'boolean' },
+                field: { type: 'string', minLength: 1 }
             }
         },
         request: {
@@ -144,10 +153,39 @@ export const conduitSchema: SchemaNode = {
                 output: template
             }
         },
+        condition: {
+            type: 'object',
+            additionalProperties: {
+                anyOf: [
+                    {
+                        type: 'object',
+                        additionalProperties: false,
+                        minProperties: 1,
+                        properties: { in: { type: 'array' }, notEmpty: { const: true }, empty: { const: true } }
+                    },
+                    { type: ['string', 'number', 'integer', 'boolean', 'null', 'array'] }
+                ]
+            }
+        },
         inputProperty: {
             type: 'object',
             required: ['type'],
+            additionalProperties: false,
             properties: {
+                $comment: { type: 'string' },
+                examples: { type: 'array' },
+                readOnly: { type: 'boolean' },
+                deprecated: { type: 'boolean' },
+                oneOf: {
+                    type: 'array',
+                    minItems: 1,
+                    items: {
+                        type: 'object',
+                        required: ['const'],
+                        additionalProperties: false,
+                        properties: { const: {}, title: { type: 'string' }, description: { type: 'string' } }
+                    }
+                },
                 type: { enum: ['string', 'number', 'integer', 'boolean', 'array', 'object'] },
                 title: { type: 'string' },
                 description: { type: 'string' },
@@ -165,15 +203,28 @@ export const conduitSchema: SchemaNode = {
                 minItems: { type: 'integer', minimum: 0 },
                 maxItems: { type: 'integer', minimum: 0 },
                 'x-secret': { type: 'boolean' },
-                'x-widget': { type: 'string' },
+                'x-widget': { enum: [...WIDGETS] },
                 'x-placeholder': { type: 'string' },
-                'x-visibleWhen': { type: 'object' },
+                'x-group': { type: 'string', minLength: 1 },
+                'x-order': { type: 'number' },
+                'x-advanced': { type: 'boolean' },
+                'x-visibleWhen': { $ref: '#/$defs/condition' },
+                'x-requiredWhen': { $ref: '#/$defs/condition' },
                 'x-options': {
                     type: 'object',
                     required: ['operation'],
                     additionalProperties: false,
-                    properties: { operation: { $ref: '#/$defs/id' }, inputs: templateMap }
-                }
+                    properties: {
+                        operation: { $ref: '#/$defs/id' },
+                        inputs: templateMap,
+                        dependsOn: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+                        search: { type: 'string', minLength: 1 }
+                    }
+                },
+                'x-accept': { type: 'string' },
+                'x-maxBytes': { type: 'integer', minimum: 1 },
+                'x-language': { type: 'string' },
+                'x-errorMessage': { type: 'object', additionalProperties: { type: 'string' } }
             }
         },
         inputSchema: {
@@ -183,7 +234,20 @@ export const conduitSchema: SchemaNode = {
             properties: {
                 type: { const: 'object' },
                 properties: { type: 'object', additionalProperties: { $ref: '#/$defs/inputProperty' } },
-                required: { type: 'array', items: { type: 'string' }, uniqueItems: true }
+                required: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+                'x-rules': {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        required: ['check', 'message'],
+                        additionalProperties: false,
+                        properties: {
+                            check: templateString,
+                            message: { type: 'string', minLength: 1 },
+                            fields: { type: 'array', items: { type: 'string' } }
+                        }
+                    }
+                }
             }
         },
         apply: {

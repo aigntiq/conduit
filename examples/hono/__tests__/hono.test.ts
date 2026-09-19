@@ -79,6 +79,24 @@ describe('Conduit in Hono', () => {
         expect(await res.text()).toContain('Connection failed');
     });
 
+    it('serves the form model a UI renders from, and the auth form', async () => {
+        const form = (await (await call('/conduit/connectors/acme-crm/forms/create-contact', { user: 'ada' })).json()) as {
+            groups: { fields: { name: string; widget: string; options?: unknown }[] }[];
+        };
+        expect(form.groups[0]!.fields.map((f) => [f.name, f.widget])).toEqual([
+            ['email', 'email'],
+            ['firstName', 'text'],
+            ['lastName', 'text'],
+            ['ownerId', 'select'],
+            ['tags', 'list']
+        ]);
+        const auth = (await (await call('/conduit/connectors/acme-crm/auth/key/form', { user: 'ada' })).json()) as { groups: { fields: { name: string; widget: string }[] }[] };
+        expect(auth.groups[0]!.fields.map((f) => [f.name, f.widget])).toEqual([
+            ['apiKey', 'password'],
+            ['region', 'select']
+        ]);
+    });
+
     it('leaves other routes to the app', async () => {
         expect(await (await app.fetch(new Request(`${APP}/`))).text()).toBe('ok');
     });

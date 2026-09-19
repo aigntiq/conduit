@@ -7,6 +7,7 @@ import { webCryptoCipher, deriveKey } from '../ports/cipher';
 import { inProcessLocks, memoryAccounts, memoryTransient } from '../ports/memory';
 import type { AccountFilter, AccountStore, ClientResolver, HttpClient, LockProvider, OAuthClient, SecretCipher, TransientStore } from '../ports/types';
 import type { ConnectorSource } from '../spec/source';
+import { buildForm, type FormModel } from '../spec/forms';
 import { assertInputs, authInputs } from '../spec/inputs';
 import type { ConnectorSpec, OAuth2Method } from '../spec/types';
 import type { Diagnostic } from '../errors';
@@ -100,6 +101,12 @@ export interface Conduit {
         list(): Promise<ConnectorSummary[]>;
         get(id: string): Promise<ConnectorSpec>;
         describe(id: string): Promise<ConnectorDescription>;
+        /**
+         * The normalised form model for an operation's inputs, or for what an
+         * auth method asks when connecting. Renderers walk this; validate it
+         * with `validateForm`.
+         */
+        form(id: string, target: { operation: string } | { authMethod: string }): Promise<FormModel>;
         /** Validation diagnostics for every connector, including invalid ones. */
         diagnostics(): Promise<Record<string, Diagnostic[]>>;
         /** Drop cached specs so the next call re-reads the sources. */
@@ -193,7 +200,7 @@ export function createConduit(options: ConduitOptions): Conduit {
     async function connect(request: ConnectRequest): Promise<AccountInfo> {
         const loaded = await registry.get(request.connector);
         const method = loaded.method(request.method);
-        const values = assertInputs(authInputs(method), request.inputs, 'connect inputs');
+        const values = await assertInputs(authInputs(method), request.inputs, 'connect inputs', { functions: loaded.functions });
         const ctx = baseCtx(loaded, { method, mask: maskerFor(method, { values }) });
         const { credentials, tokenResponse } = await mint(k, ctx, method, values, request.owner);
         const withCreds = { ...ctx, credentials, mask: maskerFor(method, credentials) };
@@ -230,6 +237,10 @@ export function createConduit(options: ConduitOptions): Conduit {
             async describe(id) {
                 return describe((await registry.get(id)).spec);
             },
+            async form(id, target) {
+                const loaded = await registry.get(id);
+                return buildForm('operation' in target ? loaded.operation(target.operation).inputs : authInputs(loaded.method(target.authMethod)));
+            },
             diagnostics: () => registry.diagnostics(),
             reload: (id) => registry.invalidate(id)
         },
@@ -260,7 +271,7 @@ export function createConduit(options: ConduitOptions): Conduit {
                 }
                 if (request.account) await loadAccount(k, request.account, request.owner);
 
-                const values = assertInputs(authInputs(method), request.inputs, 'connect inputs');
+                const values = await assertInputs(authInputs(method), request.inputs, 'connect inputs', { functions: loaded.functions });
                 const ctx = baseCtx(loaded, { method });
                 const client = await resolveClient(k, ctx, method, request.owner, values);
                 const redirectUri = request.redirectUri ?? k.redirectUri;

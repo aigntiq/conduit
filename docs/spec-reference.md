@@ -37,6 +37,7 @@ optional `watch`), or use `memorySource([...])`.
 | `version` | semver | required. The connector's own version |
 | `description`, `homepage` | string | |
 | `icon` | string | URL or `data:` URI (a relative path in `connector.json` is inlined) |
+| `brandColor`, `helpUrl` | string | `#rrggbb`; a link for the connector |
 | `categories` | string[] | |
 | `config` | object | static, non-secret values, read as `config.*`. Hosts can override per connector (e.g. point `baseUrl` at a sandbox) |
 | `http` | [HTTP defaults](#http-defaults) | |
@@ -93,6 +94,7 @@ Every method has `id` (required), `label`, `description`, and:
 | `test` | a request that succeeds only when the credentials work |
 | `identity` | `{ request?, id, name, data }` — who the account is. `data` is kept (non-secret) as `account.data` |
 | `refreshSkewSec` | refresh this long before expiry. Default 60 |
+| `setup`, `helpUrl` | markdown setup instructions (register an app, redirect URI, scopes) and a link |
 
 Whatever the type, credentials are read as `auth.*` and **sealed** before an
 `AccountStore` ever sees them.
@@ -162,6 +164,8 @@ Every operation has `id`, `kind`, `label` (all required), plus:
 | Field | |
 |---|---|
 | `description`, `tags` | |
+| `group`, `helpUrl` | catalog grouping and a link |
+| `destructive` | the operation deletes or irreversibly changes data; UIs ask for confirmation |
 | `auth` | method ids it works with (default: any), or `false` for no credentials |
 | `inputs` | [input schema](#inputs) |
 | `outputs` | JSON Schema of the result (documentation for UIs and tools) |
@@ -198,25 +202,32 @@ page at a time and resume from the returned cursor.
 
 ### Inputs
 
-A JSON Schema subset: `{ "type": "object", "properties": { … }, "required": [ … ] }`.
-Each property has `type` (`string`, `number`, `integer`, `boolean`, `array`,
-`object`) and optionally `title`, `description`, `default`, `enum`, `format`,
-`items`, `properties`, `required`, `minimum`, `maximum`, `minLength`,
-`maxLength`, `pattern`, `minItems` and `maxItems`.
+A JSON Schema subset, `{ "type": "object", "properties": { … }, "required": [ … ], "x-rules": [ … ] }`.
 
-Defaults are applied first. Then form-style strings are coerced toward the
-declared type (`"5"` → `5`, `"true"` → `true`), and an empty string counts as
-missing for non-string fields. Keys the schema does not declare pass through.
+Each property has a `type` (`string`, `number`, `integer`, `boolean`,
+`array` or `object`) plus optional:
 
-UI hints — they never affect validation:
+- standard keywords: `title`, `description`, `default`, `examples`,
+  `readOnly`, `deprecated`, `enum`, `oneOf` (labelled choices), `format`,
+  `items`, `properties`, `required`;
+- constraints: `minimum`, `maximum`, `minLength`, `maxLength`,
+  `pattern`, `minItems`, `maxItems`;
+- UI and validation hints: `x-widget`, `x-placeholder`, `x-group`,
+  `x-order`, `x-advanced`, `x-visibleWhen`, `x-requiredWhen`,
+  `x-options`, `x-secret`, `x-accept`, `x-maxBytes`, `x-language`,
+  `x-errorMessage`.
 
-| Hint | |
-|---|---|
-| `x-secret` | masked in UIs and traces (`format: "password"` implies it) |
-| `x-widget` | e.g. `textarea`, `code` |
-| `x-placeholder` | |
-| `x-visibleWhen` | `{ otherInput: value }` |
-| `x-options` | `{ operation, inputs? }` — choices from an `options` operation; `inputs` are *templates* over the current `inputs` |
+Unknown keys are rejected, so a misspelled hint is a validation error rather
+than something silently ignored.
+
+**[UI hints, forms and validation](ui-hints.md)** documents all of it:
+
+- the widget vocabulary and inference table;
+- conditions and cross-field rules;
+- the form model (`conduit.connectors.form`);
+- how inputs are prepared: defaults, coercion, hidden fields dropped,
+  validation with coded issues;
+- behaviour for hosts that bind inputs dynamically.
 
 ### Errors
 
@@ -231,6 +242,7 @@ match wins, and a rule may match a 2xx response (an API that answers
 | `error` | `auth`, `forbidden`, `notFound`, `rateLimited`, `validation`, `conflict`, `transient`, `fatal` |
 | `message` | *template* |
 | `retryable` | override |
+| `field` | attribute a `validation` failure to an input: the error carries `issues: [{ path: "inputs.<field>", code: "remote" }]`, and the HTTP surface answers 422 |
 
 The default classification is:
 

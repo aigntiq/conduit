@@ -22,9 +22,9 @@ const schema: InputSchema = {
 };
 
 describe('prepareInputs', () => {
-    it('applies defaults and coerces form strings toward the declared type', () => {
-        const { value, issues } = prepareInputs(schema, {
-            email: 'a@b.c',
+    it('applies defaults and coerces form strings toward the declared type', async () => {
+        const { value, issues } = await prepareInputs(schema, {
+            email: 'a@b.co',
             ratio: '0.5',
             active: 'false',
             tags: ['1', '2'],
@@ -33,7 +33,7 @@ describe('prepareInputs', () => {
         });
         expect(issues).toEqual([]);
         expect(value).toEqual({
-            email: 'a@b.c',
+            email: 'a@b.co',
             count: 10,
             ratio: 0.5,
             active: false,
@@ -43,45 +43,50 @@ describe('prepareInputs', () => {
         });
     });
 
-    it('treats an empty string as missing for non-string fields', () => {
-        expect(prepareInputs(schema, { email: 'a@b.c', count: '' }).value.count).toBe(10);
+    it('coerces values resolved from elsewhere: single items into lists, JSON text into structures', async () => {
+        const { value, issues } = await prepareInputs(schema, { email: 'a@b.co', tags: '7', address: '{"city":"Rome"}' });
+        expect(issues).toEqual([]);
+        expect(value.tags).toEqual([7]);
+        expect(value.address).toEqual({ city: 'Rome', zip: 1000 });
+        expect((await prepareInputs(schema, { email: 'a@b.co', tags: '[1,2]' })).value.tags).toEqual([1, 2]);
     });
 
-    it('does not mutate defaults across calls', () => {
+    it('treats an empty string as missing for non-string fields', async () => {
+        expect((await prepareInputs(schema, { email: 'a@b.co', count: '' })).value.count).toBe(10);
+    });
+
+    it('does not mutate defaults across calls', async () => {
         const s: InputSchema = { type: 'object', properties: { list: { type: 'array', default: [] } } };
-        const a = prepareInputs(s, {}).value.list as unknown[];
+        const a = (await prepareInputs(s, {})).value.list as unknown[];
         a.push(1);
-        expect(prepareInputs(s, {}).value.list).toEqual([]);
+        expect((await prepareInputs(s, {})).value.list).toEqual([]);
     });
 
-    it('reports every issue with a path', () => {
-        const { issues } = prepareInputs(schema, { count: 'many', kind: 'z', address: {}, tags: ['x'] });
-        expect(issues.map((i) => i.path).sort()).toEqual([
-            'inputs.address.city',
-            'inputs.count',
-            'inputs.email',
-            'inputs.kind',
-            'inputs.tags[0]'
+    it('reports one coded issue per field, with a path', async () => {
+        const { issues } = await prepareInputs(schema, { count: 'many', kind: 'z', address: {}, tags: ['x'], email: 'nope' });
+        expect(issues.map((i) => [i.path, i.code]).sort()).toEqual([
+            ['inputs.address.city', 'required'],
+            ['inputs.count', 'type'],
+            ['inputs.email', 'format'],
+            ['inputs.kind', 'enum'],
+            ['inputs.tags[0]', 'type']
         ]);
     });
 
-    it('rejects non-object inputs', () => {
-        expect(prepareInputs(schema, 'nope').issues).toEqual([{ path: '', message: 'inputs must be an object' }]);
+    it('rejects non-object inputs', async () => {
+        expect((await prepareInputs(schema, 'nope')).issues).toEqual([{ path: '', code: 'type', message: 'inputs must be an object', params: { expected: ['object'] } }]);
     });
 
-    it('passes inputs through untouched without a schema', () => {
-        expect(prepareInputs(undefined, { a: '1' })).toEqual({ value: { a: '1' }, issues: [] });
+    it('passes inputs through untouched without a schema', async () => {
+        expect(await prepareInputs(undefined, { a: '1' })).toEqual({ value: { a: '1' }, issues: [] });
     });
 });
 
 describe('assertInputs', () => {
-    it('throws a ConduitValidationError with the issues', () => {
-        expect(() => assertInputs(schema, {})).toThrow(ConduitValidationError);
-        try {
-            assertInputs(schema, {});
-        } catch (e) {
-            expect((e as ConduitValidationError).issues).toEqual([{ path: 'inputs.email', message: 'is required' }]);
-        }
+    it('throws a ConduitValidationError with the issues', async () => {
+        const err = await assertInputs(schema, {}).catch((e: unknown) => e);
+        expect(err).toBeInstanceOf(ConduitValidationError);
+        expect((err as ConduitValidationError).issues).toEqual([{ path: 'inputs.email', code: 'required', message: 'is required' }]);
     });
 });
 

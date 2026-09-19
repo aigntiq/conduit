@@ -42,7 +42,7 @@ describe('operations', () => {
         const before = h.provider.requests.length;
         const err = await api.run('create-contact', { email: 'x' }).catch((e: unknown) => e);
         expect(err).toBeInstanceOf(ConduitValidationError);
-        expect((err as ConduitValidationError).issues).toEqual([{ path: 'inputs.email', message: 'must be at least 3 characters' }]);
+        expect((err as ConduitValidationError).issues).toEqual([{ path: 'inputs.email', code: 'minLength', params: { limit: 3 }, message: 'must be at least 3 characters' }]);
         expect(h.provider.requests.length).toBe(before);
     });
 

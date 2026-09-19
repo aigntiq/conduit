@@ -15,6 +15,8 @@ export interface Failure {
     /** A rule said `retryable: true` explicitly — retry even if the kind is not in `retry.on`. */
     forced?: boolean;
     status?: number;
+    /** The input an error rule attributed the failure to. */
+    field?: string;
 }
 
 export function defaultKind(status: number): ErrorKind | undefined {
@@ -67,7 +69,8 @@ export async function classify(view: ResponseView, rules: readonly ErrorRule[], 
                 message: message || `request failed with status ${view.status}`,
                 retryable: rule.retryable ?? isRetryableKind(rule.error),
                 forced: rule.retryable === true,
-                status: view.status
+                status: view.status,
+                ...(rule.field === undefined ? {} : { field: rule.field })
             };
         }
     }

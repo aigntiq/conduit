@@ -52,7 +52,7 @@ async function prepare(k: Kernel, req: ExecuteRequest, trace: TraceEntry[]): Pro
         fresh = { account, credentials: await open(k, account) };
     }
 
-    const inputs = assertInputs(op.inputs, req.inputs);
+    const inputs = await assertInputs(op.inputs, req.inputs, 'inputs', { functions: loaded.functions });
     const env = { ...k.env, ...req.env };
 
     const ctx: CallContext = {
