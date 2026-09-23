@@ -1,0 +1,36 @@
+{
+    "spec": "conduit/1",
+    "id": "weather",
+    "name": "Weather",
+    "version": "0.3.0",
+    "description": "A (fictional) forecast API with a query-string key.",
+    "config": { "baseUrl": "https://weather.example" },
+    "http": { "baseUrl": "{{config.baseUrl}}" },
+    "auth": [{ "id": "key", "type": "apiKey", "in": "query", "name": "appid" }],
+    "operations": [
+        {
+            "id": "forecast",
+            "kind": "action",
+            "label": "Forecast",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "city": { "type": "string", "minLength": 1 },
+                    "days": { "type": "integer", "minimum": 1, "maximum": 7, "default": 3 },
+                    "units": { "type": "string", "enum": ["metric", "imperial"], "default": "metric" }
+                },
+                "required": ["city"]
+            },
+            "request": { "url": "/forecast", "query": { "q": "{{inputs.city}}", "cnt": "{{inputs.days}}", "units": "{{inputs.units}}" } },
+            "output": "{{response.body.list | map(d => {date: formatDate(d.dt, 'date'), temp: round(d.temp, 1)})}}"
+        },
+        {
+            "id": "status",
+            "kind": "action",
+            "label": "Service status",
+            "auth": false,
+            "request": { "url": "/status", "responseType": "text" },
+            "output": "{{trim(response.body)}}"
+        }
+    ]
+}

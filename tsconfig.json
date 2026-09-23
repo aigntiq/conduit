@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@aigntiq/conduit": ["./packages/conduit/src/index.ts"],
+      "@aigntiq/conduit/expr": ["./packages/conduit/src/expr/index.ts"],
+      "@aigntiq/conduit/schema": ["./packages/conduit/src/schema/index.ts"],
+      "@aigntiq/conduit/oauth": ["./packages/conduit/src/oauth/index.ts"],
+      "@aigntiq/conduit/server": ["./packages/conduit/src/server/index.ts"],
+      "@aigntiq/conduit/node": ["./packages/conduit/src/node/index.ts"],
+      "@aigntiq/conduit/builder": ["./packages/conduit/src/builder/index.ts"],
+      "@aigntiq/conduit/testing": ["./packages/conduit/src/testing/index.ts"],
+      "@aigntiq/conduit-connectors": ["./packages/conduit-connectors/src/index.ts"],
+      "@aigntiq/conduit-connectors/*": ["./packages/conduit-connectors/src/generated/*.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/__tests__/**/*.ts",
+    "packages/*/connectors/**/*.ts",
+    "packages/*/scripts/**/*.ts",
+    "examples/*/src/**/*.ts",
+    "examples/*/__tests__/**/*.ts",
+    "scripts/lib/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "packages/*/dist"]
+}

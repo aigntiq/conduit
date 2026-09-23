@@ -1,0 +1,35 @@
+{
+    "$schema": "../../../../schema/conduit-1.schema.json",
+    "spec": "conduit/1",
+    "id": "acme-crm",
+    "name": "Acme CRM",
+    "version": "1.0.0",
+    "description": "Contacts and deals in the (fictional) Acme CRM.",
+    "categories": ["crm", "sales"],
+    "config": {
+        "baseUrl": "https://api.acme.example",
+        "authUrl": "https://auth.acme.example"
+    },
+    "http": {
+        "baseUrl": "{{config.baseUrl}}/v2",
+        "headers": {
+            "Accept": "application/json",
+            "X-Acme-Region": "{{account.data.region}}"
+        },
+        "errors": [
+            {
+                "when": "{{response.status == 200 && response.body.ok == false}}",
+                "error": "validation",
+                "message": "{{response.body.error}}"
+            }
+        ],
+        "retry": { "attempts": 3, "initialDelayMs": 10, "maxDelayMs": 200 }
+    },
+    "functions": {
+        "fullName": { "params": ["c"], "body": "trim(default(c.first_name, '') + ' ' + default(c.last_name, ''))" },
+        "toContact": {
+            "params": ["c"],
+            "body": "{id: c.id, email: lower(c.email), name: fullName(c), ownerId: c.owner_id, createdAt: date(c.created_at)}"
+        }
+    }
+}

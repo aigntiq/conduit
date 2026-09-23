@@ -1,0 +1,22 @@
+[
+  {
+    "name": "@aigntiq/conduit (runtime)",
+    "path": "packages/conduit/dist/index.prod.js",
+    "limit": "34 KB"
+  },
+  {
+    "name": "@aigntiq/conduit/expr",
+    "path": "packages/conduit/dist/expr.prod.js",
+    "limit": "12 KB"
+  },
+  {
+    "name": "@aigntiq/conduit/server",
+    "path": "packages/conduit/dist/server.prod.js",
+    "limit": "3 KB"
+  },
+  {
+    "name": "@aigntiq/conduit/builder",
+    "path": "packages/conduit/dist/builder.prod.js",
+    "limit": "5 KB"
+  }
+]

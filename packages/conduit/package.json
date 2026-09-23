@@ -1,0 +1,82 @@
+{
+    "name": "@aigntiq/conduit",
+    "version": "0.1.0",
+    "description": "Declarative, pluggable connectors — describe an API's auth and operations once as data, then call it from any host framework",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "development": "./dist/index.js",
+            "production": "./dist/index.prod.js",
+            "import": "./dist/index.js"
+        },
+        "./expr": {
+            "types": "./dist/expr/index.d.ts",
+            "development": "./dist/expr.js",
+            "production": "./dist/expr.prod.js",
+            "import": "./dist/expr.js"
+        },
+        "./schema": {
+            "types": "./dist/schema/index.d.ts",
+            "development": "./dist/schema.js",
+            "production": "./dist/schema.prod.js",
+            "import": "./dist/schema.js"
+        },
+        "./oauth": {
+            "types": "./dist/oauth/index.d.ts",
+            "development": "./dist/oauth.js",
+            "production": "./dist/oauth.prod.js",
+            "import": "./dist/oauth.js"
+        },
+        "./server": {
+            "types": "./dist/server/index.d.ts",
+            "development": "./dist/server.js",
+            "production": "./dist/server.prod.js",
+            "import": "./dist/server.js"
+        },
+        "./builder": {
+            "types": "./dist/builder/index.d.ts",
+            "development": "./dist/builder.js",
+            "production": "./dist/builder.prod.js",
+            "import": "./dist/builder.js"
+        },
+        "./node": {
+            "types": "./dist/node/index.d.ts",
+            "development": "./dist/node.js",
+            "production": "./dist/node.prod.js",
+            "import": "./dist/node.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": ["dist", "schema", "CHANGELOG.md"],
+    "sideEffects": false,
+    "scripts": {
+        "build": "vite build && vite build --mode prod-dist && tsc -p tsconfig.build.json",
+        "dev": "vite build --watch"
+    },
+    "keywords": ["aigntiq", "conduit", "connectors", "integrations", "oauth", "api", "declarative"],
+    "author": "Andreas Ekdahl",
+    "license": "MIT",
+    "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/aigntiq/conduit.git",
+        "directory": "packages/conduit"
+    },
+    "homepage": "https://github.com/aigntiq/conduit#readme",
+    "bugs": {
+        "url": "https://github.com/aigntiq/conduit/issues"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.1",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
