@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ConduitSpecError, assertValidConnector, validateConnector, type ConnectorSpec } from '@sigx/conduit';
-import { conduitSchema } from '@sigx/conduit/schema';
-import { fileSource } from '@sigx/conduit/node';
+import { ConduitSpecError, assertValidConnector, validateConnector, type ConnectorSpec } from '@aigntiq/conduit';
+import { conduitSchema } from '@aigntiq/conduit/schema';
+import { fileSource } from '@aigntiq/conduit/node';
 
 const FIXTURES = join(__dirname, '..', '..', 'test', 'fixtures', 'connectors');
 

@@ -4,8 +4,8 @@
  * including the decoded MIME message Gmail receives in `raw`.
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { ConduitRequestError, ConduitValidationError, createConduit, type CatalogOf, type HttpClient } from '@sigx/conduit';
-import { connectorCatalog, type Connectors } from '@sigx/conduit-connectors';
+import { ConduitRequestError, ConduitValidationError, createConduit, type CatalogOf, type HttpClient } from '@aigntiq/conduit';
+import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 
 const SECRET = 'gmail-connector-tests-secret-long-enough';
 const REDIRECT = 'https://app.example/conduit/auth/callback';

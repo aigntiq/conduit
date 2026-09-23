@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * generate.mjs — `pnpm --filter @sigx/conduit-connectors generate` (also the
+ * generate.mjs — `pnpm --filter @aigntiq/conduit-connectors generate` (also the
  * first step of `build`). Loads every `connectors/<id>/index.ts` through Vite
  * (so it resolves exactly as the build and tests do), validates it, and
  * writes the generated sources, the JSON and the package exports map. A test
@@ -23,9 +23,9 @@ const server = await createServer({
     server: { middlewareMode: true, hmr: false, watch: null },
     resolve: {
         alias: {
-            '@sigx/conduit/builder': core('builder/index.ts'),
-            '@sigx/conduit/expr': core('expr/index.ts'),
-            '@sigx/conduit': core('index.ts')
+            '@aigntiq/conduit/builder': core('builder/index.ts'),
+            '@aigntiq/conduit/expr': core('expr/index.ts'),
+            '@aigntiq/conduit': core('index.ts')
         }
     }
 });

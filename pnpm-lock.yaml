@@ -44,7 +44,7 @@ importers:
 
   examples/express:
     dependencies:
-      '@sigx/conduit':
+      '@aigntiq/conduit':
         specifier: workspace:*
         version: link:../../packages/conduit
       express:
@@ -57,7 +57,7 @@ importers:
 
   examples/hono:
     dependencies:
-      '@sigx/conduit':
+      '@aigntiq/conduit':
         specifier: workspace:*
         version: link:../../packages/conduit
       hono:
@@ -81,7 +81,7 @@ importers:
 
   packages/conduit-connectors:
     devDependencies:
-      '@sigx/conduit':
+      '@aigntiq/conduit':
         specifier: workspace:*
         version: link:../conduit
       '@sigx/vite':

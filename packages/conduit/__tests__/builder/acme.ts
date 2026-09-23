@@ -2,7 +2,7 @@
  * The Acme CRM fixture connector, authored with the builder. The test
  * asserts it compiles to exactly the JSON in test/fixtures/connectors.
  */
-import { $, action, array, ref, auth, connector, email, expr, options, paging, pollTrigger, search, secret, select, string, integer, webhookTrigger } from '@sigx/conduit/builder';
+import { $, action, array, ref, auth, connector, email, expr, options, paging, pollTrigger, search, secret, select, string, integer, webhookTrigger } from '@aigntiq/conduit/builder';
 
 export const acme = connector({
     id: 'acme-crm',

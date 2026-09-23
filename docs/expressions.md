@@ -14,7 +14,7 @@ strings may contain `{{ expression }}`.
 
 The language is small, sandboxed and side-effect free. It is **data, not code**:
 there is no `eval`, nothing reaches a JavaScript prototype, and every run has a
-step budget. It is available on its own as `@sigx/conduit/expr`.
+step budget. It is available on its own as `@aigntiq/conduit/expr`.
 
 ## Templates
 
@@ -128,7 +128,7 @@ can define its own in `functions`:
 On its own, the engine takes a registry directly:
 
 ```ts
-import { createFunctionRegistry, renderTemplate } from '@sigx/conduit/expr';
+import { createFunctionRegistry, renderTemplate } from '@aigntiq/conduit/expr';
 
 const functions = createFunctionRegistry({
     cents: { minArgs: 1, maxArgs: 1, signature: 'cents(amount)', call: ([v]) => Math.round(Number(v) * 100) }

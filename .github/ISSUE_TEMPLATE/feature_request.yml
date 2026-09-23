@@ -40,7 +40,7 @@ body:
       label: Which package(s) would this affect?
       multiple: true
       options:
-        - "@sigx/conduit"
+        - "@aigntiq/conduit"
         - Not sure
     validations:
       required: true

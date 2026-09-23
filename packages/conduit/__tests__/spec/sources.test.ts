@@ -2,8 +2,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { ConduitSpecError, compositeSource, memorySource, type ConnectorSpec } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
+import { ConduitSpecError, compositeSource, memorySource, type ConnectorSpec } from '@aigntiq/conduit';
+import { fileSource } from '@aigntiq/conduit/node';
 
 const FIXTURES = join(__dirname, '..', '..', 'test', 'fixtures', 'connectors');
 

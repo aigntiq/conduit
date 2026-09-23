@@ -1,4 +1,4 @@
-# SignalX Conduit — shared agent guide
+# Conduit — shared agent guide
 
 > ⚠️ **BRANCH FIRST — never work on `main`.** Before touching ANY file, create a
 > worktree (`pnpm wt new <N-short-slug>`) and do everything from
@@ -21,9 +21,9 @@ This is the sigx standard agent setup. The same pattern (this file +
 it originates in [`signalxjs/repo-template`](https://github.com/signalxjs/repo-template).
 See "Adopting this setup in another sigx repo" at the bottom.
 
-SignalX Conduit is a pnpm monorepo (ESM, `"type": "module"`) of the packages
+Conduit is a pnpm monorepo (ESM, `"type": "module"`) of the packages
 under `packages/`. Tech stack: TypeScript (strict), Vite, Vitest, oxlint.
-Published to npm under the `@sigx` scope.
+Published to npm under the `@aigntiq` scope.
 
 **What Conduit is:** a declarative, pluggable connector framework. A
 *connector* describes a third-party API as data — its auth methods (OAuth2,
@@ -43,7 +43,7 @@ this in CI; if it flags a word you need, reword rather than weaken the guard.
 ## Development workflow (issue → PR → Copilot review → merge)
 
 **This is mandatory for EVERY agent-driven change — including one-line fixes.
-Never commit straight to `main`.** Repo: `signalxjs/conduit`, base branch `main`.
+Never commit straight to `main`.** Repo: `aigntiq/conduit`, base branch `main`.
 (Human contributors follow `CONTRIBUTING.md`, where an issue is optional; for
 agents the issue-first process below is required.)
 
@@ -81,7 +81,7 @@ agents the issue-first process below is required.)
    `gh` is too old to resolve `@copilot` (error: `'@copilot' not found`), request it
    via the API instead — don't skip it:
    ```sh
-   gh api --method POST repos/signalxjs/conduit/pulls/<pr>/requested_reviewers \
+   gh api --method POST repos/aigntiq/conduit/pulls/<pr>/requested_reviewers \
      -f 'reviewers[]=copilot-pull-request-reviewer[bot]'
    ```
    (The reviewer-request API takes the `[bot]`-suffixed slug; the review author
@@ -99,7 +99,7 @@ agents the issue-first process below is required.)
 
    **Then resolve the threads.** Where the repo's ruleset sets
    `required_review_thread_resolution` (check with
-   `gh api repos/signalxjs/conduit/rules/branches/main`), a PR carrying an
+   `gh api repos/aigntiq/conduit/rules/branches/main`), a PR carrying an
    unresolved **inline** comment cannot merge however green it is — with a
    merge queue it silently never enqueues, and `gh pr checks` shows nothing
    wrong. Pushing the fix does not resolve a thread, and neither does replying
@@ -107,7 +107,7 @@ agents the issue-first process below is required.)
    resolve it over GraphQL:
    ```sh
    # list the open threads
-   gh api graphql -f query='query { repository(owner:"signalxjs", name:"conduit") {
+   gh api graphql -f query='query { repository(owner:"aigntiq", name:"conduit") {
      pullRequest(number:<pr>) { reviewThreads(first:100) { nodes {
        id isResolved comments(first:1){nodes{body}} } } } } }' \
      -q '.data.repository.pullRequest.reviewThreads.nodes[]
@@ -165,7 +165,7 @@ To run an example: `pnpm --filter <example-name> dev`.
 
 ## Packages
 
-- `packages/conduit` → `@sigx/conduit` — the whole v1 runtime. Subpaths:
+- `packages/conduit` → `@aigntiq/conduit` — the whole v1 runtime. Subpaths:
   - `.` — isomorphic: spec types, `defineConnector`, `validateConnector`,
     `createConduit`, ports + memory adapters, plugin API, errors.
   - `./expr` — the Conduit expression engine (parse, compile, evaluate, analyse).
@@ -179,12 +179,12 @@ To run an example: `pnpm --filter <example-name> dev`.
   - `./testing` — alias-only inside this workspace (never published):
     `mockProvider()` and the port conformance suites.
 
-Path aliases: `tsconfig.json` and `vitest.config.ts` map `@sigx/conduit/*` to
+Path aliases: `tsconfig.json` and `vitest.config.ts` map `@aigntiq/conduit/*` to
 `packages/conduit/src`, so tests and typecheck run against source, not dist.
 
-- `packages/conduit-connectors` → `@sigx/conduit-connectors` — ready-made connectors in
+- `packages/conduit-connectors` → `@aigntiq/conduit-connectors` — ready-made connectors in
   one package. Authored with the builder in `connectors/<id>/index.ts`; `pnpm --filter
-  @sigx/conduit-connectors generate` compiles them to `src/generated/` and `json/`
+  @aigntiq/conduit-connectors generate` compiles them to `src/generated/` and `json/`
   (committed; a test fails on drift) and rewrites the package exports. A connector with
   ANY validation diagnostic fails the build. Every connector needs replay tests against
   a scripted HTTP stub (`__tests__/gmail.test.ts`).
@@ -215,7 +215,7 @@ the expression language is `docs/expressions.md`; forms and validation are
   locking (`LockProvider`), encryption (`SecretCipher`), specs
   (`ConnectorSource`) and HTTP (`HttpClient`) are interfaces in
   `src/ports/`, with memory/default implementations next to them. Adapters
-  for real backends ship as separate `@sigx/conduit-*` packages and must pass
+  for real backends ship as separate `@aigntiq/conduit-*` packages and must pass
   the conformance suites in `./testing`.
 - **The host owns identity.** Conduit has no user model: an account's `owner`
   is an opaque string, and `resolveOwner(request)` is the handlers' only auth
@@ -273,7 +273,7 @@ the queue, in two moments:
   ```sh
   gh issue create --repo signalxjs/signalxjs.github.io \
     --title "conduit: <what changed>" \
-    --body "Source: signalxjs/conduit#<pr>. <What needs documenting, and where on the site.> Not yet released."
+    --body "Source: aigntiq/conduit#<pr>. <What needs documenting, and where on the site.> Not yet released."
   ```
   A user-facing PR isn't mergeable until its docs issue exists (see step 6 of
   the workflow).
@@ -311,4 +311,4 @@ To adopt it in another repo:
    "Build, Test, Lint", and "Packages". Replace every `conduit` with the repo name.
 5. Keep the workflow, worktree, and conventions sections as-is — they are the
    shared standard.
-6. Lock down `main`: `node scripts/apply-branch-protection.mjs signalxjs/conduit`.
+6. Lock down `main`: `node scripts/apply-branch-protection.mjs aigntiq/conduit`.

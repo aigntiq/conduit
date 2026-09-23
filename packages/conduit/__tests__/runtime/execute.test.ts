@@ -9,7 +9,7 @@ import {
     memorySource,
     type ConnectorSpec,
     type ExecuteEvent
-} from '@sigx/conduit';
+} from '@aigntiq/conduit';
 import { harness, SECRET, type Harness } from './helpers';
 
 let h: Harness;

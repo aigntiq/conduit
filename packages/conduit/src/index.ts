@@ -1,5 +1,5 @@
 /**
- * `@sigx/conduit` — declarative, pluggable connectors.
+ * `@aigntiq/conduit` — declarative, pluggable connectors.
  *
  * This entry is isomorphic: it runs on any WinterCG runtime (fetch +
  * WebCrypto) and imports nothing from Node.

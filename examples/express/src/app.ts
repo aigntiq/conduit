@@ -10,8 +10,8 @@
  * `x-demo-user` header; a real app reads its session instead.
  */
 import express, { type Request } from 'express';
-import { isConduitError, type Conduit } from '@sigx/conduit';
-import { createNodeHandler } from '@sigx/conduit/node';
+import { isConduitError, type Conduit } from '@aigntiq/conduit';
+import { createNodeHandler } from '@aigntiq/conduit/node';
 
 const currentUser = (req: Request | import('node:http').IncomingMessage): string | undefined => {
     const user = req.headers['x-demo-user'];

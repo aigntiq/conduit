@@ -5,7 +5,7 @@ import {
     evaluateExpression,
     standardRegistry,
     type ExprFunction
-} from '@sigx/conduit/expr';
+} from '@aigntiq/conduit/expr';
 
 const scope = {
     inputs: { name: 'Ada', count: 3, tags: ['a', 'b', 'c'], nested: { deep: { value: 42 } }, empty: '' },

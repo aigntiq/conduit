@@ -148,7 +148,7 @@ over the current values. It reloads when a field in `dependsOn` changes. With
 ## Validation
 
 ```ts
-import { validateForm, prepareForm } from '@sigx/conduit';
+import { validateForm, prepareForm } from '@aigntiq/conduit';
 
 const issues = await validateForm(model, values);      // [{ path, code, params?, message }]
 const { value, issues } = await prepareForm(model, values);

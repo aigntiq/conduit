@@ -1,6 +1,6 @@
 /**
  * Conformance suites for port implementations. An adapter package
- * (`@sigx/conduit-pg`, …) runs these against its own store:
+ * (`@aigntiq/conduit-pg`, …) runs these against its own store:
  *
  *     accountStoreConformance('pg', () => pgAccounts(db));
  *

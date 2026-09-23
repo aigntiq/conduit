@@ -1,7 +1,7 @@
 /**
- * `@sigx/conduit/server` — Conduit's HTTP surface as a WinterCG handler:
+ * `@aigntiq/conduit/server` — Conduit's HTTP surface as a WinterCG handler:
  * `(Request) => Promise<Response>`. It runs as is on Hono, Bun, Deno,
- * Cloudflare Workers and Next.js route handlers; `@sigx/conduit/node`
+ * Cloudflare Workers and Next.js route handlers; `@aigntiq/conduit/node`
  * bridges it to Express/Connect.
  *
  * The host owns identity: `resolveOwner(request)` is the only auth hook.

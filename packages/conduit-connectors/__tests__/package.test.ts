@@ -1,16 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { validateConnector } from '@sigx/conduit';
-import { catalog, connectorCatalog } from '@sigx/conduit-connectors';
-import gmail from '@sigx/conduit-connectors/gmail';
+import { validateConnector } from '@aigntiq/conduit';
+import { catalog, connectorCatalog } from '@aigntiq/conduit-connectors';
+import gmail from '@aigntiq/conduit-connectors/gmail';
 import gmailSource from '../connectors/gmail/index';
 import { connectorIds, exportsMap, generate, withIcon } from '../scripts/generate-lib';
 
 const ROOT = join(__dirname, '..');
 
 describe('generated output', () => {
-    it('is in sync with the connector sources (run `pnpm --filter @sigx/conduit-connectors generate`)', () => {
+    it('is in sync with the connector sources (run `pnpm --filter @aigntiq/conduit-connectors generate`)', () => {
         const specs = connectorIds(ROOT).map((id) => {
             expect(id).toBe('gmail'); // add new connectors to this list's imports
             return withIcon(ROOT, gmailSource);

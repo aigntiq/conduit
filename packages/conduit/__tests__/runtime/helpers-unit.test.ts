@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { HostGuard } from '@sigx/conduit';
-import { buildUrl, callbackParams, createPkce, openState, parseTokenResponse, sealState } from '@sigx/conduit/oauth';
+import { HostGuard } from '@aigntiq/conduit';
+import { buildUrl, callbackParams, createPkce, openState, parseTokenResponse, sealState } from '@aigntiq/conduit/oauth';
 import { Masker } from '../../src/http/perform';
 import { BUILTIN_ENCODERS, joinUrl, renderRequest } from '../../src/http/request';
 import { nextLink, retryAfterMs } from '../../src/http/response';
-import { standardRegistry } from '@sigx/conduit/expr';
+import { standardRegistry } from '@aigntiq/conduit/expr';
 
 describe('oauth helpers', () => {
     it('creates S256 PKCE pairs', async () => {

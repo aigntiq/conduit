@@ -1,15 +1,15 @@
-# @sigx/conduit-connectors
+# @aigntiq/conduit-connectors
 
-Ready-made [Conduit](https://github.com/signalxjs/conduit) connectors in one
+Ready-made [Conduit](https://github.com/aigntiq/conduit) connectors in one
 package. Install once and pick the ones you use; only those are loaded.
 
 ```sh
-pnpm add @sigx/conduit @sigx/conduit-connectors
+pnpm add @aigntiq/conduit @aigntiq/conduit-connectors
 ```
 
 ```ts
-import { createConduit, type CatalogOf } from '@sigx/conduit';
-import { connectorCatalog, type Connectors } from '@sigx/conduit-connectors';
+import { createConduit, type CatalogOf } from '@aigntiq/conduit';
+import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 
 const conduit = createConduit<CatalogOf<Connectors>>({
     sources: connectorCatalog({ include: ['gmail'] }),   // or '*'
@@ -31,8 +31,8 @@ Three ways in, all carrying the same spec:
 | | |
 |---|---|
 | `connectorCatalog({ include })` | a `ConnectorSource`; each connector is loaded on first use |
-| `@sigx/conduit-connectors/gmail` | the spec as a module, for bundlers and edge runtimes: `memorySource([gmail])` |
-| `@sigx/conduit-connectors/json/gmail.json` | plain `conduit/1` JSON, for anything else |
+| `@aigntiq/conduit-connectors/gmail` | the spec as a module, for bundlers and edge runtimes: `memorySource([gmail])` |
+| `@aigntiq/conduit-connectors/json/gmail.json` | plain `conduit/1` JSON, for anything else |
 
 Wrap the catalog in `compositeSource` with your own `fileSource` to override
 one connector (earlier sources win), for example to pin an older version.
@@ -54,9 +54,9 @@ the [changelog](CHANGELOG.md).
 
 ## Contributing a connector
 
-Connectors are written in TypeScript with `@sigx/conduit/builder`, in
+Connectors are written in TypeScript with `@aigntiq/conduit/builder`, in
 `connectors/<id>/index.ts`, plus `icon.svg` and a README. They are compiled
-by `pnpm --filter @sigx/conduit-connectors generate`. The build refuses any
+by `pnpm --filter @aigntiq/conduit-connectors generate`. The build refuses any
 connector with a validation diagnostic, and every connector needs replay
 tests (see `__tests__/gmail.test.ts`).
 

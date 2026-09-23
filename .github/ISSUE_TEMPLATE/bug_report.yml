@@ -23,7 +23,7 @@ body:
       label: Affected package(s)
       multiple: true
       options:
-        - "@sigx/conduit"
+        - "@aigntiq/conduit"
         - Not sure / multiple
     validations:
       required: true

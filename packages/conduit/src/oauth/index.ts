@@ -1,5 +1,5 @@
 /**
- * `@sigx/conduit/oauth` — standalone OAuth 2.0 helpers. The runtime uses
+ * `@aigntiq/conduit/oauth` — standalone OAuth 2.0 helpers. The runtime uses
  * these; hosts can too, without the rest of Conduit.
  */
 import { fromBase64, fromUtf8, randomBytes, timingSafeEqual, toBase64Url, utf8 } from '../util/bytes';

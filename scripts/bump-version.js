@@ -3,7 +3,7 @@
  * cross-package peer ranges in step with it.
  *
  * That second half is the whole reason this is a script rather than a loop.
- * Adapter packages declare `"peerDependencies": { "@sigx/conduit": "^0.1.0" }`.
+ * Adapter packages declare `"peerDependencies": { "@aigntiq/conduit": "^0.1.0" }`.
  * Bumping only `pkg.version` would publish them all peering on a range that no
  * longer resolved to `latest`, and nothing downstream caught it: the range is
  * still valid semver, `verify:pack` installs from local tarballs where the

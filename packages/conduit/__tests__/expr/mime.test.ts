@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateExpression, standardRegistry } from '@sigx/conduit/expr';
+import { evaluateExpression, standardRegistry } from '@aigntiq/conduit/expr';
 
 const mime = async (message: Record<string, unknown>) => String(await evaluateExpression('mime(m)', { m: message }, { functions: standardRegistry }));
 

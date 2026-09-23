@@ -13,14 +13,14 @@ Needs `gh` authenticated (`gh auth login`) with **admin** on the repo.
 
 ```sh
 # baseline (PR + review + no force-push/deletion, squash-only merges):
-node scripts/apply-branch-protection.mjs signalxjs/conduit
+node scripts/apply-branch-protection.mjs aigntiq/conduit
 
 # also require CI to be green — pass your real check-run names:
-node scripts/apply-branch-protection.mjs signalxjs/conduit \
+node scripts/apply-branch-protection.mjs aigntiq/conduit \
   --checks "test (ubuntu-latest, 22); verify-pack; codecov/patch"
 
 # preview without changing anything:
-node scripts/apply-branch-protection.mjs signalxjs/conduit --dry-run
+node scripts/apply-branch-protection.mjs aigntiq/conduit --dry-run
 ```
 
 Including **`codecov/patch`** is what makes the test-first convention

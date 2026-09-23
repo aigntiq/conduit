@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * SignalX Conduit - Pre-publish pack smoke test
+ * Conduit - Pre-publish pack smoke test
  *
  * Catches packaging bugs that lint/typecheck/test miss:
  *   - missing files in `files` array
@@ -37,7 +37,7 @@ const PACKAGES = ['packages/conduit', 'packages/conduit-connectors'];
 // one entry allowed to touch Node built-ins.
 const NEUTRAL_SUBPATHS = ['.', './expr', './schema', './oauth', './server', './builder'];
 
-const sandbox = join(tmpdir(), `sigx-conduit-verify-pack-${Date.now()}`);
+const sandbox = join(tmpdir(), `aigntiq-conduit-verify-pack-${Date.now()}`);
 const tarballDir = join(sandbox, 'tarballs');
 const appDir = join(sandbox, 'app');
 
@@ -123,7 +123,7 @@ function main() {
     writeFileSync(
         join(appDir, 'package.json'),
         JSON.stringify(
-            { name: 'sigx-conduit-pack-smoke', private: true, type: 'module', dependencies: deps },
+            { name: 'aigntiq-conduit-pack-smoke', private: true, type: 'module', dependencies: deps },
             null,
             2
         )

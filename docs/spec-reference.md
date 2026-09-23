@@ -3,7 +3,7 @@
 A connector is JSON (or TypeScript via `defineConnector`) that describes one
 API. This page documents every field. The machine-readable schema is
 [`packages/conduit/schema/conduit-1.schema.json`](../packages/conduit/schema/conduit-1.schema.json)
-(exported as `@sigx/conduit/schema`); add
+(exported as `@aigntiq/conduit/schema`); add
 `"$schema": "<path to it>"` to a `connector.json` for editor completion.
 
 Every string marked *template* may contain `{{ expressions }}` — see
@@ -12,7 +12,7 @@ Every string marked *template* may contain `{{ expressions }}` — see
 
 ## Layout
 
-`fileSource(dir)` from `@sigx/conduit/node` reads either layout:
+`fileSource(dir)` from `@aigntiq/conduit/node` reads either layout:
 
 ```
 connectors/

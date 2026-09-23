@@ -2,9 +2,9 @@ import type { AddressInfo } from 'node:net';
 import { createServer, type Server } from 'node:http';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createConduit, type Conduit } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
-import { mockProvider, type MockProvider } from '@sigx/conduit/testing';
+import { createConduit, type Conduit } from '@aigntiq/conduit';
+import { fileSource } from '@aigntiq/conduit/node';
+import { mockProvider, type MockProvider } from '@aigntiq/conduit/testing';
 import { createApp } from '../src/app';
 
 const FIXTURES = join(__dirname, '..', '..', '..', 'packages', 'conduit', 'test', 'fixtures', 'connectors');

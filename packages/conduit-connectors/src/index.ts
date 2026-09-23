@@ -1,13 +1,13 @@
 /**
- * `@sigx/conduit-connectors` — ready-made connectors in one package. Pick
+ * `@aigntiq/conduit-connectors` — ready-made connectors in one package. Pick
  * the ones you use; only those are loaded:
  *
  *     createConduit({ sources: connectorCatalog({ include: ['gmail'] }), … })
  *
- * Each connector is also its own subpath (`@sigx/conduit-connectors/gmail`)
+ * Each connector is also its own subpath (`@aigntiq/conduit-connectors/gmail`)
  * for bundlers and edge runtimes, and plain JSON under `json/`.
  */
-import type { ConnectorSource, ConnectorSpec, ConnectorSummary } from '@sigx/conduit';
+import type { ConnectorSource, ConnectorSpec, ConnectorSummary } from '@aigntiq/conduit';
 import { loaders, summaries } from './generated/registry';
 
 export type { Connectors } from './generated/registry';
@@ -27,7 +27,7 @@ export function connectorCatalog(options: CatalogOptions): ConnectorSource {
     const available = Object.keys(loaders) as ConnectorId[];
     const ids = options.include === '*' ? available : [...new Set(options.include)];
     for (const id of ids) {
-        if (!available.includes(id)) throw new Error(`no connector "${String(id)}" in @sigx/conduit-connectors (available: ${available.join(', ')})`);
+        if (!available.includes(id)) throw new Error(`no connector "${String(id)}" in @aigntiq/conduit-connectors (available: ${available.join(', ')})`);
     }
     const cache = new Map<string, Promise<ConnectorSpec>>();
     const load = (id: ConnectorId) => {

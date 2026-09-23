@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * SignalX - Publish Script
+ * aigntiq - Publish Script
  *
  * Publishes all packages in this repo to npm in dependency order.
  *
@@ -32,7 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
 // Packages in dependency order (dependencies first). Adapter packages
-// (`@sigx/conduit-*`) peer on @sigx/conduit, so it always goes first.
+// (`@aigntiq/conduit-*`) peer on @aigntiq/conduit, so it always goes first.
 // Examples are private and stay out.
 const PACKAGES = [
     'packages/conduit',
@@ -172,7 +172,7 @@ function publishPackage(pkg) {
 }
 
 async function main() {
-    console.log('🚀 SignalX Publisher');
+    console.log('🚀 aigntiq Publisher');
     console.log('================================');
 
     if (dryRun) {

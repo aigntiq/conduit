@@ -1,6 +1,6 @@
 import { generateKeyPairSync, createVerify, verify as nodeVerify } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { STANDARD_FUNCTIONS, evaluateExpression, standardRegistry } from '@sigx/conduit/expr';
+import { STANDARD_FUNCTIONS, evaluateExpression, standardRegistry } from '@aigntiq/conduit/expr';
 
 const NOW = Date.UTC(2026, 0, 2, 3, 4, 5);
 const run = (source: string, scope: Record<string, unknown> = {}) =>

@@ -9,8 +9,8 @@ A host does three things:
 ## 1. Create the instance
 
 ```ts
-import { createConduit } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
+import { createConduit } from '@aigntiq/conduit';
+import { fileSource } from '@aigntiq/conduit/node';
 
 export const conduit = createConduit({
     sources: fileSource('./connectors'),
@@ -43,7 +43,7 @@ export const conduit = createConduit({
 ### Fetch runtimes: Hono, Bun, Deno, Workers, Next.js
 
 ```ts
-import { createFetchHandler } from '@sigx/conduit/server';
+import { createFetchHandler } from '@aigntiq/conduit/server';
 
 const conduitHandler = createFetchHandler(conduit, {
     basePath: '/conduit',
@@ -57,7 +57,7 @@ export const GET = conduitHandler, POST = conduitHandler;       // Next.js route
 ### Express, Connect, Node `http`
 
 ```ts
-import { createNodeHandler } from '@sigx/conduit/node';
+import { createNodeHandler } from '@aigntiq/conduit/node';
 
 app.use(createNodeHandler(conduit, {
     resolveOwner: (req) => req.session?.userId,
@@ -124,7 +124,7 @@ const { output } = await conduit.execute({
 Failures are typed. Branch on the class or on `code`:
 
 ```ts
-import { ConduitAuthError, ConduitRequestError, ConduitValidationError } from '@sigx/conduit';
+import { ConduitAuthError, ConduitRequestError, ConduitValidationError } from '@aigntiq/conduit';
 
 try { … } catch (e) {
     if (e instanceof ConduitAuthError && e.needsReauth) promptReconnect(e.accountId);

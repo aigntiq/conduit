@@ -1,5 +1,5 @@
 /**
- * `@sigx/conduit/schema` — the `conduit/1` JSON Schema and the compact
+ * `@aigntiq/conduit/schema` — the `conduit/1` JSON Schema and the compact
  * validator that enforces it.
  */
 export { conduitSchema } from './conduit-1';

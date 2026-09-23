@@ -11,7 +11,7 @@ import {
     type ConnectorSpec,
     type InputProperty,
     type InputSchema
-} from '@sigx/conduit';
+} from '@aigntiq/conduit';
 
 const message: InputSchema = {
     type: 'object',

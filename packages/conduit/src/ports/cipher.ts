@@ -15,7 +15,7 @@ const bs = (b: Uint8Array): Bytes => b as Bytes;
 export async function deriveKey(secret: string, purpose: string, usage: 'aes' | 'hmac'): Promise<CryptoKey> {
     if (secret.length < 32) throw new Error('secret must be at least 32 characters');
     const material = await crypto.subtle.importKey('raw', bs(utf8(secret)), 'HKDF', false, ['deriveKey']);
-    const params = { name: 'HKDF', hash: 'SHA-256', salt: bs(utf8('sigx-conduit')), info: bs(utf8(purpose)) };
+    const params = { name: 'HKDF', hash: 'SHA-256', salt: bs(utf8('aigntiq-conduit')), info: bs(utf8(purpose)) };
     return usage === 'aes'
         ? crypto.subtle.deriveKey(params, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
         : crypto.subtle.deriveKey(params, material, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign', 'verify']);

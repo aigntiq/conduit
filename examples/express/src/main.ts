@@ -2,8 +2,8 @@
  * Run: CONDUIT_SECRET=… ACME_CLIENT_ID=… ACME_CLIENT_SECRET=… pnpm --filter conduit-example-express dev
  */
 import { join } from 'node:path';
-import { createConduit } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
+import { createConduit } from '@aigntiq/conduit';
+import { fileSource } from '@aigntiq/conduit/node';
 import { createApp } from './app.ts';
 
 const port = Number(process.env.PORT ?? 3000);

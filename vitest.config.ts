@@ -21,16 +21,16 @@ export default defineConfig({
     resolve: {
         // MORE SPECIFIC FIRST: aliases match by prefix, in order.
         alias: {
-            '@sigx/conduit/expr': src('expr/index.ts'),
-            '@sigx/conduit/schema': src('schema/index.ts'),
-            '@sigx/conduit/oauth': src('oauth/index.ts'),
-            '@sigx/conduit/server': src('server/index.ts'),
-            '@sigx/conduit/node': src('node/index.ts'),
-            '@sigx/conduit/builder': src('builder/index.ts'),
-            '@sigx/conduit/testing': src('testing/index.ts'),
-            '@sigx/conduit': src('index.ts'),
-            '@sigx/conduit-connectors/gmail': resolve(__dirname, 'packages/conduit-connectors/src/generated/gmail.ts'),
-            '@sigx/conduit-connectors': resolve(__dirname, 'packages/conduit-connectors/src/index.ts')
+            '@aigntiq/conduit/expr': src('expr/index.ts'),
+            '@aigntiq/conduit/schema': src('schema/index.ts'),
+            '@aigntiq/conduit/oauth': src('oauth/index.ts'),
+            '@aigntiq/conduit/server': src('server/index.ts'),
+            '@aigntiq/conduit/node': src('node/index.ts'),
+            '@aigntiq/conduit/builder': src('builder/index.ts'),
+            '@aigntiq/conduit/testing': src('testing/index.ts'),
+            '@aigntiq/conduit': src('index.ts'),
+            '@aigntiq/conduit-connectors/gmail': resolve(__dirname, 'packages/conduit-connectors/src/generated/gmail.ts'),
+            '@aigntiq/conduit-connectors': resolve(__dirname, 'packages/conduit-connectors/src/index.ts')
         }
     }
 });

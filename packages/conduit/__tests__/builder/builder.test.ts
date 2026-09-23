@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { createConduit, memorySource, validateConnector, type CatalogOf, type ConnectorSpec } from '@sigx/conduit';
+import { createConduit, memorySource, validateConnector, type CatalogOf, type ConnectorSpec } from '@aigntiq/conduit';
 import {
     $,
     action,
@@ -19,8 +19,8 @@ import {
     string,
     toTemplate,
     when
-} from '@sigx/conduit/builder';
-import { fileSource } from '@sigx/conduit/node';
+} from '@aigntiq/conduit/builder';
+import { fileSource } from '@aigntiq/conduit/node';
 import { acme } from './acme';
 
 const FIXTURES = join(__dirname, '..', '..', 'test', 'fixtures', 'connectors');

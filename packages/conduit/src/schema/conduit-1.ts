@@ -3,7 +3,7 @@
  *
  * `packages/conduit/schema/conduit-1.schema.json` is generated from this
  * object (`pnpm gen:schema`); a test fails when they drift. Point an editor
- * at that file (or at `"$schema": "https://sigx.dev/conduit/schema/conduit-1.json"`)
+ * at that file (or at `"$schema": "https://unpkg.com/@aigntiq/conduit/schema/conduit-1.schema.json"`)
  * for completion while writing a connector.
  */
 import { WIDGETS } from '../spec/types';
@@ -62,7 +62,7 @@ const requestProperties = {
 
 export const conduitSchema: SchemaNode = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: 'https://sigx.dev/conduit/schema/conduit-1.json',
+    $id: 'https://unpkg.com/@aigntiq/conduit/schema/conduit-1.schema.json',
     title: 'Conduit connector (conduit/1)',
     type: 'object',
     required: ['spec', 'id', 'name', 'version', 'operations'],

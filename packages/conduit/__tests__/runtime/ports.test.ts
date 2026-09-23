@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { inProcessLocks, memoryAccounts, memoryTransient, webCryptoCipher } from '@sigx/conduit';
-import { accountStoreConformance, lockProviderConformance, transientStoreConformance } from '@sigx/conduit/testing';
+import { inProcessLocks, memoryAccounts, memoryTransient, webCryptoCipher } from '@aigntiq/conduit';
+import { accountStoreConformance, lockProviderConformance, transientStoreConformance } from '@aigntiq/conduit/testing';
 
 accountStoreConformance('memoryAccounts', () => memoryAccounts());
 transientStoreConformance('memoryTransient', (clock) => memoryTransient({ now: () => clock.now }));

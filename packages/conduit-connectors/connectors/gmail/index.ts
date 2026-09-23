@@ -27,7 +27,7 @@ import {
     string,
     type ErrorRuleDef,
     type Ref
-} from '@sigx/conduit/builder';
+} from '@aigntiq/conduit/builder';
 
 // ── Shared pieces ───────────────────────────────────────────────────────
 

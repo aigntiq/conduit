@@ -1,5 +1,5 @@
 /**
- * `@sigx/conduit/expr` — the Conduit expression language.
+ * `@aigntiq/conduit/expr` — the Conduit expression language.
  *
  * Usable on its own: nothing here knows about connectors, HTTP or auth.
  */

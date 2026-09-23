@@ -1,6 +1,6 @@
 # Authoring connectors in TypeScript
 
-`@sigx/conduit/builder` writes connectors as TypeScript that compiles to
+`@aigntiq/conduit/builder` writes connectors as TypeScript that compiles to
 ordinary `conduit/1` JSON. JSON stays the runtime contract. The builder adds:
 
 - **typed templates:** `inputs.emial` is a compile error, not a load-time diagnostic;
@@ -11,7 +11,7 @@ Everything the builder produces is data. Builder functions run once, at build
 time, and never at request time.
 
 ```ts
-import { $, action, connector, email, expr, string, auth, search, paging, rules, emails, richtext, files } from '@sigx/conduit/builder';
+import { $, action, connector, email, expr, string, auth, search, paging, rules, emails, richtext, files } from '@aigntiq/conduit/builder';
 
 export default connector({
     id: 'acme',
@@ -92,7 +92,7 @@ The builder functions (`request`, `output`, `errors`, `steps`, `paginate`,
 Declare `outputs` with the same helpers to type the result. Then:
 
 ```ts
-import { createConduit, type CatalogOf } from '@sigx/conduit';
+import { createConduit, type CatalogOf } from '@aigntiq/conduit';
 import acme from './connectors/acme';
 
 const conduit = createConduit<CatalogOf<typeof acme>>({ sources: memorySource([acme]), secret });

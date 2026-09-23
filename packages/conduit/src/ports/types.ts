@@ -1,7 +1,7 @@
 /**
  * Ports — the interfaces through which Conduit reaches everything
  * host-specific. Core ships an in-memory or default implementation of each
- * (`./memory.ts`, `./cipher.ts`); real backends ship as `@sigx/conduit-*`
+ * (`./memory.ts`, `./cipher.ts`); real backends ship as `@aigntiq/conduit-*`
  * adapter packages and must pass the conformance suites in `./testing`.
  */
 

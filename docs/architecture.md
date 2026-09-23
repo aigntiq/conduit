@@ -6,7 +6,7 @@ embeds it. This page covers how the pieces fit, the invariants that keep it
 safe, and where extension happens.
 
 ```
-                       ┌──────────────────────── @sigx/conduit ────────────────────────┐
+                       ┌──────────────────────── @aigntiq/conduit ────────────────────────┐
   connector specs ───► │ ConnectorSource ─► registry (validate once, config, functions)│
                        │                                                                │
   host code ─────────► │ createConduit ─► auth flows ─┐                                 │
@@ -109,9 +109,9 @@ definePlugin({
 The spec and types already describe these; the runtime will grow into them:
 
 - **Triggers** — webhook subscribe/verify/renew/unsubscribe and polling with dedupe. This needs a `Scheduler` port and a `TriggerSink` for delivering events to the host.
-- **`@sigx/conduit-cli`** — `validate`, `run`, `login` (loopback OAuth), `new`.
+- **`@aigntiq/conduit-cli`** — `validate`, `run`, `login` (loopback OAuth), `new`.
 - **Storage adapters** — `-surreal`, `-pg`, `-redis`.
-- **`@sigx/conduit-actors`** — cluster-wide single-flight refresh and durable renew/poll on `@sigx/actors`.
-- **`@sigx/conduit-ui`** — sigx components: connect button, auth form, operation form with dynamic options.
-- **`@sigx/conduit-mcp`** — operations as MCP/AI tools.
-- **`@sigx/conduit-openapi`** — draft a connector from an OpenAPI document.
+- **`@aigntiq/conduit-actors`** — cluster-wide single-flight refresh and durable renew/poll on `@sigx/actors`.
+- **`@aigntiq/conduit-ui`** — sigx components: connect button, auth form, operation form with dynamic options.
+- **`@aigntiq/conduit-mcp`** — operations as MCP/AI tools.
+- **`@aigntiq/conduit-openapi`** — draft a connector from an OpenAPI document.

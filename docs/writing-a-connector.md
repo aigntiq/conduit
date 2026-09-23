@@ -10,7 +10,7 @@ and templates use [Conduit expressions](expressions.md).
 
 ```json
 {
-    "$schema": "../../node_modules/@sigx/conduit/schema/conduit-1.schema.json",
+    "$schema": "../../node_modules/@aigntiq/conduit/schema/conduit-1.schema.json",
     "spec": "conduit/1",
     "id": "todo",
     "name": "Todo",
@@ -121,8 +121,8 @@ creating two.
 ## 4. Validate
 
 ```ts
-import { validateConnector } from '@sigx/conduit';
-import { fileSource } from '@sigx/conduit/node';
+import { validateConnector } from '@aigntiq/conduit';
+import { fileSource } from '@aigntiq/conduit/node';
 
 const [todo] = await fileSource('./connectors').list();
 console.log(validateConnector(todo).diagnostics);

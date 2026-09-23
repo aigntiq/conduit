@@ -1,4 +1,4 @@
-# SignalX Conduit
+# Conduit
 
 **Describe an API once, as data. Call it from any host.**
 
@@ -20,8 +20,8 @@ in-memory defaults — and the HTTP surface is a plain `Request → Response`
 handler that mounts in Express, Hono, Fastify, Bun, Deno, Workers or Next.
 
 ```ts
-import { createConduit } from '@sigx/conduit';
-import { createNodeHandler, fileSource } from '@sigx/conduit/node';
+import { createConduit } from '@aigntiq/conduit';
+import { createNodeHandler, fileSource } from '@aigntiq/conduit/node';
 
 const conduit = createConduit({
     sources: fileSource('./connectors'),
@@ -47,12 +47,12 @@ const { output } = await conduit.execute({
 
 | Package | What it is |
 |---|---|
-| [`@sigx/conduit`](packages/conduit) | The runtime: spec, validation, forms, expressions, auth/OAuth, executor, ports, fetch + Node handlers, the TypeScript builder |
-| [`@sigx/conduit-connectors`](packages/conduit-connectors) | Ready-made connectors in one package — pick the ones you use (Gmail, …) |
+| [`@aigntiq/conduit`](packages/conduit) | The runtime: spec, validation, forms, expressions, auth/OAuth, executor, ports, fetch + Node handlers, the TypeScript builder |
+| [`@aigntiq/conduit-connectors`](packages/conduit-connectors) | Ready-made connectors in one package — pick the ones you use (Gmail, …) |
 
-Planned: `@sigx/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
-`@sigx/conduit-actors`, `@sigx/conduit-ui`, `@sigx/conduit-mcp`,
-`@sigx/conduit-openapi`. See [`docs/architecture.md`](docs/architecture.md).
+Planned: `@aigntiq/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
+`@aigntiq/conduit-actors`, `@aigntiq/conduit-ui`, `@aigntiq/conduit-mcp`,
+`@aigntiq/conduit-openapi`. See [`docs/architecture.md`](docs/architecture.md).
 
 ## Docs
 

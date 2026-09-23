@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { ConduitAuthError, createConduit, memoryAccounts, memorySource, type ConnectorSpec, type HttpClient } from '@sigx/conduit';
+import { ConduitAuthError, createConduit, memoryAccounts, memorySource, type ConnectorSpec, type HttpClient } from '@aigntiq/conduit';
 import { SECRET } from './helpers';
 
 interface Seen {

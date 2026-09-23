@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConduitValidationError, assertInputs, authInputs, prepareInputs, secretInputNames, type InputSchema } from '@sigx/conduit';
+import { ConduitValidationError, assertInputs, authInputs, prepareInputs, secretInputNames, type InputSchema } from '@aigntiq/conduit';
 
 const schema: InputSchema = {
     type: 'object',

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { ConduitAuthError } from '@sigx/conduit';
+import { ConduitAuthError } from '@aigntiq/conduit';
 import { harness, REDIRECT, type Harness } from './helpers';
 
 let h: Harness;

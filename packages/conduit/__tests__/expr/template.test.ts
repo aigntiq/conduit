@@ -6,7 +6,7 @@ import {
     findExpressions,
     renderTemplate,
     standardRegistry
-} from '@sigx/conduit/expr';
+} from '@aigntiq/conduit/expr';
 
 const scope = { inputs: { id: 7, name: 'Ada', tags: ['x', 'y'], limit: undefined as number | undefined, obj: { a: 1 } } };
 const render = (value: unknown) => renderTemplate(value, scope, { functions: standardRegistry });

@@ -1,5 +1,5 @@
 {
-    "name": "@sigx/conduit",
+    "name": "@aigntiq/conduit",
     "version": "0.1.0",
     "description": "Declarative, pluggable connectors — describe an API's auth and operations once as data, then call it from any host framework",
     "type": "module",
@@ -56,7 +56,7 @@
         "build": "vite build && vite build --mode prod-dist && tsc -p tsconfig.build.json",
         "dev": "vite build --watch"
     },
-    "keywords": ["sigx", "conduit", "connectors", "integrations", "oauth", "api", "declarative"],
+    "keywords": ["aigntiq", "conduit", "connectors", "integrations", "oauth", "api", "declarative"],
     "author": "Andreas Ekdahl",
     "license": "MIT",
     "engines": {
@@ -64,12 +64,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/signalxjs/conduit.git",
+        "url": "git+https://github.com/aigntiq/conduit.git",
         "directory": "packages/conduit"
     },
-    "homepage": "https://sigx.dev/conduit/",
+    "homepage": "https://github.com/aigntiq/conduit#readme",
     "bugs": {
-        "url": "https://github.com/signalxjs/conduit/issues"
+        "url": "https://github.com/aigntiq/conduit/issues"
     },
     "devDependencies": {
         "@sigx/vite": "catalog:",

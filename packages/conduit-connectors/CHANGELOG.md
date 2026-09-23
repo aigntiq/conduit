@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@sigx/conduit-connectors` are documented here. The
+All notable changes to `@aigntiq/conduit-connectors` are documented here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The
 package follows [Semantic Versioning](https://semver.org/): adding a connector
 or an operation is a minor release, fixing a mapping a patch, and breaking

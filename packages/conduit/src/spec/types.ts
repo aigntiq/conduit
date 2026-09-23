@@ -9,7 +9,7 @@
  * `docs/spec-reference.md#scope`).
  *
  * The canonical machine-readable form is the JSON Schema exported from
- * `@sigx/conduit/schema`; these types and that schema describe the same shape.
+ * `@aigntiq/conduit/schema`; these types and that schema describe the same shape.
  */
 import type { ErrorKind } from '../errors';
 import type { JwtAlgorithm } from '../util/crypto';

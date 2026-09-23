@@ -5,7 +5,7 @@
     "description": "Conduit mounted in a Hono app — the same code runs on Node, Bun, Deno and Workers",
     "type": "module",
     "dependencies": {
-        "@sigx/conduit": "workspace:*",
+        "@aigntiq/conduit": "workspace:*",
         "hono": "^4.13.8"
     }
 }

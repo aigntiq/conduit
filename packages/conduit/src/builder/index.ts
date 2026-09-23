@@ -1,10 +1,10 @@
 /**
- * `@sigx/conduit/builder` — author connectors in TypeScript. Every builder
+ * `@aigntiq/conduit/builder` — author connectors in TypeScript. Every builder
  * returns plain `conduit/1` JSON; types carry from the declared inputs into
  * the templates (a misspelled input is a compile error) and out to typed
  * `execute` calls.
  *
- *     import { action, connector, email, $ } from '@sigx/conduit/builder';
+ *     import { action, connector, email, $ } from '@aigntiq/conduit/builder';
  *
  *     export default connector({
  *         id: 'acme', name: 'Acme', version: '1.0.0',

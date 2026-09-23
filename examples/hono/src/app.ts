@@ -5,8 +5,8 @@
  * (bring a durable `AccountStore`/`TransientStore` there).
  */
 import { Hono } from 'hono';
-import type { Conduit } from '@sigx/conduit';
-import { createFetchHandler } from '@sigx/conduit/server';
+import type { Conduit } from '@aigntiq/conduit';
+import { createFetchHandler } from '@aigntiq/conduit/server';
 
 export function createApp(conduit: Conduit): Hono {
     const app = new Hono();

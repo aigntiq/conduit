@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createConduit, definePlugin, memorySource, type ConnectorSpec } from '@sigx/conduit';
-import { createFetchHandler, safeReturnPath } from '@sigx/conduit/server';
+import { createConduit, definePlugin, memorySource, type ConnectorSpec } from '@aigntiq/conduit';
+import { createFetchHandler, safeReturnPath } from '@aigntiq/conduit/server';
 
 const SECRET = 'handler-test-secret-that-is-long-enough';
 

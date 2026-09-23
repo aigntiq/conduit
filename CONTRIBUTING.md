@@ -1,7 +1,7 @@
-# Contributing to SignalX Conduit
+# Contributing to Conduit
 
 Thanks for your interest! This repo is part of the
-[`signalxjs`](https://github.com/signalxjs) family. It follows the **sigx
+[`aigntiq`](https://github.com/aigntiq) org. It follows the **sigx
 standard** working setup — agent guide, git-worktree workflow, CI/release pipeline,
 and protected `main` — maintained in
 [`signalxjs/repo-template`](https://github.com/signalxjs/repo-template).
@@ -17,7 +17,7 @@ We use the standard `main` / `branches` worktree layout. Clone the primary
 checkout into a `main` folder:
 
 ```bash
-git clone https://github.com/signalxjs/conduit.git conduit/main
+git clone https://github.com/aigntiq/conduit.git conduit/main
 cd conduit/main
 pnpm install
 pnpm build
@@ -73,8 +73,8 @@ pnpm build
 
 ## Reporting bugs and requesting features
 
-- **Bug?** Open an issue with the [bug report template](https://github.com/signalxjs/conduit/issues/new?template=bug_report.yml). A minimal reproduction helps a lot.
-- **Feature idea?** Use the [feature request template](https://github.com/signalxjs/conduit/issues/new?template=feature_request.yml).
+- **Bug?** Open an issue with the [bug report template](https://github.com/aigntiq/conduit/issues/new?template=bug_report.yml). A minimal reproduction helps a lot.
+- **Feature idea?** Use the [feature request template](https://github.com/aigntiq/conduit/issues/new?template=feature_request.yml).
 
 ## Code of conduct
 

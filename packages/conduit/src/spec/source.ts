@@ -2,7 +2,7 @@
  * Connector sources — where specs come from. A port: hosts can serve specs
  * from anywhere (a database, a registry, a bundle) by implementing
  * `ConnectorSource`. Core ships in-memory and composite sources; the
- * filesystem source lives in `@sigx/conduit/node`.
+ * filesystem source lives in `@aigntiq/conduit/node`.
  */
 import type { ConnectorSpec } from './types';
 
