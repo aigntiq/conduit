@@ -83,6 +83,15 @@ describe('semantic validation', () => {
         ]);
     });
 
+    it('rejects an operation that is both readOnly and destructive', () => {
+        const spec = base();
+        spec.operations[0] = { ...spec.operations[0]!, readOnly: true, destructive: true };
+        expect(errorsOf(spec)).toEqual([['operations[0].readOnly', 'operation_read_only_destructive']]);
+        spec.operations[0] = { ...spec.operations[0]!, readOnly: true, destructive: false };
+        expect(errorsOf(spec)).toEqual([]);
+        expect(errorsOf({ ...base(), operations: [{ ...base().operations[0]!, readOnly: 'yes' }] })).toEqual([['operations[0].readOnly', 'schema']]);
+    });
+
     it('checks references to auth methods and options operations', () => {
         const spec = base();
         spec.operations[0] = {

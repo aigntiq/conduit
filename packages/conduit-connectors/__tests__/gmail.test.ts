@@ -321,6 +321,22 @@ describe('Gmail: labels and trash', () => {
     });
 });
 
+describe('Gmail: read and write intent', () => {
+    it('marks exactly the pure reads readOnly, and none of them destructive', async () => {
+        const { conduit } = await setup();
+        const ops = (await conduit.connectors.get('gmail')).operations;
+        expect(ops.filter((o) => o.readOnly).map((o) => o.id)).toEqual([
+            'search-messages',
+            'get-message',
+            'get-thread',
+            'get-attachment',
+            'list-labels',
+            'new-email'
+        ]);
+        expect(ops.filter((o) => o.readOnly && o.destructive)).toEqual([]);
+    });
+});
+
 describe('Gmail: forms and typing', () => {
     it('describes a composable send form', async () => {
         const { conduit } = await setup();

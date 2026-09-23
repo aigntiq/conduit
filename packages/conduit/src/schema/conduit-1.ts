@@ -43,6 +43,7 @@ const operationBase = {
     tags: { type: 'array', items: { type: 'string' } },
     group: { type: 'string', minLength: 1 },
     destructive: { type: 'boolean' },
+    readOnly: { type: 'boolean' },
     helpUrl: { type: 'string' }
 };
 

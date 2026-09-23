@@ -731,6 +731,7 @@ const connector = {
             "label": "Search messages",
             "description": "Find messages with Gmail search syntax — the same as the search box.",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -808,6 +809,7 @@ const connector = {
             "kind": "action",
             "label": "Get message",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -919,6 +921,7 @@ const connector = {
             "kind": "action",
             "label": "Get conversation",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -958,6 +961,7 @@ const connector = {
             "kind": "action",
             "label": "Download attachment",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -999,6 +1003,7 @@ const connector = {
             "id": "list-labels",
             "kind": "options",
             "label": "Labels",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -1175,6 +1180,7 @@ const connector = {
             "label": "New email",
             "description": "Fires for each new message matching the search.",
             "group": "Triggers",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {

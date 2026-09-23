@@ -25,14 +25,14 @@ itself.
 | `send-email` | action | to/cc/bcc (at least one), subject, HTML or plain body, attachments, send-as alias, reply-to, optional thread. Bad recipients come back as a validation issue on the field |
 | `create-draft` | action | same fields as `send-email` |
 | `reply-to-message` | action | replies in the thread with correct `In-Reply-To`/`References`, to the sender's Reply-To (or From), optional reply-all |
-| `search-messages` | search | Gmail search syntax, label filter, up to 50 pages of 100 |
-| `get-message` | action | headers, decoded text and HTML bodies, attachment list |
-| `get-thread` | action | the conversation's messages with their main headers |
-| `get-attachment` | action | returns a file value `{ filename, contentType, base64, size }`, ready to attach elsewhere |
-| `list-labels` | options | system labels first; searchable |
+| `search-messages` | search | **read-only** — Gmail search syntax, label filter, up to 50 pages of 100 |
+| `get-message` | action | **read-only** — headers, decoded text and HTML bodies, attachment list |
+| `get-thread` | action | **read-only** — the conversation's messages with their main headers |
+| `get-attachment` | action | **read-only** — returns a file value `{ filename, contentType, base64, size }`, ready to attach elsewhere |
+| `list-labels` | options | **read-only** — system labels first; searchable |
 | `modify-labels` | action | add and/or remove labels (label pickers load from `list-labels`) |
 | `trash-message` | action | **destructive** — moves to Trash (Gmail deletes after 30 days) |
-| `new-email` | trigger (poll) | new messages matching a search, every 60 s. Defined; the trigger runtime is not released yet |
+| `new-email` | trigger (poll) | **read-only** — new messages matching a search, every 60 s. Defined; the trigger runtime is not released yet |
 
 ## Limits
 

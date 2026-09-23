@@ -223,6 +223,7 @@ export default connector({
             label: 'Search messages',
             description: 'Find messages with Gmail search syntax — the same as the search box.',
             group: 'Messages',
+            readOnly: true,
             inputs: {
                 query: string({ title: 'Search', placeholder: 'from:ada@example.com is:unread newer_than:7d' }).optional(),
                 labelIds: array(string(), { title: 'Labels', options: labelOptions }).optional(),
@@ -241,6 +242,7 @@ export default connector({
         action('get-message', {
             label: 'Get message',
             group: 'Messages',
+            readOnly: true,
             inputs: { id: string({ title: 'Message' }) },
             outputs: object({
                 id: string(),
@@ -280,6 +282,7 @@ export default connector({
         action('get-thread', {
             label: 'Get conversation',
             group: 'Messages',
+            readOnly: true,
             inputs: { id: string({ title: 'Thread' }) },
             request: ({ inputs }) => ({
                 url: $`/users/me/threads/${expr`urlEncode(${inputs.id})`}`,
@@ -299,6 +302,7 @@ export default connector({
         action('get-attachment', {
             label: 'Download attachment',
             group: 'Messages',
+            readOnly: true,
             inputs: {
                 messageId: string({ title: 'Message' }),
                 attachmentId: string({ title: 'Attachment' }),
@@ -317,6 +321,7 @@ export default connector({
 
         options('list-labels', {
             label: 'Labels',
+            readOnly: true,
             inputs: { query: string({ title: 'Search' }).optional() },
             request: { url: '/users/me/labels' },
             output: ({ response, inputs }) =>
@@ -364,6 +369,7 @@ export default connector({
             label: 'New email',
             description: 'Fires for each new message matching the search.',
             group: 'Triggers',
+            readOnly: true,
             intervalSec: 60,
             inputs: {
                 query: string({ title: 'Search', placeholder: 'from:billing@example.com has:attachment' }).optional(),
