@@ -9,7 +9,7 @@
         "branch-protection": "node scripts/apply-branch-protection.mjs",
         "verify:names": "node scripts/check-names.mjs",
         "gen:schema": "node scripts/gen-schema.mjs",
-        "build": "pnpm -r --filter ./packages/* run build",
+        "build": "pnpm -r --filter \"./packages/*\" run build",
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
