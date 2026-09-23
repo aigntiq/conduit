@@ -73,7 +73,7 @@ All paths are relative to `basePath`. All require an owner except the callback.
 | Route | |
 |---|---|
 | `GET /connectors` | catalog |
-| `GET /connectors/:id` | full description: auth methods (with inputs), operations (with inputs/outputs) |
+| `GET /connectors/:id` | full description (`conduit.connectors.describe(id)`): auth methods (with inputs), operations (with inputs/outputs and the `group`, `destructive` and `readOnly` hints) |
 | `GET /accounts?connector=` | the owner's accounts |
 | `POST /auth/:connector/:method/start` | `{ inputs?, returnTo?, account? }` → `{ type: "redirect", url }` or `{ type: "connected", account }` |
 | `GET /auth/:connector/:method/start?returnTo=` | same as a plain link: 302 to the provider |

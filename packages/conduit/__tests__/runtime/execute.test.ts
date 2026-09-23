@@ -366,6 +366,29 @@ describe('catalog', () => {
         expect(weather.operations.find((o) => o.id === 'status')).toMatchObject({ auth: false });
     });
 
+    it('carries group, destructive and readOnly, and omits them when the spec does', async () => {
+        const spec: ConnectorSpec = {
+            spec: 'conduit/1',
+            id: 'hints',
+            name: 'Hints',
+            version: '1.0.0',
+            http: { baseUrl: 'https://hints.example' },
+            operations: [
+                { id: 'read', kind: 'action', label: 'Read', group: 'Items', readOnly: true, request: { url: '/items' } },
+                { id: 'wipe', kind: 'action', label: 'Wipe', group: 'Items', destructive: true, readOnly: false, request: { method: 'DELETE', url: '/items' } },
+                { id: 'plain', kind: 'action', label: 'Plain', request: { url: '/plain' } }
+            ]
+        };
+        const conduit = createConduit({ sources: memorySource([spec]), secret: SECRET });
+        const ops = (await conduit.connectors.describe('hints')).operations;
+        expect(ops[0]).toMatchObject({ group: 'Items', readOnly: true });
+        expect(ops[0]).not.toHaveProperty('destructive');
+        expect(ops[1]).toMatchObject({ group: 'Items', destructive: true, readOnly: false });
+        expect(ops[2]).not.toHaveProperty('group');
+        expect(ops[2]).not.toHaveProperty('destructive');
+        expect(ops[2]).not.toHaveProperty('readOnly');
+    });
+
     it('hides invalid connectors from the list but reports them', async () => {
         const good: ConnectorSpec = { spec: 'conduit/1', id: 'good', name: 'Good', version: '1.0.0', operations: [] };
         const bad = { ...good, id: 'bad', name: 'Bad', operations: [{ id: 'x', kind: 'action', label: 'X', request: { url: '{{ nope( }}' } }] } as ConnectorSpec;

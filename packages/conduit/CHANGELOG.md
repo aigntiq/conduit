@@ -24,3 +24,4 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 - Typed `execute`: `createConduit<CatalogOf<typeof connector>>()` checks connector and operation ids, inputs and outputs.
 - Error rules can attribute a failure to an input (`field`); the HTTP surface answers 422 with the issues.
 - `readOnly` on operations: the operation only reads, so a host may run it without asking. Validation rejects an operation that is both `readOnly` and `destructive` (`operation_read_only_destructive`); the builder accepts it.
+- `connectors.describe()` (and `GET /connectors/:id`) carries each operation's `group`, `destructive` and `readOnly`, so a UI or tool catalog built from it can group operations and pick an approval policy without reading the full spec.

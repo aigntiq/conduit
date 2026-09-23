@@ -312,7 +312,7 @@ describe('Gmail: labels and trash', () => {
 
     it('trashes messages, marked destructive for UIs', async () => {
         const { conduit, account } = await setup();
-        expect((await conduit.connectors.describe('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ kind: 'action' });
+        expect((await conduit.connectors.describe('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ kind: 'action', group: 'Messages', destructive: true });
         expect((await conduit.connectors.get('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ destructive: true });
         const { output } = await conduit.execute({ connector: 'gmail', operation: 'trash-message', account, inputs: { id: 'm1' } });
         expect(output).toMatchObject({ labelIds: ['TRASH'] });
@@ -334,6 +334,8 @@ describe('Gmail: read and write intent', () => {
             'new-email'
         ]);
         expect(ops.filter((o) => o.readOnly && o.destructive)).toEqual([]);
+        const described = (await conduit.connectors.describe('gmail')).operations;
+        expect(described.filter((o) => o.readOnly).map((o) => o.id)).toEqual(ops.filter((o) => o.readOnly).map((o) => o.id));
     });
 });
 

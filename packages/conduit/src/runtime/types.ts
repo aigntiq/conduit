@@ -105,6 +105,12 @@ export interface OperationDescription {
     auth: string[] | false;
     hidden: boolean;
     tags?: string[];
+    /** Catalog grouping, e.g. "Messages". */
+    group?: string;
+    /** Deletes or irreversibly changes data — confirm before running. */
+    destructive?: boolean;
+    /** Only reads, no side effects. Absent means unknown. */
+    readOnly?: boolean;
 }
 
 export interface ConnectorDescription extends ConnectorSummary {

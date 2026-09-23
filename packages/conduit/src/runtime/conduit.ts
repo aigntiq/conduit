@@ -452,7 +452,10 @@ function describe(spec: ConnectorSpec): ConnectorDescription {
             ...(o.outputs === undefined ? {} : { outputs: o.outputs }),
             auth: o.auth === false ? false : (o.auth ?? (spec.auth ?? []).map((m) => m.id)),
             hidden: o.hidden ?? o.kind === 'options',
-            ...(o.tags === undefined ? {} : { tags: o.tags })
+            ...(o.tags === undefined ? {} : { tags: o.tags }),
+            ...(o.group === undefined ? {} : { group: o.group }),
+            ...(o.destructive === undefined ? {} : { destructive: o.destructive }),
+            ...(o.readOnly === undefined ? {} : { readOnly: o.readOnly })
         }))
     };
 }
