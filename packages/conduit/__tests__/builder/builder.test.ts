@@ -59,6 +59,7 @@ describe('fields', () => {
             label: 'Send',
             group: 'Messages',
             destructive: false,
+            readOnly: false,
             inputs: {
                 to: emails({ title: 'To', group: 'Recipients', minItems: 1 }),
                 cc: emails({ group: 'Recipients', advanced: true }).optional(),
@@ -83,7 +84,7 @@ describe('fields', () => {
         expect(inputs.properties.count).toEqual({ type: 'integer', minimum: 1, 'x-errorMessage': { minimum: 'At least one' } });
         expect(inputs.properties.address).toEqual({ type: 'object', properties: { city: { type: 'string' }, zip: { type: 'string' } }, required: ['city'] });
         expect(inputs['x-rules']).toEqual([{ check: '{{ !isEmpty(inputs.to) || !isEmpty(inputs.cc) }}', message: 'Fill in at least one of: to, cc', fields: ['to', 'cc'] }]);
-        expect(built.spec).toMatchObject({ group: 'Messages', destructive: false, request: { body: { to: '{{inputs.to}}', when: '{{inputs.sendAt}}' } } });
+        expect(built.spec).toMatchObject({ group: 'Messages', destructive: false, readOnly: false, request: { body: { to: '{{inputs.to}}', when: '{{inputs.sendAt}}' } } });
     });
 });
 

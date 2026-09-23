@@ -88,7 +88,7 @@ const labelOptions = { operation: 'list-labels', search: 'query' };
 export default connector({
     id: 'gmail',
     name: 'Gmail',
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Send, draft, search, read, label and trash email in a Gmail account.',
     categories: ['email', 'productivity'],
     brandColor: '#d93025',
@@ -221,6 +221,7 @@ export default connector({
 
         search('search-messages', {
             label: 'Search messages',
+            readOnly: true,
             description: 'Find messages with Gmail search syntax — the same as the search box.',
             group: 'Messages',
             inputs: {
@@ -240,6 +241,7 @@ export default connector({
 
         action('get-message', {
             label: 'Get message',
+            readOnly: true,
             group: 'Messages',
             inputs: { id: string({ title: 'Message' }) },
             outputs: object({
@@ -279,6 +281,7 @@ export default connector({
 
         action('get-thread', {
             label: 'Get conversation',
+            readOnly: true,
             group: 'Messages',
             inputs: { id: string({ title: 'Thread' }) },
             request: ({ inputs }) => ({
@@ -298,6 +301,7 @@ export default connector({
 
         action('get-attachment', {
             label: 'Download attachment',
+            readOnly: true,
             group: 'Messages',
             inputs: {
                 messageId: string({ title: 'Message' }),
@@ -317,6 +321,7 @@ export default connector({
 
         options('list-labels', {
             label: 'Labels',
+            readOnly: true,
             inputs: { query: string({ title: 'Search' }).optional() },
             request: { url: '/users/me/labels' },
             output: ({ response, inputs }) =>

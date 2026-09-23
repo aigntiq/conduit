@@ -5,7 +5,7 @@ export const summaries: readonly ConnectorSummary[] = [
     {
         "id": "gmail",
         "name": "Gmail",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": "Send, draft, search, read, label and trash email in a Gmail account.",
         "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMyIgeT0iNSIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiByeD0iMiIvPjxwYXRoIGQ9Ik0zLjUgNi41IDEyIDEzbDguNS02LjUiLz48L3N2Zz4K",
         "categories": [

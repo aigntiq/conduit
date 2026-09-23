@@ -162,6 +162,7 @@ interface OperationCommon<F extends Fields, O> {
     description?: string;
     group?: string;
     destructive?: boolean;
+    readOnly?: boolean;
     helpUrl?: string;
     hidden?: boolean;
     tags?: string[];
@@ -188,7 +189,7 @@ interface PagedOperationDef<F extends Fields, O> extends RequestOperationDef<F, 
 
 function compileCommon<F extends Fields, O>(id: string, kind: OperationSpec['kind'], def: OperationCommon<F, O>): Record<string, unknown> {
     const spec: Record<string, unknown> = { id, kind, label: def.label };
-    const copy = ['description', 'group', 'destructive', 'helpUrl', 'hidden', 'tags', 'auth', 'retry'] as const;
+    const copy = ['description', 'group', 'destructive', 'readOnly', 'helpUrl', 'hidden', 'tags', 'auth', 'retry'] as const;
     for (const key of copy) if (def[key] !== undefined) spec[key] = def[key];
     if (def.inputs) spec.inputs = toInputSchema(def.inputs, def.rules);
     if (def.outputs) spec.outputs = def.outputs.property;

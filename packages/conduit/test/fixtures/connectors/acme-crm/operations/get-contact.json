@@ -1,6 +1,8 @@
 {
     "kind": "action",
     "label": "Get contact",
+    "group": "Contacts",
+    "readOnly": true,
     "inputs": {
         "type": "object",
         "properties": { "id": { "type": "string", "title": "Contact id", "minLength": 1 } },

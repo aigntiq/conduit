@@ -73,6 +73,14 @@ describe('structural validation', () => {
 });
 
 describe('semantic validation', () => {
+    it('rejects an operation that is both readOnly and destructive', () => {
+        const spec = base();
+        spec.operations[0] = { ...spec.operations[0]!, readOnly: true, destructive: true } as ConnectorSpec['operations'][number];
+        expect(errorsOf(spec)).toEqual([['operations[0].readOnly', 'operation_intent_conflict']]);
+        spec.operations[0] = { ...spec.operations[0]!, destructive: false } as ConnectorSpec['operations'][number];
+        expect(errorsOf(spec)).toEqual([]);
+    });
+
     it('rejects duplicate ids', () => {
         const spec = base();
         spec.operations.push({ ...spec.operations[0]! });

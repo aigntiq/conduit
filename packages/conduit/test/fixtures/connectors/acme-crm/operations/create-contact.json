@@ -2,6 +2,7 @@
     "kind": "action",
     "label": "Create contact",
     "description": "Create a contact, optionally assigned to an owner.",
+    "group": "Contacts",
     "inputs": {
         "type": "object",
         "properties": {

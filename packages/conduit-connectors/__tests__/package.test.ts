@@ -40,7 +40,7 @@ describe('generated output', () => {
 describe('connectorCatalog', () => {
     it('lists the package', () => {
         expect(catalog.map((c) => c.id)).toEqual(['gmail']);
-        expect(catalog[0]).toMatchObject({ name: 'Gmail', version: '1.0.0', categories: ['email', 'productivity'] });
+        expect(catalog[0]).toMatchObject({ name: 'Gmail', version: '1.1.0', categories: ['email', 'productivity'] });
     });
 
     it('serves only what was included, loading on demand', async () => {

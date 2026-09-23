@@ -1539,6 +1539,9 @@
             "destructive": {
               "type": "boolean"
             },
+            "readOnly": {
+              "type": "boolean"
+            },
             "helpUrl": {
               "type": "string"
             },
@@ -1628,6 +1631,9 @@
               "minLength": 1
             },
             "destructive": {
+              "type": "boolean"
+            },
+            "readOnly": {
               "type": "boolean"
             },
             "helpUrl": {
@@ -1724,6 +1730,9 @@
             "destructive": {
               "type": "boolean"
             },
+            "readOnly": {
+              "type": "boolean"
+            },
             "helpUrl": {
               "type": "string"
             },
@@ -1816,6 +1825,9 @@
               "minLength": 1
             },
             "destructive": {
+              "type": "boolean"
+            },
+            "readOnly": {
               "type": "boolean"
             },
             "helpUrl": {

@@ -166,6 +166,7 @@ Every operation has `id`, `kind`, `label` (all required), plus:
 | `description`, `tags` | |
 | `group`, `helpUrl` | catalog grouping and a link |
 | `destructive` | the operation deletes or irreversibly changes data; UIs ask for confirmation |
+| `readOnly` | the operation only reads, with no side effects at the provider; hosts may run it without confirmation. Cannot be combined with `destructive` |
 | `auth` | method ids it works with (default: any), or `false` for no credentials |
 | `inputs` | [input schema](#inputs) |
 | `outputs` | JSON Schema of the result (documentation for UIs and tools) |
@@ -355,6 +356,7 @@ Checks are structural (the schema) and semantic:
 - duplicate ids;
 - unknown auth, operation and step references;
 - `x-options` pointing at a non-`options` operation;
+- an operation both `readOnly` and `destructive` (`operation_intent_conflict`);
 - every template parsed, with its functions resolved;
 - scope roots checked against the table above (warnings).
 

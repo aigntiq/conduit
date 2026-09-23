@@ -8,6 +8,9 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 
 ### Added
 
+- `readOnly` on operations: the operation has no side effects, so hosts may run it without confirmation. Validation rejects an operation that is both `readOnly` and `destructive` (`operation_intent_conflict`). The builder takes it too.
+- `describe()` (and `GET {base}/connectors/:id`) now carries each operation's `group`, `destructive`, `readOnly` and `helpUrl`.
+- `toolDefinitions(description)` and `toolSchema(inputs)` in `./schema`: an operation's inputs as plain JSON Schema without `x-` UI hints, and one tool definition per `action` / `search` operation with `readOnly` / `destructive` annotations.
 - The `conduit/1` connector spec: TypeScript types, `defineConnector`, the JSON Schema (`./schema`, `schema/conduit-1.schema.json`) and `validateConnector` with located diagnostics.
 - Conduit expressions (`./expr`): a sandboxed `{{ }}` language with pipes, lambdas, a standard library (text, lists, objects, dates, digests, HMAC, JWT signing) and static analysis.
 - `createConduit`: connector registry, accounts, auth flows (OAuth 2 authorization code with PKCE, client credentials, refresh and revoke; API key; basic; bearer; JWT, direct or exchanged; custom steps), and operation execution with steps, pagination, error rules, retries and output mapping.

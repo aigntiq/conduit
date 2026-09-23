@@ -158,7 +158,7 @@ const connector = {
     "spec": "conduit/1",
     "id": "gmail",
     "name": "Gmail",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Send, draft, search, read, label and trash email in a Gmail account.",
     "categories": [
         "email",
@@ -731,6 +731,7 @@ const connector = {
             "label": "Search messages",
             "description": "Find messages with Gmail search syntax — the same as the search box.",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -808,6 +809,7 @@ const connector = {
             "kind": "action",
             "label": "Get message",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -919,6 +921,7 @@ const connector = {
             "kind": "action",
             "label": "Get conversation",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -958,6 +961,7 @@ const connector = {
             "kind": "action",
             "label": "Download attachment",
             "group": "Messages",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -999,6 +1003,7 @@ const connector = {
             "id": "list-labels",
             "kind": "options",
             "label": "Labels",
+            "readOnly": true,
             "inputs": {
                 "type": "object",
                 "properties": {

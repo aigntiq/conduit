@@ -33,7 +33,7 @@ const { output } = await conduit.execute({
 |---|---|
 | `@aigntiq/conduit` | spec types, validation, `createConduit`, ports + in-memory defaults, plugins, errors — runs on any WinterCG runtime |
 | `@aigntiq/conduit/expr` | the `{{ }}` expression language, standalone |
-| `@aigntiq/conduit/schema` | the `conduit/1` JSON Schema (also shipped as `schema/conduit-1.schema.json`) |
+| `@aigntiq/conduit/schema` | the `conduit/1` JSON Schema (also shipped as `schema/conduit-1.schema.json`), and `toolDefinitions` / `toolSchema` to expose operations as tools |
 | `@aigntiq/conduit/oauth` | PKCE, sealed state and token helpers, standalone |
 | `@aigntiq/conduit/server` | `createFetchHandler` — `Request → Response` for Hono, Bun, Deno, Workers, Next.js |
 | `@aigntiq/conduit/builder` | author connectors in TypeScript — typed inputs and templates, compiled to JSON; typed `execute` via `CatalogOf` |

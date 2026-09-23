@@ -67,6 +67,7 @@ export const acme = connector({
         action('create-contact', {
             label: 'Create contact',
             description: 'Create a contact, optionally assigned to an owner.',
+            group: 'Contacts',
             inputs: {
                 email: email({ title: 'Email', minLength: 3 }),
                 firstName: string({ title: 'First name' }).optional(),
@@ -84,6 +85,8 @@ export const acme = connector({
         }),
         action('get-contact', {
             label: 'Get contact',
+            group: 'Contacts',
+            readOnly: true,
             inputs: { id: string({ title: 'Contact id', minLength: 1 }) },
             steps: ({ response }) => [
                 // ownerId is read without being declared — only possible through an explicit ref.

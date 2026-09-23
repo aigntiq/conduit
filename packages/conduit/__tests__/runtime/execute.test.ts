@@ -362,6 +362,9 @@ describe('catalog', () => {
             expect.objectContaining({ id: 'key', type: 'apiKey', redirect: false })
         ]);
         expect(acmeDescription.operations.find((o) => o.id === 'list-owners')).toMatchObject({ kind: 'options', hidden: true, auth: ['oauth', 'key'] });
+        expect(acmeDescription.operations.find((o) => o.id === 'get-contact')).toMatchObject({ group: 'Contacts', readOnly: true });
+        expect(acmeDescription.operations.find((o) => o.id === 'create-contact')).toMatchObject({ group: 'Contacts' });
+        expect(acmeDescription.operations.find((o) => o.id === 'create-contact')).not.toHaveProperty('readOnly');
         const weather = await h.conduit.connectors.describe('weather');
         expect(weather.operations.find((o) => o.id === 'status')).toMatchObject({ auth: false });
     });

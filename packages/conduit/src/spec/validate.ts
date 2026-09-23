@@ -272,6 +272,9 @@ function checkOperation(c: Collector, op: OperationSpec, path: string, authIds: 
             if (!authIds.has(id)) c.error(`${path}.auth[${i}]`, 'auth_unknown', `no auth method "${id}"`);
         });
     }
+    if (op.readOnly === true && op.destructive === true) {
+        c.error(`${path}.readOnly`, 'operation_intent_conflict', 'an operation cannot be both readOnly and destructive');
+    }
     checkInputs(c, op.inputs, `${path}.inputs`, operations);
     c.steps(op.steps, `${path}.steps`, SCOPE_ROOTS.request, SCOPE_ROOTS.stepOutput);
     c.templates(op.errors, `${path}.errors`, SCOPE_ROOTS.errors);

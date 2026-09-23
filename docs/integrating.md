@@ -145,6 +145,33 @@ do {
 } while (cursor !== undefined);
 ```
 
+## 4. Expose operations as tools
+
+To hand a connector's operations to a model, an agent framework or an MCP
+server, build tool definitions from its description:
+
+```ts
+import { toolDefinitions } from '@aigntiq/conduit/schema';
+
+const tools = toolDefinitions(await conduit.connectors.describe('acme-crm'));
+// [{ name: 'create-contact', operation: 'create-contact', description: 'Create contact. …',
+//    inputSchema: { type: 'object', … }, annotations: {} },
+//  { name: 'list-contacts', …, annotations: { readOnly: true } }, …]
+```
+
+- One definition per `action` and `search` operation. `options` operations feed
+  forms and triggers are delivered, so neither becomes a tool. Hidden operations
+  are left out unless you pass `{ includeHidden: true }`.
+- `inputSchema` is plain JSON Schema: the inputs without their `x-` UI hints
+  (`toolSchema(inputs)` does just that step).
+- `annotations` come from the spec: `readOnly` when the operation declares it
+  (a `search` reads unless it says `readOnly: false`), `destructive` when it
+  declares that. Use them to pick an approval policy — run reads, confirm
+  destructive calls.
+- Names are the bare operation ids. Prefix them when several connectors share a
+  tool namespace, and run each call with `conduit.execute`, mapping its typed
+  errors to messages your callers understand.
+
 ## Runnable examples
 
 - [`examples/express`](../examples/express) — Express, with a server-side route that calls `execute`.

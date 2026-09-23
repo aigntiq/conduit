@@ -5,6 +5,7 @@
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { ConduitRequestError, ConduitValidationError, createConduit, type CatalogOf, type HttpClient } from '@aigntiq/conduit';
+import { toolDefinitions } from '@aigntiq/conduit/schema';
 import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 
 const SECRET = 'gmail-connector-tests-secret-long-enough';
@@ -312,12 +313,32 @@ describe('Gmail: labels and trash', () => {
 
     it('trashes messages, marked destructive for UIs', async () => {
         const { conduit, account } = await setup();
-        expect((await conduit.connectors.describe('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ kind: 'action' });
-        expect((await conduit.connectors.get('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ destructive: true });
+        expect((await conduit.connectors.describe('gmail')).operations.find((o) => o.id === 'trash-message')).toMatchObject({ kind: 'action', destructive: true });
         const { output } = await conduit.execute({ connector: 'gmail', operation: 'trash-message', account, inputs: { id: 'm1' } });
         expect(output).toMatchObject({ labelIds: ['TRASH'] });
         const err = await conduit.execute({ connector: 'gmail', operation: 'trash-message', account, inputs: { id: 'gone' } }).catch((e: unknown) => e);
         expect(err).toMatchObject({ kind: 'notFound', issues: [{ path: 'inputs.id', code: 'remote' }] });
+    });
+});
+
+describe('Gmail: tools', () => {
+    it('declares which operations only read, and becomes tool definitions', async () => {
+        const { conduit } = await setup();
+        const description = await conduit.connectors.describe('gmail');
+        expect(description.operations.filter((o) => o.readOnly).map((o) => o.id)).toEqual(['search-messages', 'get-message', 'get-thread', 'get-attachment', 'list-labels']);
+        const tools = toolDefinitions(description);
+        expect(tools.map((t) => [t.name, t.annotations])).toEqual([
+            ['send-email', {}],
+            ['create-draft', {}],
+            ['reply-to-message', {}],
+            ['search-messages', { readOnly: true }],
+            ['get-message', { readOnly: true }],
+            ['get-thread', { readOnly: true }],
+            ['get-attachment', { readOnly: true }],
+            ['modify-labels', {}],
+            ['trash-message', { destructive: true }]
+        ]);
+        expect(JSON.stringify(tools.map((t) => t.inputSchema))).not.toMatch(/"x-/);
     });
 });
 

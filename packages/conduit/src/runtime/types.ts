@@ -105,6 +105,13 @@ export interface OperationDescription {
     auth: string[] | false;
     hidden: boolean;
     tags?: string[];
+    /** Catalog grouping, e.g. "Messages". */
+    group?: string;
+    /** Deletes or irreversibly changes data — confirm before running. */
+    destructive?: boolean;
+    /** Only reads — safe to run without confirmation. */
+    readOnly?: boolean;
+    helpUrl?: string;
 }
 
 export interface ConnectorDescription extends ConnectorSummary {
