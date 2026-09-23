@@ -10,4 +10,4 @@ onlyBuiltDependencies:
 # helper — but it still flows through the catalog so `pnpm sync:core` and
 # `pnpm verify:catalog` keep working the same way they do in every sigx repo.
 catalog:
-  "@sigx/vite": ^0.15.0
+  "@sigx/vite": ^1.0.1

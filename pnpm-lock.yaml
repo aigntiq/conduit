@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@sigx/vite':
-      specifier: ^0.15.0
-      version: 0.15.6
+      specifier: ^1.0.1
+      version: 1.0.1
 
 importers:
 
@@ -68,7 +68,7 @@ importers:
     devDependencies:
       '@sigx/vite':
         specifier: 'catalog:'
-        version: 0.15.6(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))
+        version: 1.0.1(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))
       '@types/node':
         specifier: ^26.6.1
         version: 26.6.2
@@ -86,7 +86,7 @@ importers:
         version: link:../conduit
       '@sigx/vite':
         specifier: 'catalog:'
-        version: 0.15.6(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))
+        version: 1.0.1(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))
       '@types/node':
         specifier: ^26.6.1
         version: 26.6.2
@@ -530,16 +530,16 @@ packages:
   '@sigx/serialize@1.0.1':
     resolution: {integrity: sha512-3cZFfYFlMU3KF9icY/KcjjVuqpdv576dTWXpdwtjKOzjoG+J7bVFIvQD37RmTcV6tBMC+oDl75WT57at136pyA==}
 
-  '@sigx/vite@0.15.6':
-    resolution: {integrity: sha512-PpgbQeO64JU5bB0jbQz7shMUycdcXFQ3xvwLtm+dHmLjH5517TDFp1bv7Fo2POO4rp+MWyaBnq5/0stWXsuENQ==}
+  '@sigx/vite@1.0.1':
+    resolution: {integrity: sha512-JPkMiGYzx4IfBrMeAtWWNZjmk7lHfGb9s0WxhjgSq67NyMzKOd3FU3zJULfKuQe+lRmLkqGEuX/5NdxDWyxAdA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
-      '@sigx/resume': '*'
-      '@sigx/server': '*'
-      '@sigx/server-renderer': '*'
-      '@sigx/ssr-islands': '*'
-      sigx: '*'
+      '@sigx/resume': ^1.0.1
+      '@sigx/server': ^1.0.1
+      '@sigx/server-renderer': ^1.0.1
+      '@sigx/ssr-islands': ^1.0.1
+      sigx: ^1.0.1
       vite: '>=8.0.0'
     peerDependenciesMeta:
       '@sigx/resume':
@@ -1666,7 +1666,7 @@ snapshots:
 
   '@sigx/serialize@1.0.1': {}
 
-  '@sigx/vite@0.15.6(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))':
+  '@sigx/vite@1.0.1(sigx@1.0.1)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0))':
     dependencies:
       sigx: 1.0.1
       vite: 8.3.0(@types/node@26.6.2)(jiti@2.7.0)
