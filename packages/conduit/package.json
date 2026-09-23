@@ -42,6 +42,12 @@
             "production": "./dist/builder.prod.js",
             "import": "./dist/builder.js"
         },
+        "./testing": {
+            "types": "./dist/testing/index.d.ts",
+            "development": "./dist/testing.js",
+            "production": "./dist/testing.prod.js",
+            "import": "./dist/testing.js"
+        },
         "./node": {
             "types": "./dist/node/index.d.ts",
             "development": "./dist/node.js",

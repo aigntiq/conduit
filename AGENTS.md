@@ -174,8 +174,11 @@ To run an example: `pnpm --filter <example-name> dev`.
     templates); compiles to plain JSON; `emitTypes` for JSON-shipped connectors.
   - `./node` — `createNodeHandler` (connect-style) and `fileSource(dir)`.
     **The only entry allowed to import `node:` built-ins.**
-  - `./testing` — alias-only inside this workspace (never published):
-    `mockProvider()` and the port conformance suites.
+  - `./testing` — the port conformance suites, runner-agnostic (suites are
+    data; `registerConformance(suites, { describe, it })`) and runtime-neutral.
+  - `mockProvider()` lives in `packages/conduit/test/mock-provider.ts`
+    (Node-only), reached through the workspace-only alias
+    `@aigntiq/conduit/test/mock-provider` — never published.
 
 Path aliases: `tsconfig.json` and `vitest.config.ts` map `@aigntiq/conduit/*` to
 `packages/conduit/src`, so tests and typecheck run against source, not dist.
@@ -214,7 +217,7 @@ the expression language is `docs/expressions.md`; forms and validation are
   (`ConnectorSource`) and HTTP (`HttpClient`) are interfaces in
   `src/ports/`, with memory/default implementations next to them. Adapters
   for real backends ship as separate `@aigntiq/conduit-*` packages and must pass
-  the conformance suites in `./testing`.
+  the conformance suites in `./testing` (`@aigntiq/conduit/testing`).
 - **The host owns identity.** Conduit has no user model: an account's `owner`
   is an opaque string, and `resolveOwner(request)` is the handlers' only auth
   hook.

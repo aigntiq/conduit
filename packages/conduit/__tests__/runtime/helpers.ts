@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { createConduit, memoryAccounts, type AccountStore, type Conduit, type ConduitOptions } from '@aigntiq/conduit';
 import { fileSource } from '@aigntiq/conduit/node';
-import { mockProvider, type MockProvider } from '@aigntiq/conduit/testing';
+import { mockProvider, type MockProvider } from '@aigntiq/conduit/test/mock-provider';
 
 export const FIXTURES = join(__dirname, '..', '..', 'test', 'fixtures', 'connectors');
 export const SECRET = 'test-secret-that-is-at-least-32-characters-long';

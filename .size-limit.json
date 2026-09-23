@@ -18,5 +18,10 @@
     "name": "@aigntiq/conduit/builder",
     "path": "packages/conduit/dist/builder.prod.js",
     "limit": "5 KB"
+  },
+  {
+    "name": "@aigntiq/conduit/testing",
+    "path": "packages/conduit/dist/testing.prod.js",
+    "limit": "2 KB"
   }
 ]
