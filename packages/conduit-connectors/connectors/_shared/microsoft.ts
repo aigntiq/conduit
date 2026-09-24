@@ -105,7 +105,6 @@ export function graphPaging(response: Ref, maxPages = 20) {
     return paging.nextUrl({ items: response.body.value, next: response.body['@odata.nextLink'], maxPages });
 }
 
-/** The standard setup steps for a Microsoft 365 connector. `notes` follow after a blank line. */
 /** The setup steps for the app-only (`app`) method: application permissions, admin consent, a scoped mailbox. */
 export function microsoftAppSetup(id: string, scopes: readonly string[]): string {
     const list = scopes.map((s) => `\`${s}\``).join(', ');
@@ -118,6 +117,7 @@ export function microsoftAppSetup(id: string, scopes: readonly string[]): string
     ].join('\n');
 }
 
+/** The standard setup steps for a Microsoft 365 connector. `notes` follow after a blank line. */
 export function microsoftSetup(id: string, scopes: readonly string[], notes: readonly string[] = []): string {
     const list = ['offline_access', 'User.Read', ...scopes].map((s) => `\`${s}\``).join(', ');
     const key = /^[a-z_$][\w$]*$/i.test(id) ? id : `'${id}'`;
