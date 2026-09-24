@@ -8,7 +8,8 @@ import { defineLibBuild } from '../../scripts/lib/lib-build.ts';
 const dir = new URL('./connectors/', import.meta.url);
 const connectors = readdirSync(dir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && existsSync(new URL(`${d.name}/index.ts`, dir)))
-    .map((d) => d.name);
+    .map((d) => d.name)
+    .sort();
 
 export default defineLibBuild({
     entry: {

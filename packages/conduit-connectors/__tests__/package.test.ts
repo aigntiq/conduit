@@ -54,7 +54,7 @@ describe('generated output', () => {
 describe('connectorCatalog', () => {
     it('lists the package', () => {
         expect(catalog.map((c) => c.id)).toEqual(IDS);
-        expect(catalog[0]).toMatchObject({ name: 'Gmail', version: '1.0.0', categories: ['email', 'productivity'] });
+        expect(catalog.find((c) => c.id === 'gmail')).toMatchObject({ name: 'Gmail', version: '1.0.0', categories: ['email', 'productivity'] });
     });
 
     it('serves only what was included, loading on demand', async () => {
