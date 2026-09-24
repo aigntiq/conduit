@@ -74,7 +74,7 @@ export async function renderPoll(spec: ConnectorSpec, operation: string, options
         request: rendered,
         async answer(body, status = 200) {
             // The ResponseView templates see at run time (url: where the request went).
-            const response = { status, ok: status < 400, headers: {}, body, url: await absoluteUrl() };
+            const response = { status, ok: status >= 200 && status < 300, headers: {}, body, url: await absoluteUrl() };
             const items = ((await render(trigger.items, { response })) as unknown[]) ?? [];
             const cursor = trigger.cursor === undefined ? undefined : await render(trigger.cursor, { response });
             const keys = await Promise.all(items.map((item) => render(trigger.dedupeKey, { response, item })));
