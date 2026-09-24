@@ -24,6 +24,12 @@
             "production": "./dist/google-calendar.prod.js",
             "import": "./dist/google-calendar.js"
         },
+        "./google-contacts": {
+            "types": "./dist/generated/google-contacts.d.ts",
+            "development": "./dist/google-contacts.js",
+            "production": "./dist/google-contacts.prod.js",
+            "import": "./dist/google-contacts.js"
+        },
         "./google-drive": {
             "types": "./dist/generated/google-drive.d.ts",
             "development": "./dist/google-drive.js",
@@ -65,7 +71,8 @@
         "google-calendar",
         "google-drive",
         "microsoft-outlook",
-        "microsoft-calendar"
+        "microsoft-calendar",
+        "google-contacts"
     ],
     "author": "Andreas Ekdahl",
     "license": "MIT",
