@@ -143,8 +143,8 @@ async function runSteps(k: Kernel, p: Prepared, steps: readonly StepSpec[] | und
         }
         const items = await renderWithAuth(k, p, step.forEach, s);
         const max = step.maxIterations ?? DEFAULT_MAX_ITERATIONS;
-        if (!Array.isArray(items)) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach must be a list, got ${describeType(items)}`);
-        if (items.length > max) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach has ${items.length} items; at most ${max} are allowed (maxIterations)`);
+        if (!Array.isArray(items)) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach is ${describeType(items)}, not a list`);
+        if (items.length > max) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach has ${items.length} items, at most ${max} allowed`);
         // Outputs so far are visible as steps.<name> while the loop runs.
         const outputs: unknown[] = [];
         results[step.name] = outputs;
