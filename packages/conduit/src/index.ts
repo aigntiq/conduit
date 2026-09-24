@@ -19,6 +19,7 @@ export {
     ConduitRequestError,
     ConduitRateLimitError,
     ConduitAuthError,
+    ConduitPolicyError,
     isConduitError,
     type ErrorKind,
     type Diagnostic,

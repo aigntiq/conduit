@@ -31,7 +31,7 @@ const { output } = await conduit.execute({
 
 | Entry | |
 |---|---|
-| `@aigntiq/conduit` | spec types, validation, `createConduit`, ports + in-memory defaults, plugins, errors — runs on any WinterCG runtime |
+| `@aigntiq/conduit` | spec types, validation, `createConduit`, ports + in-memory defaults, plugins, operation policy (allow / confirm / deny per operation), errors — runs on any WinterCG runtime |
 | `@aigntiq/conduit/expr` | the `{{ }}` expression language, standalone |
 | `@aigntiq/conduit/schema` | the `conduit/1` JSON Schema (also shipped as `schema/conduit-1.schema.json`), and `toolDefinitions` / `toolSchema` to expose operations as tools |
 | `@aigntiq/conduit/oauth` | PKCE, sealed state and token helpers, standalone |

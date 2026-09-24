@@ -16,9 +16,11 @@ import { renderTemplate } from '../expr/template';
 import type { RequestMiddleware } from '../http/perform';
 import { exchangeCode, identify, mint, resolveClient, revokeRemote, testCredentials } from './auth-flows';
 import { ensureFresh, loadAccount, open, seal, toInfo, upsertAccount } from './accounts';
+import { describe, describeOperation, summary } from './describe';
 import { execute, normalizeOptions } from './execute';
 import { accountScope, maskerFor, type CallContext, type Kernel } from './kernel';
 import { PluginHost, type ConduitPlugin, type ConduitRoute } from './plugins';
+import { evaluatePolicy, type OperationPolicy, type PolicyVerdict } from './policy';
 import { ConnectorRegistry, type LoadedConnector } from './registry';
 import type {
     AccountInfo,
@@ -58,6 +60,11 @@ export interface ConduitOptions {
     /** Request middleware, after plugin middleware. */
     middleware?: RequestMiddleware[];
     plugins?: ConduitPlugin[];
+    /**
+     * Asked before every `execute` (and `options`) call, after the inputs are
+     * validated and before anything is sent. Default: every call is allowed.
+     */
+    policy?: OperationPolicy;
     /** Clock, epoch ms. For tests. */
     now?: () => number;
     /** OAuth handshake lifetime. Default 10 minutes. */
@@ -94,6 +101,16 @@ export interface ConnectRequest {
     owner: string;
     inputs?: Record<string, unknown>;
     /** Replace the credentials of this existing account. */
+    account?: string;
+}
+
+/** What `decide` asks the policy about — an execute request without its inputs. */
+export interface DecideRequest {
+    connector: string;
+    operation: string;
+    owner?: string;
+    caller?: string;
+    /** When given, it must belong to `owner` (if set) and to the connector. */
     account?: string;
 }
 
@@ -136,6 +153,12 @@ export interface Conduit<Cat extends Catalog = Catalog> {
     execute<K extends keyof Cat & string, O extends keyof Cat[K] & string>(request: ExecuteRequest<Cat, K, O>): Promise<ExecuteResult<Cat[K][O]['output']>>;
     /** Run an `options` operation and return `{label, value}` items. */
     options<K extends keyof Cat & string, O extends keyof Cat[K] & string>(request: ExecuteRequest<Cat, K, O>): Promise<OptionItem[]>;
+    /**
+     * The policy's verdict on an operation ahead of a call, without inputs —
+     * to hide denied operations from a menu or tool list, or mark the ones
+     * that need confirmation. `allow` when no policy is set.
+     */
+    decide(request: DecideRequest): Promise<PolicyVerdict>;
     /** Routes contributed by plugins, served by `createFetchHandler`. */
     readonly routes: readonly ConduitRoute[];
     /** Stop watching sources. */
@@ -187,7 +210,8 @@ export function createConduit<Cat extends Catalog = Catalog>(options: ConduitOpt
         http: { fetch: fetchImpl, middleware: options.middleware ?? [], now },
         env,
         now,
-        redirectUri: options.redirectUri
+        redirectUri: options.redirectUri,
+        policy: options.policy
     };
 
     const baseCtx = (loaded: LoadedConnector, extra: Partial<CallContext> = {}): CallContext => ({
@@ -415,6 +439,23 @@ export function createConduit<Cat extends Catalog = Catalog>(options: ConduitOpt
             return normalizeOptions(output);
         },
 
+        async decide(request) {
+            const loaded = await registry.get(request.connector);
+            const op = loaded.operation(request.operation);
+            const account = request.account === undefined ? undefined : toInfo(await loadAccount(k, request.account, request.owner));
+            if (account && account.connector !== loaded.spec.id) {
+                throw new ConduitError('account_mismatch', `account "${account.id}" belongs to connector "${account.connector}", not "${loaded.spec.id}"`);
+            }
+            if (!k.policy) return { decision: 'allow' };
+            return evaluatePolicy(k.policy, {
+                connector: loaded.spec.id,
+                operation: describeOperation(loaded.spec, op),
+                owner: request.owner ?? account?.owner,
+                caller: request.caller,
+                account
+            });
+        },
+
         routes: plugins.routes,
 
         close() {
@@ -423,40 +464,3 @@ export function createConduit<Cat extends Catalog = Catalog>(options: ConduitOpt
     };
     return conduit as unknown as Conduit<Cat>;
 }
-
-function summary(spec: ConnectorSpec): ConnectorSummary {
-    const s: ConnectorSummary = { id: spec.id, name: spec.name, version: spec.version };
-    if (spec.description !== undefined) s.description = spec.description;
-    if (spec.icon !== undefined) s.icon = spec.icon;
-    if (spec.categories !== undefined) s.categories = spec.categories;
-    return s;
-}
-
-function describe(spec: ConnectorSpec): ConnectorDescription {
-    return {
-        ...summary(spec),
-        auth: (spec.auth ?? []).map((m) => ({
-            id: m.id,
-            type: m.type,
-            label: m.label ?? m.id,
-            ...(m.description === undefined ? {} : { description: m.description }),
-            inputs: authInputs(m),
-            redirect: m.type === 'oauth2' && (m.grant ?? 'authorization_code') === 'authorization_code'
-        })),
-        operations: spec.operations.map((o) => ({
-            id: o.id,
-            kind: o.kind,
-            label: o.label,
-            ...(o.description === undefined ? {} : { description: o.description }),
-            ...(o.inputs === undefined ? {} : { inputs: o.inputs }),
-            ...(o.outputs === undefined ? {} : { outputs: o.outputs }),
-            auth: o.auth === false ? false : (o.auth ?? (spec.auth ?? []).map((m) => m.id)),
-            hidden: o.hidden ?? o.kind === 'options',
-            ...(o.tags === undefined ? {} : { tags: o.tags }),
-            ...(o.group === undefined ? {} : { group: o.group }),
-            ...(o.destructive === undefined ? {} : { destructive: o.destructive }),
-            ...(o.readOnly === undefined ? {} : { readOnly: o.readOnly })
-        }))
-    };
-}
-

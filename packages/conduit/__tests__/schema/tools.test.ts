@@ -101,4 +101,18 @@ describe('toolDefinitions', () => {
         const search = { ...description, operations: [{ id: 'q', kind: 'search' as const, label: 'Q', auth: false as const, hidden: false, readOnly: false }] };
         expect(toolDefinitions(search)[0]!.annotations).toEqual({});
     });
+
+    it('applies policy decisions: deny drops the tool, confirm marks it', () => {
+        const tools = toolDefinitions(description, { decisions: { send: { decision: 'confirm', reason: 'writes' }, delete: 'deny', get: 'allow' } });
+        expect(tools.map((t) => [t.name, t.annotations])).toEqual([
+            ['send', { confirm: true }],
+            ['get', { readOnly: true }],
+            ['list', { readOnly: true }]
+        ]);
+    });
+
+    it('treats a null decision entry as no decision', () => {
+        const decisions = JSON.parse('{"send":null}') as Record<string, 'allow'>;
+        expect(toolDefinitions(description, { decisions }).map((t) => t.name)).toEqual(['send', 'get', 'delete', 'list']);
+    });
 });

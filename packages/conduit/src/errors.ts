@@ -126,6 +126,23 @@ export class ConduitAuthError extends ConduitError {
     }
 }
 
+/**
+ * The host's operation policy refused the call before anything was sent.
+ * `operation_denied` is final; `confirmation_required` runs once the host
+ * repeats the call with `confirmed: true`.
+ */
+export class ConduitPolicyError extends ConduitError {
+    readonly decision: 'deny' | 'confirm';
+    readonly reason: string | undefined;
+
+    constructor(decision: 'deny' | 'confirm', message: string, init: { reason?: string } & ConduitErrorOptions = {}) {
+        super(decision === 'deny' ? 'operation_denied' : 'confirmation_required', message, init);
+        this.name = 'ConduitPolicyError';
+        this.decision = decision;
+        this.reason = init.reason;
+    }
+}
+
 /** A located problem in a connector spec. */
 export interface Diagnostic {
     /** JSON-pointer-ish path into the spec, e.g. `operations[2].request.url`. */
