@@ -95,6 +95,12 @@ A binary response body (`responseType: 'binary'`) is bytes. `base64` and
 maps to a file value:
 `{filename: 'report.pdf', contentType: response.headers['content-type'], base64: base64(response.body)}`.
 
+Files the other way — uploaded in parts — take `byteLength(base64OrBytes)`
+and `chunks(base64OrBytes, size)`, which splits a file into
+`[{base64, start, end, total}]` of `size` bytes each (`end` inclusive, as
+`Content-Range` counts). `size` must be a multiple of 3, so every slice is
+whole base64; pair it with a `forEach` step.
+
 **Lists:** `map(list, fn)` · `filter` · `find` · `some` · `every` · `flatMap` ·
 `sortBy(list, fn, 'asc' | 'desc')` · `groupBy` · `first` · `last` · `slice(list, start, end?)` ·
 `concat` · `reverse` · `unique` · `flatten` · `compact` · `range(start, end)` · `sum` · `min` · `max`

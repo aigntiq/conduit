@@ -207,3 +207,32 @@ describe('assertValidConnector', () => {
         expect((err as ConduitSpecError).diagnostics).toHaveLength(1);
     });
 });
+
+describe('forEach steps', () => {
+    const spec = (step: Record<string, unknown>, auth?: unknown[]) =>
+        ({
+            spec: 'conduit/1',
+            id: 'x',
+            name: 'X',
+            version: '1.0.0',
+            http: { baseUrl: 'https://api.example' },
+            ...(auth ? { auth } : {}),
+            operations: [{ id: 'a', kind: 'action', label: 'A', steps: [{ name: 's', url: '/p/{{each.id}}', ...step }], request: { url: '/done?n={{length(steps.s)}}' } }]
+        }) as unknown as ConnectorSpec;
+
+    it('let the step read each and index, and nowhere else', () => {
+        expect(validateConnector(spec({ forEach: '{{inputs.items}}', output: '{{ {index, id: each.id} }}' })).diagnostics).toEqual([]);
+        expect(validateConnector(spec({})).diagnostics.map((d) => d.path)).toContain('operations[0].steps[0].url');
+    });
+
+    it('warn about maxIterations without forEach', () => {
+        const found = validateConnector(spec({ url: '/p', maxIterations: 5 })).diagnostics.map((d) => [d.path, d.code, d.severity]);
+        expect(found).toContainEqual(['operations[0].steps[0].maxIterations', 'step_max_iterations_unused', 'warning']);
+    });
+
+    it("refuse forEach in a custom auth method's steps", () => {
+        const custom = [{ id: 'c', type: 'custom', steps: [{ name: 't', url: '/t', forEach: '{{[1, 2]}}' }], credentials: { token: '{{steps.t}}' }, apply: { headers: { Authorization: 'Bearer {{auth.token}}' } } }];
+        const found = validateConnector(spec({ forEach: '{{[1]}}' }, custom)).diagnostics.map((d) => [d.path, d.code]);
+        expect(found).toContainEqual(['auth[0].steps[0].forEach', 'step_foreach_unsupported']);
+    });
+});

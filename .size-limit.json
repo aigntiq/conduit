@@ -2,7 +2,7 @@
   {
     "name": "@aigntiq/conduit (runtime)",
     "path": "packages/conduit/dist/index.prod.js",
-    "limit": "34 KB"
+    "limit": "35 KB"
   },
   {
     "name": "@aigntiq/conduit/expr",

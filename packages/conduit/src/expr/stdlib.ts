@@ -39,6 +39,42 @@ function asBytes(v: unknown): Uint8Array {
     return v instanceof Uint8Array ? v : utf8(asString(v));
 }
 
+/** Base64 text without whitespace, as the decoder reads it; bytes (a binary response body) encoded. */
+function asBase64(v: unknown): string {
+    return v instanceof Uint8Array ? toBase64(v) : asString(v).replace(/\s+/g, '');
+}
+
+function byteLength(v: unknown): number {
+    if (isNil(v)) return 0;
+    if (v instanceof Uint8Array) return v.length;
+    const b64 = asBase64(v).replace(/=+$/, '');
+    return Math.floor((b64.length * 3) / 4);
+}
+
+/** The longest base64 slice `chunks` hands out: the evaluator's string cap. */
+const MAX_CHUNK_CHARS = 5_000_000;
+
+function chunks(ctx: CallContext, v: unknown, sizeArg: unknown): { base64: string; start: number; end: number; total: number }[] {
+    const size = asNumber(ctx, sizeArg);
+    // Whole base64 quanta (3 bytes = 4 characters), so every slice decodes on its own.
+    if (!Number.isInteger(size) || size <= 0 || size % 3 !== 0) {
+        return ctx.fail(`chunks: size must be a positive multiple of 3`);
+    }
+    const chars = (size / 3) * 4;
+    if (chars > MAX_CHUNK_CHARS) return ctx.fail(`chunks: size ${size} is too large`);
+    if (isNil(v)) return [];
+    const out: { base64: string; start: number; end: number; total: number }[] = [];
+    // Bytes are sliced first and each slice encoded, never the whole file at once.
+    const bytes = v instanceof Uint8Array ? v : undefined;
+    const b64 = bytes ? '' : asBase64(v);
+    const total = bytes ? bytes.length : byteLength(b64);
+    for (let i = 0, start = 0; start < total; i++, start += size) {
+        const base64 = bytes ? toBase64(bytes.subarray(start, start + size)) : b64.slice(i * chars, (i + 1) * chars);
+        out.push({ base64, start, end: Math.min(start + size, total) - 1, total });
+    }
+    return out;
+}
+
 function asNumber(ctx: CallContext, v: unknown): number {
     if (typeof v === 'number') return v;
     if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v);
@@ -219,6 +255,8 @@ export const STANDARD_FUNCTIONS: Record<string, ExprFunction> = {
     base64: define('base64(textOrBytes)', 'Base64-encode UTF-8 text, or bytes (a binary response body) as they are.', ([v]) => toBase64(asBytes(v)), 1, 1),
     base64url: define('base64url(textOrBytes)', 'Unpadded base64url-encode UTF-8 text, or bytes as they are.', ([v]) => toBase64Url(asBytes(v)), 1, 1),
     fromBase64: define('fromBase64(text)', 'Decode base64 or base64url to UTF-8 text.', ([v]) => (isNil(v) ? v : fromUtf8(fromBase64(asString(v)))), 1, 1),
+    byteLength: define('byteLength(base64OrBytes)', 'Bytes in base64 or bytes.', ([v]) => byteLength(v), 1, 1),
+    chunks: define('chunks(base64OrBytes, size)', 'Byte ranges of `size` (a multiple of 3): [{base64, start, end, total}].', ([v, size], ctx) => chunks(ctx, v, size), 2, 2),
 
     // ── lists ───────────────────────────────────────────────────────────
     map: define('map(list, fn)', 'Transform each item: map(items, i => i.id) or map(items, "id").', async ([v, fn], ctx) => mapList(ctx, asList(ctx, v), fn), 2, 2),

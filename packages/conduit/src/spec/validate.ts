@@ -100,17 +100,30 @@ class Collector {
         }
     }
 
-    steps(steps: StepSpec[] | undefined, path: string, available: ReadonlySet<string>, outputRoots: ReadonlySet<string>): void {
+    /** `loops`: whether `forEach` is allowed (operation steps; not custom auth). */
+    steps(steps: StepSpec[] | undefined, path: string, available: ReadonlySet<string>, outputRoots: ReadonlySet<string>, loops = true): void {
         if (!steps) return;
         const names = new Set<string>();
         steps.forEach((step, i) => {
             const p = `${path}[${i}]`;
             if (names.has(step.name)) this.error(`${p}.name`, 'duplicate_step', `step "${step.name}" is defined twice`);
             names.add(step.name);
-            const { when, output, ...request } = step;
-            this.templates(when, `${p}.when`, available);
-            this.request(request, p, available);
-            this.templates(output, `${p}.output`, outputRoots);
+            const { when, output, forEach, maxIterations, ...request } = step;
+            if (maxIterations !== undefined && forEach === undefined) {
+                this.warn(`${p}.maxIterations`, 'step_max_iterations_unused', 'maxIterations has no effect without forEach');
+            }
+            let inStep = available;
+            let inOutput = outputRoots;
+            if (forEach !== undefined) {
+                if (!loops) this.error(`${p}.forEach`, 'step_foreach_unsupported', 'forEach is only supported on operation steps');
+                this.templates(forEach, `${p}.forEach`, available);
+                // The item and its position, for this step only.
+                inStep = new Set([...available, 'each', 'index']);
+                inOutput = new Set([...outputRoots, 'each', 'index']);
+            }
+            this.templates(when, `${p}.when`, inStep);
+            this.request(request, p, inStep);
+            this.templates(output, `${p}.output`, inOutput);
         });
     }
 }
@@ -256,7 +269,7 @@ function checkAuth(c: Collector, method: AuthMethod, path: string, operations: M
             }
             break;
         case 'custom':
-            c.steps(method.steps, `${path}.steps`, SCOPE_ROOTS.custom, SCOPE_ROOTS.customResult);
+            c.steps(method.steps, `${path}.steps`, SCOPE_ROOTS.custom, SCOPE_ROOTS.customResult, false);
             c.templates(method.credentials, `${path}.credentials`, SCOPE_ROOTS.customResult);
             c.templates(method.expiresIn, `${path}.expiresIn`, SCOPE_ROOTS.customResult);
             break;

@@ -113,6 +113,42 @@ describe('json fields', () => {
     });
 });
 
+describe('forEach steps', () => {
+    it('compile forEach and maxIterations, with each and index as refs', () => {
+        const op = action('upload', {
+            label: 'Upload',
+            inputs: { file: file() },
+            steps: ({ inputs, each, index, response }) => [
+                {
+                    name: 'parts',
+                    forEach: expr`chunks(${inputs.file.base64}, 3)`,
+                    maxIterations: 50,
+                    method: 'PUT',
+                    url: '/part',
+                    headers: { 'Content-Range': $`bytes ${each.start}-${each.end}/${each.total}` },
+                    body: each.base64,
+                    encoding: 'binary',
+                    output: { index, status: response.status }
+                }
+            ],
+            request: ({ steps }) => ({ method: 'POST', url: '/done', body: { parts: steps.parts } })
+        });
+        expect(op.spec.steps).toEqual([
+            {
+                name: 'parts',
+                forEach: '{{chunks(inputs.file.base64, 3)}}',
+                maxIterations: 50,
+                method: 'PUT',
+                url: '/part',
+                headers: { 'Content-Range': 'bytes {{each.start}}-{{each.end}}/{{each.total}}' },
+                body: '{{each.base64}}',
+                encoding: 'binary',
+                output: { index: '{{index}}', status: '{{response.status}}' }
+            }
+        ]);
+    });
+});
+
 describe('types', () => {
     it('infers input and output types and types execute through a catalog', async () => {
         const mini = connector({
