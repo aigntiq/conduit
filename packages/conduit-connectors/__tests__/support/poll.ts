@@ -52,10 +52,12 @@ export async function renderPoll(spec: ConnectorSpec, operation: string, options
     // The poll scope at run time: inputs auth account config env state (+ response, item).
     const scope = { inputs: options.inputs ?? {}, auth: options.auth ?? {}, account: options.account ?? {}, config: spec.config ?? {}, env, state: options.state ?? {} };
     const render = (template: unknown, extra: Record<string, unknown> = {}) => renderTemplate(template, { ...scope, ...extra }, { functions });
+    const rendered = (await render(trigger.request)) as Record<string, unknown>;
     return {
-        request: (await render(trigger.request)) as Record<string, unknown>,
+        request: rendered,
         async answer(body, status = 200) {
-            const response = { status, ok: status < 400, headers: {}, body };
+            // The ResponseView templates see at run time (url: where the request went).
+            const response = { status, ok: status < 400, headers: {}, body, url: String(rendered.url ?? '') };
             const items = ((await render(trigger.items, { response })) as unknown[]) ?? [];
             const cursor = trigger.cursor === undefined ? undefined : await render(trigger.cursor, { response });
             const keys = await Promise.all(items.map((item) => render(trigger.dedupeKey, { response, item })));
