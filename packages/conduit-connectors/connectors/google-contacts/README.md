@@ -31,7 +31,7 @@ It sends the contact's current `etag`, so a concurrent change comes back as a
 
 | Operation | Kind | Notes |
 |---|---|---|
-| `search-contacts` | search | **read-only**. With text, a prefix match on names, emails, phones and companies (one page of up to 30). Without it, every contact sorted by first name, up to 50 pages of 1000 |
+| `search-contacts` | search | **read-only**. With text, a prefix match on names, emails, phones and companies (one page of up to 30). Without it, every contact sorted by first name, in pages of 1000, at most 50 (lower it with `execute({ paging: { maxPages } })`) |
 | `get-contact` | action | **read-only** |
 | `create-contact` | action | name, emails, phones, company and title, address, birthday, notes, groups; needs at least a name, email, phone or company |
 | `update-contact` | action | only the fields given, guarded by the contact's etag |

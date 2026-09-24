@@ -109,6 +109,12 @@ describe('Google Contacts: reading', () => {
         ]);
     });
 
+    it('reads as many pages as the caller allows', async () => {
+        const { conduit, account } = await setup();
+        const { output, pages } = await conduit.execute({ connector: 'google-contacts', operation: 'search-contacts', account, paging: { maxPages: 1 } });
+        expect([pages, output.map((c) => c.id)]).toEqual([1, ['c1']]);
+    });
+
     it('searches by text with searchContacts and a read mask', async () => {
         const { conduit, account, seen } = await setup();
         const { output } = await conduit.execute({ connector: 'google-contacts', operation: 'search-contacts', account, inputs: { query: 'ada' } });

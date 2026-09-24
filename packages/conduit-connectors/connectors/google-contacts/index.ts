@@ -16,7 +16,6 @@ import {
     date,
     emails,
     expr,
-    integer,
     object,
     options,
     paging,
@@ -178,8 +177,7 @@ export default connector({
             group: 'Contacts',
             readOnly: true,
             inputs: {
-                query: string({ title: 'Search', placeholder: 'ada' }).optional(),
-                maxPages: integer({ title: 'Pages to read', description: 'Up to 1000 contacts per page when listing everyone.', default: 5, minimum: 1, maximum: 50, advanced: true }).optional()
+                query: string({ title: 'Search', placeholder: 'ada' }).optional()
             },
             outputs: array(contactOutput),
             // With text: searchContacts (one page of up to 30). Without: the

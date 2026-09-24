@@ -5,7 +5,6 @@ export type Operations = {
     "search-contacts": {
         inputs: {
             query?: string;
-            maxPages?: number;
         };
         output: Array<{
             id: string;
@@ -249,15 +248,6 @@ const connector = {
                         "type": "string",
                         "title": "Search",
                         "x-placeholder": "ada"
-                    },
-                    "maxPages": {
-                        "type": "integer",
-                        "title": "Pages to read",
-                        "description": "Up to 1000 contacts per page when listing everyone.",
-                        "default": 5,
-                        "x-advanced": true,
-                        "minimum": 1,
-                        "maximum": 50
                     }
                 }
             },
