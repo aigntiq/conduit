@@ -7,7 +7,7 @@
 import type { ConnectorSpec, TriggerOperation } from '@aigntiq/conduit';
 import { createFunctionRegistry, evaluateExpression, renderTemplate, type ExprFunction } from '@aigntiq/conduit/expr';
 
-function registryFor(spec: ConnectorSpec) {
+function registryFor(spec: ConnectorSpec, env: Record<string, unknown>) {
     const functions = createFunctionRegistry();
     for (const [name, fn] of Object.entries(spec.functions ?? {})) {
         const entry: ExprFunction = {
@@ -15,7 +15,8 @@ function registryFor(spec: ConnectorSpec) {
             description: fn.description,
             maxArgs: fn.params.length,
             call: (args) => {
-                const scope: Record<string, unknown> = { config: spec.config };
+                // As at run time: a function sees config and env besides its params.
+                const scope: Record<string, unknown> = { config: spec.config ?? {}, env };
                 fn.params.forEach((p, i) => (scope[p] = args[i]));
                 return evaluateExpression(fn.body, scope, { functions });
             }
@@ -32,12 +33,24 @@ export interface PollStep {
     answer(body: unknown, status?: number): Promise<{ items: unknown[]; cursor: unknown; keys: unknown[]; events: unknown[] }>;
 }
 
-export async function renderPoll(spec: ConnectorSpec, operation: string, options: { inputs?: Record<string, unknown>; state?: Record<string, unknown> } = {}): Promise<PollStep> {
+export interface RenderPollOptions {
+    inputs?: Record<string, unknown>;
+    state?: Record<string, unknown>;
+    /** What the host passes as `env`. */
+    env?: Record<string, unknown>;
+    /** The account's credentials and data, as templates read them. */
+    auth?: Record<string, unknown>;
+    account?: Record<string, unknown>;
+}
+
+export async function renderPoll(spec: ConnectorSpec, operation: string, options: RenderPollOptions = {}): Promise<PollStep> {
     const op = spec.operations.find((o): o is TriggerOperation => o.id === operation && o.kind === 'trigger');
     const trigger = op?.trigger;
     if (trigger?.type !== 'poll') throw new Error(`${spec.id}/${operation} is not a poll trigger`);
-    const functions = registryFor(spec);
-    const scope = { inputs: options.inputs ?? {}, state: options.state ?? {}, config: spec.config ?? {} };
+    const env = options.env ?? {};
+    const functions = registryFor(spec, env);
+    // The poll scope at run time: inputs auth account config env state (+ response, item).
+    const scope = { inputs: options.inputs ?? {}, auth: options.auth ?? {}, account: options.account ?? {}, config: spec.config ?? {}, env, state: options.state ?? {} };
     const render = (template: unknown, extra: Record<string, unknown> = {}) => renderTemplate(template, { ...scope, ...extra }, { functions });
     return {
         request: (await render(trigger.request)) as Record<string, unknown>,

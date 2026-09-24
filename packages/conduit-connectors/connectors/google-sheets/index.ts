@@ -249,7 +249,8 @@ export default connector({
                 headerRow: boolean({ title: 'First row is a header', description: 'Return the other rows as objects keyed by it.', default: true }).optional(),
                 formatted: boolean({ title: 'Formatted values', description: 'As shown in the sheet (“$1,000.00”) rather than raw (1000).', default: true, advanced: true }).optional()
             },
-            outputs: object({ range: string(), headers: array(string()).optional(), rows: array(json()) }),
+            // rows: header-keyed objects, or lists of cells with headerRow: false.
+            outputs: object({ range: string(), headers: array(string()).optional(), rows: json<Record<string, unknown>[] | unknown[][]>({ type: 'array' }) }),
             request: ({ inputs }) => ({
                 url: valuesUrl(inputs.spreadsheetId, inputs.sheet, inputs.range),
                 query: { valueRenderOption: expr`${inputs.formatted} == false ? 'UNFORMATTED_VALUE' : 'FORMATTED_VALUE'`, majorDimension: 'ROWS' }
@@ -345,7 +346,7 @@ export default connector({
             readOnly: true,
             intervalSec: 120,
             inputs: { spreadsheetId: spreadsheetField(), sheet: sheetField() },
-            outputs: object({ row: integer(), values: array(json()), record: json() }),
+            outputs: object({ row: integer(), values: json<unknown[]>({ type: 'array' }), record: json<Record<string, unknown>>() }),
             // The header row and everything from the first unseen row, in one
             // call. Data starts on row 2; the cursor is the last row seen.
             request: ({ inputs, state }) => ({

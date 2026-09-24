@@ -467,10 +467,7 @@
                     },
                     "rows": {
                         "type": "array",
-                        "items": {
-                            "type": "object",
-                            "x-widget": "json"
-                        }
+                        "x-widget": "json"
                     }
                 },
                 "required": [
@@ -895,10 +892,7 @@
                     },
                     "values": {
                         "type": "array",
-                        "items": {
-                            "type": "object",
-                            "x-widget": "json"
-                        }
+                        "x-widget": "json"
                     },
                     "record": {
                         "type": "object",

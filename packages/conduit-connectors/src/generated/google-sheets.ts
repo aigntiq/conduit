@@ -67,7 +67,7 @@ export type Operations = {
         output: {
             range: string;
             headers?: Array<string>;
-            rows: Array<Record<string, unknown>>;
+            rows: Array<unknown>;
         };
     };
     "append-rows": {
@@ -117,7 +117,7 @@ export type Operations = {
         };
         output: {
             row: number;
-            values: Array<Record<string, unknown>>;
+            values: Array<unknown>;
             record: Record<string, unknown>;
         };
     };
@@ -592,10 +592,7 @@ const connector = {
                     },
                     "rows": {
                         "type": "array",
-                        "items": {
-                            "type": "object",
-                            "x-widget": "json"
-                        }
+                        "x-widget": "json"
                     }
                 },
                 "required": [
@@ -1020,10 +1017,7 @@ const connector = {
                     },
                     "values": {
                         "type": "array",
-                        "items": {
-                            "type": "object",
-                            "x-widget": "json"
-                        }
+                        "x-widget": "json"
                     },
                     "record": {
                         "type": "object",
