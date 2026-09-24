@@ -66,7 +66,9 @@ README and `__tests__/<id>.test.ts`.
 
 What a family of connectors shares lives in `connectors/_shared/` (a
 directory without an `index.ts` is never built as a connector) — for example
-`googleOAuth()` for every Google connector. Replay tests build their scripted
+`googleOAuth()` for every Google connector, and `microsoftOAuth()`,
+`graphPaging()` and `graphSubscription()` (a Graph change-notification
+webhook trigger) for every Microsoft 365 one. Replay tests build their scripted
 provider with `scriptedHttp()` and connect an account with `connect()` from
 `__tests__/support/stub.ts`.
 
