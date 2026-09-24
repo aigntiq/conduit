@@ -271,6 +271,8 @@ describe('Google Calendar: availability', () => {
         ]);
         await conduit.execute({ connector: 'google-calendar', operation: 'find-free-busy', account, inputs: { from: '2026-05-04T06:00:00Z', to: '2026-05-04T18:00:00Z' } });
         expect(JSON.parse(last(seen, 'POST', /freeBusy$/).body).items).toEqual([{ id: 'primary' }]);
+        await conduit.execute({ connector: 'google-calendar', operation: 'find-free-busy', account, inputs: { calendars: ['primary', 'team@group.calendar.google.com'], from: '2026-05-04T06:00:00Z', to: '2026-05-04T18:00:00Z' } });
+        expect(JSON.parse(last(seen, 'POST', /freeBusy$/).body).items).toEqual([{ id: 'primary' }, { id: 'team@group.calendar.google.com' }]);
     });
 });
 

@@ -347,7 +347,11 @@ export default connector({
             group: 'Availability',
             readOnly: true,
             inputs: {
-                calendars: emails({ title: 'Calendars', description: 'Calendar ids — for people, their email address. Default: your primary calendar.' }).optional(),
+                calendars: array(string(), {
+                    title: 'Calendars',
+                    description: 'Calendar ids: a person’s email address, a shared calendar’s id, or primary. Default: your primary calendar.',
+                    options: calendarOptions
+                }).optional(),
                 from: datetime({ title: 'From' }),
                 to: datetime({ title: 'To' }),
                 timeZone: string({ title: 'Time zone', placeholder: 'Europe/Stockholm', advanced: true }).optional()

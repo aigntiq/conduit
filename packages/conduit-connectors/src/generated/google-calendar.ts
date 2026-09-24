@@ -1301,11 +1301,13 @@ const connector = {
                     "calendars": {
                         "type": "array",
                         "items": {
-                            "type": "string",
-                            "format": "email"
+                            "type": "string"
                         },
                         "title": "Calendars",
-                        "description": "Calendar ids — for people, their email address. Default: your primary calendar."
+                        "description": "Calendar ids: a person’s email address, a shared calendar’s id, or primary. Default: your primary calendar.",
+                        "x-options": {
+                            "operation": "list-calendars"
+                        }
                     },
                     "from": {
                         "type": "string",
