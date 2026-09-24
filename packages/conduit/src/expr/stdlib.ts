@@ -62,11 +62,14 @@ function chunks(ctx: CallContext, v: unknown, size: unknown): { base64: string; 
     const chars = (size / 3) * 4;
     if (chars > MAX_CHUNK_CHARS) return ctx.fail(`chunks: size ${size} is too large`);
     if (isNil(v)) return [];
-    const b64 = asBase64(v);
-    const total = byteLength(b64);
     const out: { base64: string; start: number; end: number; total: number }[] = [];
+    // Bytes are sliced first and each slice encoded, never the whole file at once.
+    const bytes = v instanceof Uint8Array ? v : undefined;
+    const b64 = bytes ? '' : asBase64(v);
+    const total = bytes ? bytes.length : byteLength(b64);
     for (let i = 0, start = 0; start < total; i++, start += size) {
-        out.push({ base64: b64.slice(i * chars, (i + 1) * chars), start, end: Math.min(start + size, total) - 1, total });
+        const base64 = bytes ? toBase64(bytes.subarray(start, start + size)) : b64.slice(i * chars, (i + 1) * chars);
+        out.push({ base64, start, end: Math.min(start + size, total) - 1, total });
     }
     return out;
 }
