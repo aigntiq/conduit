@@ -611,7 +611,7 @@ const connector = {
                 {
                     "name": "upload",
                     "forEach": "{{flatMap(largeFiles(inputs.attachments), (f, i) => map(chunks(f.base64, 2949120), c => merge(c, {session: i})))}}",
-                    "maxIterations": 60,
+                    "maxIterations": 100,
                     "method": "PUT",
                     "auth": false,
                     "headers": {
@@ -907,7 +907,7 @@ const connector = {
                 {
                     "name": "upload",
                     "forEach": "{{flatMap(largeFiles(inputs.attachments), (f, i) => map(chunks(f.base64, 2949120), c => merge(c, {session: i})))}}",
-                    "maxIterations": 60,
+                    "maxIterations": 100,
                     "method": "PUT",
                     "auth": false,
                     "headers": {

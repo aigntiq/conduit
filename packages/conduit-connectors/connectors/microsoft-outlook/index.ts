@@ -123,8 +123,9 @@ function uploadSteps({ inputs, steps, each, response }: StepScope<Compose>): Ste
         {
             name: 'upload',
             forEach: expr`flatMap(largeFiles(${inputs.attachments}), (f, i) => map(chunks(f.base64, ${PART_BYTES}), c => merge(c, {session: i})))`,
-            // 150 MB in parts of ~2.9 MB.
-            maxIterations: 60,
+            // Parts across all large attachments. 150 MB is at most ~100 of them: one
+            // 150 MB file makes 51, and ~49 files just over 3 MB make two each.
+            maxIterations: 100,
             method: 'PUT',
             url: expr`${steps.sessions}[${each.session}].uploadUrl`,
             // The upload URL carries its own token; Graph refuses an Authorization header there.
