@@ -165,6 +165,16 @@ describe('Google Contacts: writing', () => {
         expect(output).toMatchObject({ id: 'c9', givenName: 'Linus', emails: ['linus@example.com'], birthday: '1969-12-28', groups: ['contactGroups/friends'] });
     });
 
+    it('takes a birthday with or without a year, and nothing else', async () => {
+        const { conduit, account, seen } = await setup();
+        await conduit.execute({ connector: 'google-contacts', operation: 'create-contact', account, inputs: { givenName: 'Ada', birthday: '--12-10' } });
+        expect(JSON.parse(last(seen, 'POST', /createContact$/).body).birthdays).toEqual([{ date: { month: 12, day: 10 } }]);
+        await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c1', birthday: '1815-12-10' } });
+        expect(JSON.parse(last(seen, 'PATCH', /updateContact$/).body).birthdays).toEqual([{ date: { year: 1815, month: 12, day: 10 } }]);
+        const err = await conduit.execute({ connector: 'google-contacts', operation: 'create-contact', account, inputs: { givenName: 'Ada', birthday: '10 December' } }).catch((e: unknown) => e);
+        expect(err).toMatchObject({ issues: [{ path: 'inputs.birthday', code: 'pattern' }] });
+    });
+
     it('updates only the fields given, with the current etag, keeping the other half of the name', async () => {
         const { conduit, account, seen } = await setup();
         const { output } = await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c1', familyName: 'King', phones: [] } });

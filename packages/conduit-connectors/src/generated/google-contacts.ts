@@ -494,10 +494,15 @@ const connector = {
                     },
                     "birthday": {
                         "type": "string",
-                        "format": "date",
                         "title": "Birthday",
+                        "description": "1990-05-04, or --05-04 without a year.",
+                        "x-placeholder": "1990-05-04",
                         "x-group": "More",
-                        "x-advanced": true
+                        "x-advanced": true,
+                        "x-errorMessage": {
+                            "pattern": "Use 1990-05-04, or --05-04 without a year"
+                        },
+                        "pattern": "^(\\d{4}|-)-\\d{2}-\\d{2}$"
                     },
                     "notes": {
                         "type": "string",
@@ -610,7 +615,7 @@ const connector = {
                     "phoneNumbers": "{{inputs.phones == undefined ? undefined : map(inputs.phones, value => {value})}}",
                     "organizations": "{{inputs.organization == undefined && inputs.jobTitle == undefined ? undefined : [compactObject({name: inputs.organization, title: inputs.jobTitle})]}}",
                     "addresses": "{{inputs.address == undefined ? undefined : [{formattedValue: inputs.address}]}}",
-                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: {year: number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, 5, 7)), day: number(substring(inputs.birthday, 8, 10))}}]}}",
+                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: compactObject({ year: startsWith(inputs.birthday, '--') ? undefined : number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, length(inputs.birthday) - 5, length(inputs.birthday) - 3)), day: number(substring(inputs.birthday, length(inputs.birthday) - 2)) })}]}}",
                     "biographies": "{{inputs.notes == undefined ? undefined : [{value: inputs.notes, contentType: 'TEXT_PLAIN'}]}}",
                     "memberships": "{{map(inputs.groups, g => {contactGroupMembership: {contactGroupResourceName: g}})}}"
                 },
@@ -676,10 +681,15 @@ const connector = {
                     },
                     "birthday": {
                         "type": "string",
-                        "format": "date",
                         "title": "Birthday",
+                        "description": "1990-05-04, or --05-04 without a year.",
+                        "x-placeholder": "1990-05-04",
                         "x-group": "More",
-                        "x-advanced": true
+                        "x-advanced": true,
+                        "x-errorMessage": {
+                            "pattern": "Use 1990-05-04, or --05-04 without a year"
+                        },
+                        "pattern": "^(\\d{4}|-)-\\d{2}-\\d{2}$"
                     },
                     "notes": {
                         "type": "string",
@@ -817,7 +827,7 @@ const connector = {
                     "phoneNumbers": "{{inputs.phones == undefined ? undefined : map(inputs.phones, value => {value})}}",
                     "organizations": "{{inputs.organization == undefined && inputs.jobTitle == undefined ? undefined : [compactObject({name: inputs.organization, title: inputs.jobTitle})]}}",
                     "addresses": "{{inputs.address == undefined ? undefined : [{formattedValue: inputs.address}]}}",
-                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: {year: number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, 5, 7)), day: number(substring(inputs.birthday, 8, 10))}}]}}",
+                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: compactObject({ year: startsWith(inputs.birthday, '--') ? undefined : number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, length(inputs.birthday) - 5, length(inputs.birthday) - 3)), day: number(substring(inputs.birthday, length(inputs.birthday) - 2)) })}]}}",
                     "biographies": "{{inputs.notes == undefined ? undefined : [{value: inputs.notes, contentType: 'TEXT_PLAIN'}]}}"
                 },
                 "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}:updateContact"

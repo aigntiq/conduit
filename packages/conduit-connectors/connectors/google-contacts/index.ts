@@ -13,7 +13,6 @@ import {
     array,
     boolean,
     connector,
-    date,
     emails,
     expr,
     object,
@@ -52,7 +51,15 @@ const contactFields = {
     organization: string({ title: 'Company', group: 'Work' }).optional(),
     jobTitle: string({ title: 'Job title', group: 'Work' }).optional(),
     address: text({ title: 'Address', group: 'More', advanced: true }).optional(),
-    birthday: date({ title: 'Birthday', group: 'More', advanced: true }).optional(),
+    birthday: string({
+        title: 'Birthday',
+        description: '1990-05-04, or --05-04 without a year.',
+        placeholder: '1990-05-04',
+        pattern: String.raw`^(\d{4}|-)-\d{2}-\d{2}$`,
+        messages: { pattern: 'Use 1990-05-04, or --05-04 without a year' },
+        group: 'More',
+        advanced: true
+    }).optional(),
     notes: text({ title: 'Notes', group: 'More', advanced: true }).optional()
 };
 
@@ -74,7 +81,12 @@ function personBody(inputs: Ref<ContactInputs>, current?: Ref) {
         phoneNumbers: expr`${inputs.phones} == undefined ? undefined : map(${inputs.phones}, value => {value})`,
         organizations: expr`${inputs.organization} == undefined && ${inputs.jobTitle} == undefined ? undefined : [compactObject({name: ${inputs.organization}, title: ${inputs.jobTitle}})]`,
         addresses: expr`${inputs.address} == undefined ? undefined : [{formattedValue: ${inputs.address}}]`,
-        birthdays: expr`${inputs.birthday} == undefined ? undefined : [{date: {year: number(substring(${inputs.birthday}, 0, 4)), month: number(substring(${inputs.birthday}, 5, 7)), day: number(substring(${inputs.birthday}, 8, 10))}}]`,
+        // The last five characters are always MM-DD; a year is there unless it starts with "--".
+        birthdays: expr`${inputs.birthday} == undefined ? undefined : [{date: compactObject({
+            year: startsWith(${inputs.birthday}, '--') ? undefined : number(substring(${inputs.birthday}, 0, 4)),
+            month: number(substring(${inputs.birthday}, length(${inputs.birthday}) - 5, length(${inputs.birthday}) - 3)),
+            day: number(substring(${inputs.birthday}, length(${inputs.birthday}) - 2))
+        })}]`,
         biographies: expr`${inputs.notes} == undefined ? undefined : [{value: ${inputs.notes}, contentType: 'TEXT_PLAIN'}]`
     };
 }
