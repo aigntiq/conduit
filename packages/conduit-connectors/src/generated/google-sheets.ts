@@ -608,9 +608,15 @@ const connector = {
                     "field": "spreadsheetId"
                 },
                 {
-                    "when": "{{response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')}}",
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && !isEmpty(inputs.range)}}",
                     "error": "validation",
                     "message": "That sheet or range does not exist",
+                    "field": "range"
+                },
+                {
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && isEmpty(inputs.range)}}",
+                    "error": "validation",
+                    "message": "That sheet does not exist",
                     "field": "sheet"
                 }
             ],
@@ -739,7 +745,7 @@ const connector = {
                 {
                     "when": "{{response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')}}",
                     "error": "validation",
-                    "message": "That sheet or range does not exist",
+                    "message": "That sheet does not exist",
                     "field": "sheet"
                 }
             ],
@@ -866,10 +872,16 @@ const connector = {
                     "field": "spreadsheetId"
                 },
                 {
-                    "when": "{{response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')}}",
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && !isEmpty(inputs.range)}}",
                     "error": "validation",
                     "message": "That sheet or range does not exist",
                     "field": "range"
+                },
+                {
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && isEmpty(inputs.range)}}",
+                    "error": "validation",
+                    "message": "That sheet does not exist",
+                    "field": "sheet"
                 }
             ],
             "output": {
@@ -956,9 +968,15 @@ const connector = {
                     "field": "spreadsheetId"
                 },
                 {
-                    "when": "{{response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')}}",
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && !isEmpty(inputs.range)}}",
                     "error": "validation",
                     "message": "That sheet or range does not exist",
+                    "field": "range"
+                },
+                {
+                    "when": "{{(response.status == 400 && contains(default(response.body.error.message, ''), 'Unable to parse range')) && isEmpty(inputs.range)}}",
+                    "error": "validation",
+                    "message": "That sheet does not exist",
                     "field": "sheet"
                 }
             ],

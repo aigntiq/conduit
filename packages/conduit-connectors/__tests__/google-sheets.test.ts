@@ -181,10 +181,14 @@ describe('Google Sheets: reading values', () => {
         expect(output).not.toHaveProperty('headers');
     });
 
-    it('puts an unknown sheet on the sheet field', async () => {
+    it('puts an unparsable range on the range field when one was given, and on the sheet otherwise', async () => {
         const { conduit, account } = await setup();
-        const err = await conduit.execute({ connector: 'google-sheets', operation: 'get-values', account, inputs: { spreadsheetId: 'ss1', sheet: 'Nope' } }).catch((e: unknown) => e);
-        expect(err).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.sheet', code: 'remote', message: 'That sheet or range does not exist' }] });
+        const sheet = await conduit.execute({ connector: 'google-sheets', operation: 'get-values', account, inputs: { spreadsheetId: 'ss1', sheet: 'Nope' } }).catch((e: unknown) => e);
+        expect(sheet).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.sheet', code: 'remote', message: 'That sheet does not exist' }] });
+        for (const operation of ['get-values', 'clear-values'] as const) {
+            const range = await conduit.execute({ connector: 'google-sheets', operation, account, inputs: { spreadsheetId: 'ss1', sheet: 'Nope', range: 'A1:ZZZZ9' } }).catch((e: unknown) => e);
+            expect(range, operation).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.range', code: 'remote', message: 'That sheet or range does not exist' }] });
+        }
     });
 });
 

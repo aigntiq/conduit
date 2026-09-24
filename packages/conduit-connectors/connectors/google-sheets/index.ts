@@ -64,14 +64,18 @@ function notFound(response: Ref): ErrorRuleDef {
     return { when: expr`${response.status} == 404`, error: 'notFound', field: 'spreadsheetId', message: 'That spreadsheet does not exist, or is not shared with this account' };
 }
 
-/** Sheets reports an unknown sheet or a bad range as a 400 "Unable to parse range". */
-function badRange(response: Ref, field = 'sheet'): ErrorRuleDef {
-    return {
-        when: expr`${response.status} == 400 && contains(default(${response.body.error.message}, ''), 'Unable to parse range')`,
-        error: 'validation',
-        field,
-        message: 'That sheet or range does not exist'
-    };
+/**
+ * Sheets reports an unknown sheet or a bad range alike, as a 400 "Unable to
+ * parse range". Blame the range when one was given, the sheet otherwise.
+ */
+function badRange(response: Ref, range?: Ref): ErrorRuleDef[] {
+    const unparsable = expr`${response.status} == 400 && contains(default(${response.body.error.message}, ''), 'Unable to parse range')`;
+    const sheet: ErrorRuleDef = { when: unparsable, error: 'validation', field: 'sheet', message: 'That sheet does not exist' };
+    if (range === undefined) return [sheet];
+    return [
+        { when: expr`${unparsable} && !isEmpty(${range})`, error: 'validation', field: 'range', message: 'That sheet or range does not exist' },
+        { ...sheet, when: expr`${unparsable} && isEmpty(${range})` }
+    ];
 }
 
 const updateOutput = object({ spreadsheetId: string(), updatedRange: string().optional(), updatedRows: integer(), updatedCells: integer() });
@@ -255,7 +259,7 @@ export default connector({
                 url: valuesUrl(inputs.spreadsheetId, inputs.sheet, inputs.range),
                 query: { valueRenderOption: expr`${inputs.formatted} == false ? 'UNFORMATTED_VALUE' : 'FORMATTED_VALUE'`, majorDimension: 'ROWS' }
             }),
-            errors: ({ response }) => [notFound(response), badRange(response)],
+            errors: ({ response, inputs }) => [notFound(response), ...badRange(response, inputs.range)],
             output: ({ response, inputs }) =>
                 expr`${inputs.headerRow} == false
                     ? {range: ${response.body.range}, rows: default(${response.body.values}, [])}
@@ -287,7 +291,7 @@ export default connector({
                 query: { valueInputOption: expr`default(${inputs.valueInputOption}, 'USER_ENTERED')`, insertDataOption: 'INSERT_ROWS' },
                 body: { majorDimension: 'ROWS', values: expr`map(${inputs.rows}, r => rowOf(default(${steps.header.headers}, []), r))` }
             }),
-            errors: ({ response }) => [notFound(response), badRange(response)],
+            errors: ({ response }) => [notFound(response), ...badRange(response)],
             output: ({ response }) => ({
                 spreadsheetId: response.body.spreadsheetId,
                 updatedRange: response.body.updates.updatedRange,
@@ -314,7 +318,7 @@ export default connector({
                 query: { valueInputOption: expr`default(${inputs.valueInputOption}, 'USER_ENTERED')` },
                 body: { majorDimension: 'ROWS', values: inputs.rows }
             }),
-            errors: ({ response }) => [notFound(response), badRange(response, 'range')],
+            errors: ({ response, inputs }) => [notFound(response), ...badRange(response, inputs.range)],
             output: ({ response }) => ({
                 spreadsheetId: response.body.spreadsheetId,
                 updatedRange: response.body.updatedRange,
@@ -335,7 +339,7 @@ export default connector({
             },
             outputs: object({ spreadsheetId: string(), clearedRange: string() }),
             request: ({ inputs }) => ({ method: 'POST', url: valuesUrl(inputs.spreadsheetId, inputs.sheet, inputs.range, ':clear'), body: {} }),
-            errors: ({ response }) => [notFound(response), badRange(response)],
+            errors: ({ response, inputs }) => [notFound(response), ...badRange(response, inputs.range)],
             output: ({ response }) => ({ spreadsheetId: response.body.spreadsheetId, clearedRange: response.body.clearedRange })
         }),
 
