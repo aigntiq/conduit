@@ -45,6 +45,7 @@ one connector (earlier sources win), for example to pin an older version.
 | [Google Calendar](connectors/google-calendar/README.md) | Google OAuth | calendars (options), search events, get event, create event (guests, Google Meet), quick add, update event, delete event, find busy times, event created or changed (trigger) |
 | [Google Drive](connectors/google-drive/README.md) | Google OAuth | search files, get file, download file (Google files exported), upload file, create folder, rename/move/star, copy file, share file, move to trash, folders (options), new file (trigger) |
 | [Microsoft Outlook](connectors/microsoft-outlook/README.md) | Microsoft OAuth | send email, create draft, reply (all), forward, search messages, get message, download attachment, folders (options), move message, mark/flag/categorize, delete message, new email (webhook trigger) |
+| [Microsoft Calendar](connectors/microsoft-calendar/README.md) | Microsoft OAuth | calendars (options), search events, get event, create event (attendees, Teams meeting), update event, delete event, respond to invitation, find meeting times, free/busy, event created/changed/deleted (webhook trigger) |
 
 ## Versioning
 

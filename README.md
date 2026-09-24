@@ -48,7 +48,7 @@ const { output } = await conduit.execute({
 | Package | What it is |
 |---|---|
 | [`@aigntiq/conduit`](packages/conduit) | The runtime: spec, validation, forms, expressions, auth/OAuth, executor, ports, fetch + Node handlers, the TypeScript builder |
-| [`@aigntiq/conduit-connectors`](packages/conduit-connectors) | Ready-made connectors in one package — pick the ones you use (Gmail, Google Calendar, Google Drive, Microsoft Outlook, …) |
+| [`@aigntiq/conduit-connectors`](packages/conduit-connectors) | Ready-made connectors in one package — pick the ones you use (Gmail, Google Calendar, Google Drive, Microsoft Outlook, Microsoft Calendar, …) |
 
 Planned: `@aigntiq/conduit-cli`, storage adapters (`-surreal`, `-pg`, `-redis`),
 `@aigntiq/conduit-actors`, `@aigntiq/conduit-ui`, `@aigntiq/conduit-mcp`,
