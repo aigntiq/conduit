@@ -183,3 +183,18 @@ describe('signJwt', () => {
         await expect(run("signJwt({}, 'not-a-pem', 'RS256')")).rejects.toThrow(/PEM/);
     });
 });
+
+describe('bytes (binary response bodies)', () => {
+    const bytes = new Uint8Array([0, 255, 1, 0xfe, 0x3f]);
+
+    it('base64 and base64url encode the raw bytes, not their text', async () => {
+        expect(await run('base64(b)', { b: bytes })).toBe(Buffer.from(bytes).toString('base64'));
+        expect(await run('b | base64url', { b: bytes })).toBe(Buffer.from(bytes).toString('base64url'));
+        expect(await run("base64(b) | fromBase64 | length", { b: new TextEncoder().encode('héllo') })).toBe(5);
+    });
+
+    it('length is the byte count', async () => {
+        expect(await run('length(b)', { b: bytes })).toBe(5);
+        expect(await run('length(b)', { b: new Uint8Array() })).toBe(0);
+    });
+});
