@@ -25,6 +25,18 @@ export const summaries: readonly ConnectorSummary[] = [
         ]
     },
     {
+        "id": "google-contacts",
+        "name": "Google Contacts",
+        "version": "1.0.0",
+        "description": "Search, create, update and delete contacts in Google Contacts, and organise them into groups.",
+        "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cmVjdCB4PSI0IiB5PSIzIiB3aWR0aD0iMTYiIGhlaWdodD0iMTgiIHJ4PSIyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMCIgcj0iMyIvPjxwYXRoIGQ9Ik03LjUgMTcuNWMuOS0yIDIuNi0zIDQuNS0zczMuNiAxIDQuNSAzIi8+PC9zdmc+Cg==",
+        "categories": [
+            "contacts",
+            "crm",
+            "productivity"
+        ]
+    },
+    {
         "id": "google-drive",
         "name": "Google Drive",
         "version": "1.0.0",
@@ -63,10 +75,11 @@ export const summaries: readonly ConnectorSummary[] = [
 export const loaders = {
     "gmail": () => import('./gmail'),
     "google-calendar": () => import('./google-calendar'),
+    "google-contacts": () => import('./google-contacts'),
     "google-drive": () => import('./google-drive'),
     "microsoft-calendar": () => import('./microsoft-calendar'),
     "microsoft-outlook": () => import('./microsoft-outlook')
 } satisfies Record<string, () => Promise<{ default: ConnectorSpec }>>;
 
 /** Every connector in the package — `CatalogOf<Connectors>` types `execute` for all of them. */
-export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-drive').default | typeof import('./microsoft-calendar').default | typeof import('./microsoft-outlook').default;
+export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-contacts').default | typeof import('./google-drive').default | typeof import('./microsoft-calendar').default | typeof import('./microsoft-outlook').default;

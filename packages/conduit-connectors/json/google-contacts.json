@@ -1,0 +1,920 @@
+{
+    "spec": "conduit/1",
+    "id": "google-contacts",
+    "name": "Google Contacts",
+    "version": "1.0.0",
+    "description": "Search, create, update and delete contacts in Google Contacts, and organise them into groups.",
+    "categories": [
+        "contacts",
+        "crm",
+        "productivity"
+    ],
+    "brandColor": "#1a73e8",
+    "homepage": "https://contacts.google.com",
+    "helpUrl": "https://developers.google.com/people",
+    "config": {
+        "baseUrl": "https://people.googleapis.com/v1"
+    },
+    "functions": {
+        "contactOf": {
+            "params": [
+                "p"
+            ],
+            "description": "A People API person, flattened into one contact.",
+            "body": "{\n                id: replace(p.resourceName, 'people/', ''),\n                resourceName: p.resourceName,\n                etag: p.etag,\n                name: first(default(p.names, []))?.displayName,\n                givenName: first(default(p.names, []))?.givenName,\n                familyName: first(default(p.names, []))?.familyName,\n                emails: map(default(p.emailAddresses, []), e => e.value),\n                phones: map(default(p.phoneNumbers, []), n => n.value),\n                organization: first(default(p.organizations, []))?.name,\n                jobTitle: first(default(p.organizations, []))?.title,\n                address: first(default(p.addresses, []))?.formattedValue,\n                birthday: birthdayOf(first(default(p.birthdays, []))?.date),\n                notes: first(default(p.biographies, []))?.value,\n                groups: default(p.memberships, []) | filter(m => m.contactGroupMembership) | map(m => m.contactGroupMembership.contactGroupResourceName),\n                photo: first(filter(default(p.photos, []), ph => !ph.default))?.url\n            } | compactObject"
+        },
+        "birthdayOf": {
+            "params": [
+                "d"
+            ],
+            "description": "A People date as ISO text: 1990-05-04, or --05-04 without a year.",
+            "body": "d == undefined ? undefined : (d.year ? string(d.year) : '-') + '-' + padStart(string(d.month), 2, '0') + '-' + padStart(string(d.day), 2, '0')"
+        }
+    },
+    "http": {
+        "baseUrl": "{{config.baseUrl}}",
+        "headers": {
+            "Accept": "application/json"
+        },
+        "retry": {
+            "attempts": 3,
+            "initialDelayMs": 500,
+            "maxDelayMs": 20000
+        }
+    },
+    "auth": [
+        {
+            "id": "oauth",
+            "type": "oauth2",
+            "label": "Sign in with Google",
+            "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+            "tokenUrl": "https://oauth2.googleapis.com/token",
+            "revokeUrl": "https://oauth2.googleapis.com/revoke",
+            "scopes": [
+                "https://www.googleapis.com/auth/contacts"
+            ],
+            "authorizeParams": {
+                "access_type": "offline",
+                "prompt": "consent",
+                "include_granted_scopes": "true"
+            },
+            "identity": {
+                "request": {
+                    "url": "/people/me",
+                    "query": {
+                        "personFields": "emailAddresses,names"
+                    }
+                },
+                "id": "{{first(default(response.body.emailAddresses, []))?.value ?? response.body.resourceName}}",
+                "name": "{{first(default(response.body.names, []))?.displayName ?? first(default(response.body.emailAddresses, []))?.value}}"
+            },
+            "test": {
+                "url": "/people/me",
+                "query": {
+                    "personFields": "names"
+                }
+            },
+            "helpUrl": "https://developers.google.com/people/v1/how-tos/authorizing",
+            "setup": "1. In the Google Cloud console, create (or pick) a project and **enable the People API**.\n2. Configure the **OAuth consent screen** and add the scope `https://www.googleapis.com/auth/contacts`.\n3. Create an **OAuth client ID** of type *Web application*. Add your Conduit callback URL (for example `https://app.example/conduit/auth/callback`) as an **authorized redirect URI**.\n4. Give the client id and secret to Conduit: `createConduit({ clients: { 'google-contacts': { id, secret } } })`."
+        }
+    ],
+    "operations": [
+        {
+            "id": "search-contacts",
+            "kind": "search",
+            "label": "Search contacts",
+            "description": "Contacts whose name, email, phone or company starts with the search text — or every contact, when there is none.",
+            "group": "Contacts",
+            "readOnly": true,
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "title": "Search",
+                        "x-placeholder": "ada"
+                    }
+                }
+            },
+            "outputs": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "resourceName": {
+                            "type": "string"
+                        },
+                        "etag": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "givenName": {
+                            "type": "string"
+                        },
+                        "familyName": {
+                            "type": "string"
+                        },
+                        "emails": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "phones": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "organization": {
+                            "type": "string"
+                        },
+                        "jobTitle": {
+                            "type": "string"
+                        },
+                        "address": {
+                            "type": "string"
+                        },
+                        "birthday": {
+                            "type": "string"
+                        },
+                        "notes": {
+                            "type": "string"
+                        },
+                        "groups": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "photo": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "resourceName",
+                        "emails",
+                        "phones",
+                        "groups"
+                    ]
+                }
+            },
+            "output": "{{items | map(p => contactOf(p))}}",
+            "request": {
+                "query": {
+                    "query": "{{isEmpty(inputs.query) ? undefined : inputs.query}}",
+                    "readMask": "{{isEmpty(inputs.query) ? undefined : \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos\"}}",
+                    "personFields": "{{isEmpty(inputs.query) ? \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos\" : undefined}}",
+                    "sortOrder": "{{isEmpty(inputs.query) ? 'FIRST_NAME_ASCENDING' : undefined}}",
+                    "pageSize": "{{isEmpty(inputs.query) ? 1000 : 30}}"
+                },
+                "url": "{{isEmpty(inputs.query) ? '/people/me/connections' : '/people:searchContacts'}}"
+            },
+            "paginate": {
+                "style": "cursor",
+                "param": "pageToken",
+                "maxPages": 50,
+                "items": "{{response.body.connections ?? map(default(response.body.results, []), r => r.person)}}",
+                "next": "{{isEmpty(inputs.query) ? response.body.nextPageToken : undefined}}"
+            }
+        },
+        {
+            "id": "get-contact",
+            "kind": "action",
+            "label": "Get contact",
+            "group": "Contacts",
+            "readOnly": true,
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Contact",
+                        "description": "The contact id (c123…) or resource name (people/c123…)."
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "resourceName": {
+                        "type": "string"
+                    },
+                    "etag": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "givenName": {
+                        "type": "string"
+                    },
+                    "familyName": {
+                        "type": "string"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "organization": {
+                        "type": "string"
+                    },
+                    "jobTitle": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "birthday": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "photo": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "resourceName",
+                    "emails",
+                    "phones",
+                    "groups"
+                ]
+            },
+            "errors": [
+                {
+                    "when": "{{response.status == 404}}",
+                    "error": "notFound",
+                    "message": "That contact does not exist",
+                    "field": "id"
+                }
+            ],
+            "output": "{{contactOf(response.body)}}",
+            "request": {
+                "query": {
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
+                },
+                "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}"
+            }
+        },
+        {
+            "id": "create-contact",
+            "kind": "action",
+            "label": "Create contact",
+            "group": "Contacts",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "givenName": {
+                        "type": "string",
+                        "title": "First name",
+                        "x-group": "Name"
+                    },
+                    "familyName": {
+                        "type": "string",
+                        "title": "Last name",
+                        "x-group": "Name"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "title": "Email addresses",
+                        "x-group": "Contact details"
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Phone numbers",
+                        "x-group": "Contact details"
+                    },
+                    "organization": {
+                        "type": "string",
+                        "title": "Company",
+                        "x-group": "Work"
+                    },
+                    "jobTitle": {
+                        "type": "string",
+                        "title": "Job title",
+                        "x-group": "Work"
+                    },
+                    "address": {
+                        "type": "string",
+                        "title": "Address",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-widget": "textarea"
+                    },
+                    "birthday": {
+                        "type": "string",
+                        "title": "Birthday",
+                        "description": "1990-05-04, or --05-04 without a year.",
+                        "x-placeholder": "1990-05-04",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-errorMessage": {
+                            "pattern": "Use 1990-05-04, or --05-04 without a year"
+                        },
+                        "pattern": "^(\\d{4}|-)-\\d{2}-\\d{2}$"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Notes",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-widget": "textarea"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Groups",
+                        "x-group": "More",
+                        "x-options": {
+                            "operation": "list-contact-groups"
+                        }
+                    }
+                },
+                "x-rules": [
+                    {
+                        "check": "{{ !isEmpty(inputs.givenName) || !isEmpty(inputs.familyName) || !isEmpty(inputs.emails) || !isEmpty(inputs.phones) || !isEmpty(inputs.organization) }}",
+                        "message": "Give the contact a name, an email address, a phone number or a company",
+                        "fields": [
+                            "givenName",
+                            "familyName",
+                            "emails",
+                            "phones",
+                            "organization"
+                        ]
+                    }
+                ]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "resourceName": {
+                        "type": "string"
+                    },
+                    "etag": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "givenName": {
+                        "type": "string"
+                    },
+                    "familyName": {
+                        "type": "string"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "organization": {
+                        "type": "string"
+                    },
+                    "jobTitle": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "birthday": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "photo": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "resourceName",
+                    "emails",
+                    "phones",
+                    "groups"
+                ]
+            },
+            "output": "{{contactOf(response.body)}}",
+            "request": {
+                "method": "POST",
+                "query": {
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
+                },
+                "body": {
+                    "names": "{{inputs.givenName == undefined && inputs.familyName == undefined ? undefined : [compactObject({givenName: inputs.givenName, familyName: inputs.familyName})]}}",
+                    "emailAddresses": "{{inputs.emails == undefined ? undefined : map(inputs.emails, value => {value})}}",
+                    "phoneNumbers": "{{inputs.phones == undefined ? undefined : map(inputs.phones, value => {value})}}",
+                    "organizations": "{{inputs.organization == undefined && inputs.jobTitle == undefined ? undefined : [compactObject({name: inputs.organization, title: inputs.jobTitle})]}}",
+                    "addresses": "{{inputs.address == undefined ? undefined : [{formattedValue: inputs.address}]}}",
+                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: compactObject({ year: startsWith(inputs.birthday, '--') ? undefined : number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, length(inputs.birthday) - 5, length(inputs.birthday) - 3)), day: number(substring(inputs.birthday, length(inputs.birthday) - 2)) })}]}}",
+                    "biographies": "{{inputs.notes == undefined ? undefined : [{value: inputs.notes, contentType: 'TEXT_PLAIN'}]}}",
+                    "memberships": "{{inputs.groups == undefined ? undefined : map(inputs.groups, g => {contactGroupMembership: {contactGroupResourceName: g}})}}"
+                },
+                "url": "/people:createContact"
+            }
+        },
+        {
+            "id": "update-contact",
+            "kind": "action",
+            "label": "Update contact",
+            "description": "Change only the fields given. Lists (emails, phones) replace the stored ones.",
+            "group": "Contacts",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Contact"
+                    },
+                    "givenName": {
+                        "type": "string",
+                        "title": "First name",
+                        "x-group": "Name"
+                    },
+                    "familyName": {
+                        "type": "string",
+                        "title": "Last name",
+                        "x-group": "Name"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "title": "Email addresses",
+                        "x-group": "Contact details"
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Phone numbers",
+                        "x-group": "Contact details"
+                    },
+                    "organization": {
+                        "type": "string",
+                        "title": "Company",
+                        "x-group": "Work"
+                    },
+                    "jobTitle": {
+                        "type": "string",
+                        "title": "Job title",
+                        "x-group": "Work"
+                    },
+                    "address": {
+                        "type": "string",
+                        "title": "Address",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-widget": "textarea"
+                    },
+                    "birthday": {
+                        "type": "string",
+                        "title": "Birthday",
+                        "description": "1990-05-04, or --05-04 without a year.",
+                        "x-placeholder": "1990-05-04",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-errorMessage": {
+                            "pattern": "Use 1990-05-04, or --05-04 without a year"
+                        },
+                        "pattern": "^(\\d{4}|-)-\\d{2}-\\d{2}$"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "title": "Notes",
+                        "x-group": "More",
+                        "x-advanced": true,
+                        "x-widget": "textarea"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "x-rules": [
+                    {
+                        "check": "{{ inputs.givenName != undefined || inputs.familyName != undefined || inputs.emails != undefined || inputs.phones != undefined || inputs.organization != undefined || inputs.jobTitle != undefined || inputs.address != undefined || inputs.birthday != undefined || inputs.notes != undefined }}",
+                        "message": "Choose something to change",
+                        "fields": [
+                            "givenName",
+                            "familyName",
+                            "emails",
+                            "phones",
+                            "organization",
+                            "jobTitle",
+                            "address",
+                            "birthday",
+                            "notes"
+                        ]
+                    }
+                ]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "resourceName": {
+                        "type": "string"
+                    },
+                    "etag": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "givenName": {
+                        "type": "string"
+                    },
+                    "familyName": {
+                        "type": "string"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "organization": {
+                        "type": "string"
+                    },
+                    "jobTitle": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "birthday": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "photo": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "resourceName",
+                    "emails",
+                    "phones",
+                    "groups"
+                ]
+            },
+            "steps": [
+                {
+                    "name": "current",
+                    "query": {
+                        "personFields": "names"
+                    },
+                    "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}",
+                    "output": {
+                        "etag": "{{response.body.etag}}",
+                        "givenName": "{{first(default(response.body.names, []))?.givenName}}",
+                        "familyName": "{{first(default(response.body.names, []))?.familyName}}"
+                    }
+                }
+            ],
+            "errors": [
+                {
+                    "when": "{{response.status == 404}}",
+                    "error": "notFound",
+                    "message": "That contact does not exist",
+                    "field": "id"
+                },
+                {
+                    "when": "{{response.status == 400 && response.body.error.status == 'FAILED_PRECONDITION'}}",
+                    "error": "conflict",
+                    "message": "The contact changed while it was being updated; try again"
+                }
+            ],
+            "output": "{{contactOf(response.body)}}",
+            "request": {
+                "method": "PATCH",
+                "query": {
+                    "updatePersonFields": "{{compact([ inputs.givenName != undefined || inputs.familyName != undefined ? 'names' : undefined, inputs.emails != undefined ? 'emailAddresses' : undefined, inputs.phones != undefined ? 'phoneNumbers' : undefined, inputs.organization != undefined || inputs.jobTitle != undefined ? 'organizations' : undefined, inputs.address != undefined ? 'addresses' : undefined, inputs.birthday != undefined ? 'birthdays' : undefined, inputs.notes != undefined ? 'biographies' : undefined ]) | join(',')}}",
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
+                },
+                "body": {
+                    "etag": "{{steps.current.etag}}",
+                    "names": "{{inputs.givenName == undefined && inputs.familyName == undefined ? undefined : [compactObject({givenName: (default(inputs.givenName, steps.current.givenName)), familyName: (default(inputs.familyName, steps.current.familyName))})]}}",
+                    "emailAddresses": "{{inputs.emails == undefined ? undefined : map(inputs.emails, value => {value})}}",
+                    "phoneNumbers": "{{inputs.phones == undefined ? undefined : map(inputs.phones, value => {value})}}",
+                    "organizations": "{{inputs.organization == undefined && inputs.jobTitle == undefined ? undefined : [compactObject({name: inputs.organization, title: inputs.jobTitle})]}}",
+                    "addresses": "{{inputs.address == undefined ? undefined : [{formattedValue: inputs.address}]}}",
+                    "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: compactObject({ year: startsWith(inputs.birthday, '--') ? undefined : number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, length(inputs.birthday) - 5, length(inputs.birthday) - 3)), day: number(substring(inputs.birthday, length(inputs.birthday) - 2)) })}]}}",
+                    "biographies": "{{inputs.notes == undefined ? undefined : [{value: inputs.notes, contentType: 'TEXT_PLAIN'}]}}"
+                },
+                "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}:updateContact"
+            }
+        },
+        {
+            "id": "delete-contact",
+            "kind": "action",
+            "label": "Delete contact",
+            "group": "Contacts",
+            "destructive": true,
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Contact"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "deleted": {
+                        "type": "boolean"
+                    },
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "deleted",
+                    "id"
+                ]
+            },
+            "errors": [
+                {
+                    "when": "{{response.status == 404}}",
+                    "error": "notFound",
+                    "message": "That contact does not exist",
+                    "field": "id"
+                }
+            ],
+            "output": {
+                "deleted": true,
+                "id": "{{replace(inputs.id, 'people/', '')}}"
+            },
+            "request": {
+                "method": "DELETE",
+                "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}:deleteContact"
+            }
+        },
+        {
+            "id": "list-contact-groups",
+            "kind": "options",
+            "label": "Contact groups",
+            "readOnly": true,
+            "output": "{{items | filter(g => g.groupType == 'USER_CONTACT_GROUP' || g.resourceName == 'contactGroups/starred') | sortBy(g => lower(default(g.formattedName, g.name))) | map(g => {label: default(g.formattedName, g.name), value: g.resourceName})}}",
+            "request": {
+                "query": {
+                    "pageSize": 1000
+                },
+                "url": "/contactGroups"
+            },
+            "paginate": {
+                "style": "cursor",
+                "param": "pageToken",
+                "items": "{{response.body.contactGroups}}",
+                "next": "{{response.body.nextPageToken}}"
+            }
+        },
+        {
+            "id": "modify-group-members",
+            "kind": "action",
+            "label": "Add or remove group members",
+            "group": "Groups",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "groupId": {
+                        "type": "string",
+                        "title": "Group",
+                        "x-options": {
+                            "operation": "list-contact-groups"
+                        }
+                    },
+                    "add": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Add contacts",
+                        "description": "Contact ids or resource names."
+                    },
+                    "remove": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Remove contacts"
+                    }
+                },
+                "required": [
+                    "groupId"
+                ],
+                "x-rules": [
+                    {
+                        "check": "{{ !isEmpty(inputs.add) || !isEmpty(inputs.remove) }}",
+                        "message": "Choose contacts to add or remove",
+                        "fields": [
+                            "add",
+                            "remove"
+                        ]
+                    }
+                ]
+            },
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "notFound": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "notFound"
+                ]
+            },
+            "errors": [
+                {
+                    "when": "{{response.status == 404}}",
+                    "error": "notFound",
+                    "message": "That group does not exist",
+                    "field": "groupId"
+                }
+            ],
+            "output": {
+                "notFound": "{{map(default(response.body.notFoundResourceNames, []), r => replace(r, 'people/', ''))}}"
+            },
+            "request": {
+                "method": "POST",
+                "body": {
+                    "resourceNamesToAdd": "{{map(inputs.add, id => 'people/' + replace(id, 'people/', ''))}}",
+                    "resourceNamesToRemove": "{{map(inputs.remove, id => 'people/' + replace(id, 'people/', ''))}}"
+                },
+                "url": "/contactGroups/{{urlEncode(replace(inputs.groupId, 'contactGroups/', ''))}}/members:modify"
+            }
+        },
+        {
+            "id": "new-contact",
+            "kind": "trigger",
+            "label": "New contact",
+            "description": "Fires once for each contact added after the trigger is turned on.",
+            "group": "Triggers",
+            "readOnly": true,
+            "outputs": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "resourceName": {
+                        "type": "string"
+                    },
+                    "etag": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "givenName": {
+                        "type": "string"
+                    },
+                    "familyName": {
+                        "type": "string"
+                    },
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "phones": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "organization": {
+                        "type": "string"
+                    },
+                    "jobTitle": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "birthday": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "photo": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "resourceName",
+                    "emails",
+                    "phones",
+                    "groups"
+                ]
+            },
+            "trigger": {
+                "type": "poll",
+                "request": {
+                    "query": {
+                        "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos",
+                        "sortOrder": "LAST_MODIFIED_DESCENDING",
+                        "pageSize": 50
+                    },
+                    "url": "/people/me/connections"
+                },
+                "items": "{{default(response.body.connections, [])}}",
+                "dedupeKey": "{{item.resourceName}}",
+                "intervalSec": 300,
+                "event": "{{contactOf(item)}}"
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cmVjdCB4PSI0IiB5PSIzIiB3aWR0aD0iMTYiIGhlaWdodD0iMTgiIHJ4PSIyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMCIgcj0iMyIvPjxwYXRoIGQ9Ik03LjUgMTcuNWMuOS0yIDIuNi0zIDQuNS0zczMuNiAxIDQuNSAzIi8+PC9zdmc+Cg=="
+}
