@@ -16,7 +16,7 @@ any connector a major. Each connector also carries its own `version`.
 
 ### Changed
 
-- Needs `@aigntiq/conduit` 0.1.1 or later, which understands the `readOnly` hint.
+- Peers on `@aigntiq/conduit` `^0.1.1` (0.1.1 up to, not including, 0.2.0), which understands the `readOnly` hint.
 
 ### Removed
 
