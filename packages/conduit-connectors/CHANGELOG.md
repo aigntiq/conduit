@@ -8,6 +8,8 @@ any connector a major. Each connector also carries its own `version`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-24
+
 ### Added
 
 - **Google Calendar** 1.0.0: calendars (options), search events (expanding recurring events), get, create (all-day or timed, guests, Google Meet link, recurrence), quick add, update (only the fields given), delete, busy times, and an event-changed poll trigger (runtime pending).
@@ -16,6 +18,10 @@ any connector a major. Each connector also carries its own `version`.
 - **Microsoft Calendar** 1.0.0: calendars (options), search events (a calendar view, recurring events expanded), get, create (all-day or timed, required and optional attendees, Teams meeting, reminder), update (only the fields given), delete, respond to invitations, find meeting times, free/busy, and an event-changed webhook trigger (runtime pending). Times come back in UTC.
 - **Google Contacts** 1.0.0: search (by text, or everyone, paged), get, create, update (only the fields given, guarded by the contact's etag), delete, contact groups (options), add/remove group members, and a new-contact poll trigger (runtime pending).
 - **Google Sheets** 1.0.0: spreadsheets and sheets (options), get and create spreadsheet, add sheet, get rows (as header-keyed objects or lists), append rows (lists, or objects matched to the header row), update and clear cells, and a new-row poll trigger (runtime pending).
+
+### Changed
+
+- Peers on `@aigntiq/conduit` `^0.2.0`, released with it at the same version.
 
 ## [0.1.1] - 2026-09-24
 

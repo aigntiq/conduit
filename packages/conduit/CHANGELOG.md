@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-24
+
 ### Added
 
 - The builder's `json()` field can hold a list: `json({ type: 'array' })` (the default stays an object).
