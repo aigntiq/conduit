@@ -539,7 +539,7 @@
                 ],
                 "x-rules": [
                     {
-                        "check": "{{ !isEmpty(inputs.givenName) || !isEmpty(inputs.familyName) || !isEmpty(inputs.emails) || !isEmpty(inputs.phones) || !isEmpty(inputs.organization) || !isEmpty(inputs.jobTitle) || !isEmpty(inputs.address) || !isEmpty(inputs.birthday) || !isEmpty(inputs.notes) }}",
+                        "check": "{{ inputs.givenName != undefined || inputs.familyName != undefined || inputs.emails != undefined || inputs.phones != undefined || inputs.organization != undefined || inputs.jobTitle != undefined || inputs.address != undefined || inputs.birthday != undefined || inputs.notes != undefined }}",
                         "message": "Choose something to change",
                         "fields": [
                             "givenName",

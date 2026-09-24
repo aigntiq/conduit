@@ -174,6 +174,19 @@ describe('Google Contacts: writing', () => {
         expect(output).toMatchObject({ familyName: 'King', phones: [], emails: ['ada@example.com', 'ada@work.example'] });
     });
 
+    it('clears a list when given an empty one, touching nothing else, and refuses an empty update', async () => {
+        const { conduit, account, seen } = await setup();
+        await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c1', emails: [] } });
+        const patch = last(seen, 'PATCH', /updateContact$/);
+        expect(patch.url.searchParams.get('updatePersonFields')).toBe('emailAddresses');
+        expect(JSON.parse(patch.body)).toEqual({ etag: '%EgUBAgMFBw==', emailAddresses: [] });
+
+        const before = seen.length;
+        const err = await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c1' } }).catch((e: unknown) => e);
+        expect(err).toMatchObject({ code: 'inputs_invalid', issues: [{ code: 'rule', message: 'Choose something to change' }] });
+        expect(seen.length).toBe(before);
+    });
+
     it('reports a missing contact on the field', async () => {
         const { conduit, account } = await setup();
         const err = await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c404', notes: 'x' } }).catch((e: unknown) => e);

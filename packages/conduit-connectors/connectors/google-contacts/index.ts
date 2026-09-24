@@ -58,6 +58,8 @@ const contactFields = {
 
 type ContactInputs = { [K in keyof typeof contactFields]?: unknown };
 
+const UPDATABLE = Object.keys(contactFields) as (keyof typeof contactFields)[];
+
 /**
  * The People API body for the given inputs. Each field is present only when
  * its input is, so an update never clears what it wasn't asked to change.
@@ -240,9 +242,8 @@ export default connector({
             description: 'Change only the fields given. Lists (emails, phones) replace the stored ones.',
             group: 'Contacts',
             inputs: { id: string({ title: 'Contact' }), ...contactFields },
-            rules: [
-                rules.atLeastOne(['givenName', 'familyName', 'emails', 'phones', 'organization', 'jobTitle', 'address', 'birthday', 'notes'], 'Choose something to change')
-            ],
+            // "Given", not "non-empty": an empty list clears the stored one.
+            rules: [rules.check(`{{ ${UPDATABLE.map((f) => `inputs.${f} != undefined`).join(' || ')} }}`, 'Choose something to change', [...UPDATABLE])],
             outputs: contactOutput,
             steps: ({ inputs, response }) => [
                 {
