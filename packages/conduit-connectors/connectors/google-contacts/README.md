@@ -37,7 +37,7 @@ It sends the contact's current `etag`, so a concurrent change comes back as a
 | `update-contact` | action | only the fields given, guarded by the contact's etag |
 | `delete-contact` | action | **destructive** |
 | `list-contact-groups` | options | **read-only**. Your own groups plus Starred |
-| `modify-group-members` | action | add and/or remove contacts in a group; returns the ids Google didn't find |
+| `modify-group-members` | action | add and/or remove contacts in a group; returns the ids (`c123…`) Google didn't find |
 | `new-contact` | trigger (poll) | **read-only**. Contacts added after the trigger is turned on, checked every 5 minutes. The trigger is defined, but the trigger runtime is not released yet |
 
 ## Limits

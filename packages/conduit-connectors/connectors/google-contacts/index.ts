@@ -311,7 +311,7 @@ export default connector({
                 }
             }),
             errors: ({ response }) => [{ when: expr`${response.status} == 404`, error: 'notFound', field: 'groupId', message: 'That group does not exist' }],
-            output: ({ response }) => ({ notFound: expr`default(${response.body.notFoundResourceNames}, [])` })
+            output: ({ response }) => ({ notFound: expr`map(default(${response.body.notFoundResourceNames}, []), r => replace(r, 'people/', ''))` })
         }),
 
         pollTrigger('new-contact', {

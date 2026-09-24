@@ -204,7 +204,7 @@ describe('Google Contacts: groups', () => {
             inputs: { groupId: 'contactGroups/friends', add: ['c2', 'people/c404'], remove: ['c1'] }
         });
         expect(JSON.parse(last(seen, 'POST', /members:modify$/).body)).toEqual({ resourceNamesToAdd: ['people/c2', 'people/c404'], resourceNamesToRemove: ['people/c1'] });
-        expect(output).toEqual({ notFound: ['people/c404'] });
+        expect(output).toEqual({ notFound: ['c404'] });
     });
 });
 

@@ -960,7 +960,7 @@ const connector = {
                 }
             ],
             "output": {
-                "notFound": "{{default(response.body.notFoundResourceNames, [])}}"
+                "notFound": "{{map(default(response.body.notFoundResourceNames, []), r => replace(r, 'people/', ''))}}"
             },
             "request": {
                 "method": "POST",
