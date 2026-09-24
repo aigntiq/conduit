@@ -78,7 +78,7 @@ behaviour with the conformance suites published as
 `@aigntiq/conduit/testing`: `accountStoreConformance`,
 `transientStoreConformance` and `lockProviderConformance`. They are
 runner-agnostic data, registered with `registerConformance(suites, { describe, it })`
-([integrating](integrating.md#4-test-your-own-ports)).
+([integrating](integrating.md#5-test-your-own-ports)).
 
 ## Plugins
 

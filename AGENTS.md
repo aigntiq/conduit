@@ -167,7 +167,8 @@ To run an example: `pnpm --filter <example-name> dev`.
   - `.` — isomorphic: spec types, `defineConnector`, `validateConnector`,
     `createConduit`, ports + memory adapters, plugin API, errors.
   - `./expr` — the Conduit expression engine (parse, compile, evaluate, analyse).
-  - `./schema` — the `conduit/1` JSON Schema object.
+  - `./schema` — the `conduit/1` JSON Schema object, plus `toolDefinitions` /
+    `toolSchema` (operations as tool definitions).
   - `./oauth` — standalone OAuth2 helpers (PKCE, sealed state, URL building).
   - `./server` — `createFetchHandler`: WinterCG `Request → Response` routes.
   - `./builder` — author connectors in TypeScript (typed inputs, refs, `$`/`expr`

@@ -5,6 +5,7 @@
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { ConduitRequestError, ConduitValidationError, createConduit, type CatalogOf, type HttpClient } from '@aigntiq/conduit';
+import { toolDefinitions } from '@aigntiq/conduit/schema';
 import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 
 const SECRET = 'gmail-connector-tests-secret-long-enough';
@@ -336,6 +337,23 @@ describe('Gmail: read and write intent', () => {
         expect(ops.filter((o) => o.readOnly && o.destructive)).toEqual([]);
         const described = (await conduit.connectors.describe('gmail')).operations;
         expect(described.filter((o) => o.readOnly).map((o) => o.id)).toEqual(ops.filter((o) => o.readOnly).map((o) => o.id));
+    });
+
+    it('becomes tool definitions with that intent and no UI hints', async () => {
+        const { conduit } = await setup();
+        const tools = toolDefinitions(await conduit.connectors.describe('gmail'));
+        expect(tools.map((t) => [t.name, t.annotations])).toEqual([
+            ['send-email', {}],
+            ['create-draft', {}],
+            ['reply-to-message', {}],
+            ['search-messages', { readOnly: true }],
+            ['get-message', { readOnly: true }],
+            ['get-thread', { readOnly: true }],
+            ['get-attachment', { readOnly: true }],
+            ['modify-labels', {}],
+            ['trash-message', { destructive: true }]
+        ]);
+        expect(JSON.stringify(tools.map((t) => t.inputSchema))).not.toMatch(/"x-/);
     });
 });
 
