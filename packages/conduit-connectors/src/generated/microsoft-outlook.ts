@@ -271,7 +271,7 @@ const connector = {
     "spec": "conduit/1",
     "id": "microsoft-outlook",
     "name": "Microsoft Outlook",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Send, draft, reply, forward, search, read, file and delete email in Outlook (Microsoft 365 and Outlook.com).",
     "categories": [
         "email",
@@ -298,6 +298,20 @@ const connector = {
             ],
             "description": "Graph recipients from addresses; \"Name <address>\" keeps the name.",
             "body": "list == undefined ? undefined : map(list, a => contains(a, '<')\n                ? {emailAddress: {name: trim(replace(first(split(a, '<')), '\"', '')), address: trim(replace(last(split(a, '<')), '>', ''))}}\n                : {emailAddress: {address: trim(a)}})"
+        },
+        "inlineFiles": {
+            "params": [
+                "files"
+            ],
+            "description": "The attachments small enough to send with the message (3 MB).",
+            "body": "filter(default(files, []), f => byteLength(f.base64) <= 3000000)"
+        },
+        "largeFiles": {
+            "params": [
+                "files"
+            ],
+            "description": "The attachments that need an upload session (over 3 MB).",
+            "body": "filter(default(files, []), f => byteLength(f.base64) > 3000000)"
         },
         "fileAttachments": {
             "params": [
@@ -330,7 +344,11 @@ const connector = {
             "attempts": 3,
             "initialDelayMs": 500,
             "maxDelayMs": 30000
-        }
+        },
+        "allowHosts": [
+            "outlook.office.com",
+            "outlook.office365.com"
+        ]
     },
     "auth": [
         {
@@ -416,7 +434,7 @@ const connector = {
             "id": "send-email",
             "kind": "action",
             "label": "Send email",
-            "description": "Send a message, with optional attachments (up to 3 MB each). A copy is kept in Sent Items.",
+            "description": "Send a message, with optional attachments (up to 150 MB in all). A copy is kept in Sent Items.",
             "group": "Messages",
             "inputs": {
                 "type": "object",
@@ -519,7 +537,7 @@ const connector = {
                                 "filename",
                                 "base64"
                             ],
-                            "x-maxBytes": 3000000
+                            "x-maxBytes": 150000000
                         },
                         "title": "Attachments",
                         "x-group": "Attachments"
@@ -562,6 +580,51 @@ const connector = {
                     "sent"
                 ]
             },
+            "steps": [
+                {
+                    "name": "draft",
+                    "method": "POST",
+                    "body": "{{compactObject({ subject: inputs.subject, body: {contentType: inputs.format == 'text' ? 'Text' : 'HTML', content: inputs.body}, toRecipients: recipients(inputs.to), ccRecipients: recipients(inputs.cc), bccRecipients: recipients(inputs.bcc), replyTo: recipients(inputs.replyTo), importance: inputs.importance, attachments: inputs.attachments == undefined ? undefined : fileAttachments(inlineFiles(inputs.attachments)) })}}",
+                    "url": "/{{graphUser(account)}}/messages",
+                    "when": "{{!isEmpty(largeFiles(inputs.attachments))}}",
+                    "output": {
+                        "id": "{{response.body.id}}"
+                    }
+                },
+                {
+                    "name": "sessions",
+                    "forEach": "{{largeFiles(inputs.attachments)}}",
+                    "method": "POST",
+                    "body": {
+                        "AttachmentItem": {
+                            "attachmentType": "file",
+                            "name": "{{each.filename}}",
+                            "size": "{{byteLength(each.base64)}}",
+                            "contentType": "{{default(each.contentType, 'application/octet-stream')}}"
+                        }
+                    },
+                    "url": "/{{graphUser(account)}}/messages/{{urlEncode(steps.draft.id)}}/attachments/createUploadSession",
+                    "output": {
+                        "uploadUrl": "{{response.body.uploadUrl}}"
+                    }
+                },
+                {
+                    "name": "upload",
+                    "forEach": "{{flatMap(largeFiles(inputs.attachments), (f, i) => map(chunks(f.base64, 2949120), c => merge(c, {session: i})))}}",
+                    "maxIterations": 100,
+                    "method": "PUT",
+                    "auth": false,
+                    "headers": {
+                        "Content-Range": "bytes {{each.start}}-{{each.end}}/{{each.total}}"
+                    },
+                    "body": "{{each.base64}}",
+                    "encoding": "binary",
+                    "url": "{{steps.sessions[each.session].uploadUrl}}",
+                    "output": {
+                        "status": "{{response.status}}"
+                    }
+                }
+            ],
             "errors": [
                 {
                     "when": "{{response.status == 400 && contains(['ErrorInvalidRecipients', 'ErrorInvalidRecipientsSmtpAddress'], response.body.error.code)}}",
@@ -575,23 +638,8 @@ const connector = {
             },
             "request": {
                 "method": "POST",
-                "body": {
-                    "message": {
-                        "subject": "{{inputs.subject}}",
-                        "body": {
-                            "contentType": "{{inputs.format == 'text' ? 'Text' : 'HTML'}}",
-                            "content": "{{inputs.body}}"
-                        },
-                        "toRecipients": "{{recipients(inputs.to)}}",
-                        "ccRecipients": "{{recipients(inputs.cc)}}",
-                        "bccRecipients": "{{recipients(inputs.bcc)}}",
-                        "replyTo": "{{recipients(inputs.replyTo)}}",
-                        "importance": "{{inputs.importance}}",
-                        "attachments": "{{fileAttachments(inputs.attachments)}}"
-                    },
-                    "saveToSentItems": true
-                },
-                "url": "/{{graphUser(account)}}/sendMail"
+                "body": "{{(!isEmpty(largeFiles(inputs.attachments))) ? undefined : {message: (compactObject({ subject: inputs.subject, body: {contentType: inputs.format == 'text' ? 'Text' : 'HTML', content: inputs.body}, toRecipients: recipients(inputs.to), ccRecipients: recipients(inputs.cc), bccRecipients: recipients(inputs.bcc), replyTo: recipients(inputs.replyTo), importance: inputs.importance, attachments: inputs.attachments == undefined ? undefined : fileAttachments(inlineFiles(inputs.attachments)) })), saveToSentItems: true}}}",
+                "url": "{{'/' + graphUser(account) + ((!isEmpty(largeFiles(inputs.attachments))) ? '/messages/' + urlEncode(steps.draft.id) + '/send' : '/sendMail')}}"
             }
         },
         {
@@ -701,7 +749,7 @@ const connector = {
                                 "filename",
                                 "base64"
                             ],
-                            "x-maxBytes": 3000000
+                            "x-maxBytes": 150000000
                         },
                         "title": "Attachments",
                         "x-group": "Attachments"
@@ -828,6 +876,51 @@ const connector = {
                     "flagged"
                 ]
             },
+            "steps": [
+                {
+                    "name": "draft",
+                    "method": "POST",
+                    "body": "{{compactObject({ subject: inputs.subject, body: {contentType: inputs.format == 'text' ? 'Text' : 'HTML', content: inputs.body}, toRecipients: recipients(inputs.to), ccRecipients: recipients(inputs.cc), bccRecipients: recipients(inputs.bcc), replyTo: recipients(inputs.replyTo), importance: inputs.importance, attachments: inputs.attachments == undefined ? undefined : fileAttachments(inlineFiles(inputs.attachments)) })}}",
+                    "url": "/{{graphUser(account)}}/messages",
+                    "when": "{{!isEmpty(largeFiles(inputs.attachments))}}",
+                    "output": {
+                        "id": "{{response.body.id}}"
+                    }
+                },
+                {
+                    "name": "sessions",
+                    "forEach": "{{largeFiles(inputs.attachments)}}",
+                    "method": "POST",
+                    "body": {
+                        "AttachmentItem": {
+                            "attachmentType": "file",
+                            "name": "{{each.filename}}",
+                            "size": "{{byteLength(each.base64)}}",
+                            "contentType": "{{default(each.contentType, 'application/octet-stream')}}"
+                        }
+                    },
+                    "url": "/{{graphUser(account)}}/messages/{{urlEncode(steps.draft.id)}}/attachments/createUploadSession",
+                    "output": {
+                        "uploadUrl": "{{response.body.uploadUrl}}"
+                    }
+                },
+                {
+                    "name": "upload",
+                    "forEach": "{{flatMap(largeFiles(inputs.attachments), (f, i) => map(chunks(f.base64, 2949120), c => merge(c, {session: i})))}}",
+                    "maxIterations": 100,
+                    "method": "PUT",
+                    "auth": false,
+                    "headers": {
+                        "Content-Range": "bytes {{each.start}}-{{each.end}}/{{each.total}}"
+                    },
+                    "body": "{{each.base64}}",
+                    "encoding": "binary",
+                    "url": "{{steps.sessions[each.session].uploadUrl}}",
+                    "output": {
+                        "status": "{{response.status}}"
+                    }
+                }
+            ],
             "errors": [
                 {
                     "when": "{{response.status == 400 && contains(['ErrorInvalidRecipients', 'ErrorInvalidRecipientsSmtpAddress'], response.body.error.code)}}",
@@ -838,21 +931,9 @@ const connector = {
             ],
             "output": "{{messageOf(response.body)}}",
             "request": {
-                "method": "POST",
-                "body": {
-                    "subject": "{{inputs.subject}}",
-                    "body": {
-                        "contentType": "{{inputs.format == 'text' ? 'Text' : 'HTML'}}",
-                        "content": "{{inputs.body}}"
-                    },
-                    "toRecipients": "{{recipients(inputs.to)}}",
-                    "ccRecipients": "{{recipients(inputs.cc)}}",
-                    "bccRecipients": "{{recipients(inputs.bcc)}}",
-                    "replyTo": "{{recipients(inputs.replyTo)}}",
-                    "importance": "{{inputs.importance}}",
-                    "attachments": "{{fileAttachments(inputs.attachments)}}"
-                },
-                "url": "/{{graphUser(account)}}/messages"
+                "method": "{{(!isEmpty(largeFiles(inputs.attachments))) ? 'GET' : 'POST'}}",
+                "body": "{{(!isEmpty(largeFiles(inputs.attachments))) ? undefined : (compactObject({ subject: inputs.subject, body: {contentType: inputs.format == 'text' ? 'Text' : 'HTML', content: inputs.body}, toRecipients: recipients(inputs.to), ccRecipients: recipients(inputs.cc), bccRecipients: recipients(inputs.bcc), replyTo: recipients(inputs.replyTo), importance: inputs.importance, attachments: inputs.attachments == undefined ? undefined : fileAttachments(inlineFiles(inputs.attachments)) }))}}",
+                "url": "{{'/' + graphUser(account) + '/messages' + ((!isEmpty(largeFiles(inputs.attachments))) ? '/' + urlEncode(steps.draft.id) : '')}}"
             }
         },
         {

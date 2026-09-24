@@ -26,6 +26,8 @@ import {
     richtext,
     webhookTrigger,
     type ErrorRuleDef,
+    type StepDef,
+    type StepScope,
     type Ref
 } from '@aigntiq/conduit/builder';
 import { GRAPH, graphFunctions, graphPaging, graphRetry, graphSubscription, ME, microsoftApp, microsoftAppSetup, microsoftOAuth, microsoftSetup } from '../_shared/microsoft';
@@ -42,8 +44,14 @@ const folderOptions = { operation: 'list-folders', search: 'query' };
 
 const format = select({ html: 'Formatted (HTML)', text: 'Plain text' }, { title: 'Format', default: 'html', advanced: true });
 
-/** Graph caps an attachment sent inline with the message at 3 MB. */
-const attachmentsField = (group?: string) => files({ title: 'Attachments', maxBytes: 3_000_000, ...(group ? { group } : {}) });
+/**
+ * Attachments up to 3 MB go inline with the message (Graph's limit for that);
+ * larger ones, up to the 150 MB a message may hold, through an upload session.
+ */
+const attachmentsField = (group?: string) => files({ title: 'Attachments', maxBytes: 150_000_000, ...(group ? { group } : {}) });
+
+/** Upload-session parts: 9 × 320 KiB (Graph wants multiples of 320 KiB; `chunks()` multiples of 3). */
+const PART_BYTES = 2_949_120;
 
 const composeFields = {
     to: emails({ title: 'To', group: 'Recipients' }).optional(),
@@ -71,18 +79,63 @@ type Compose = {
 
 const recipientsRule = rules.atLeastOne(['to', 'cc', 'bcc'], 'Add at least one recipient');
 
-/** A Graph message body for a composed form. */
+/** A Graph message for a composed form, with the attachments small enough to go inline. */
 function message(inputs: Ref<Compose>) {
-    return {
-        subject: inputs.subject,
-        body: { contentType: expr`${inputs.format} == 'text' ? 'Text' : 'HTML'`, content: inputs.body },
-        toRecipients: expr`recipients(${inputs.to})`,
-        ccRecipients: expr`recipients(${inputs.cc})`,
-        bccRecipients: expr`recipients(${inputs.bcc})`,
-        replyTo: expr`recipients(${inputs.replyTo})`,
-        importance: inputs.importance,
-        attachments: expr`fileAttachments(${inputs.attachments})`
-    };
+    return expr`compactObject({
+        subject: ${inputs.subject},
+        body: {contentType: ${inputs.format} == 'text' ? 'Text' : 'HTML', content: ${inputs.body}},
+        toRecipients: recipients(${inputs.to}),
+        ccRecipients: recipients(${inputs.cc}),
+        bccRecipients: recipients(${inputs.bcc}),
+        replyTo: recipients(${inputs.replyTo}),
+        importance: ${inputs.importance},
+        attachments: ${inputs.attachments} == undefined ? undefined : fileAttachments(inlineFiles(${inputs.attachments}))
+    })`;
+}
+
+/** Whether any attachment needs an upload session. */
+const hasLarge = (inputs: Ref<Compose>) => expr`!isEmpty(largeFiles(${inputs.attachments}))`;
+
+/**
+ * Large attachments: save the message as a draft (with the inline ones), open
+ * an upload session per large attachment, and PUT each in parts. The draft is
+ * then sent (`send-email`) or returned (`create-draft`). Messages without
+ * large attachments skip all three.
+ */
+function uploadSteps({ inputs, steps, each, response }: StepScope<Compose>): StepDef[] {
+    return [
+        { name: 'draft', when: hasLarge(inputs), method: 'POST', url: `${ME}/messages`, body: message(inputs), output: { id: response.body.id } },
+        {
+            name: 'sessions',
+            forEach: expr`largeFiles(${inputs.attachments})`,
+            method: 'POST',
+            url: $`${ME}/messages/${expr`urlEncode(${steps.draft.id})`}/attachments/createUploadSession`,
+            body: {
+                AttachmentItem: {
+                    attachmentType: 'file',
+                    name: each.filename,
+                    size: expr`byteLength(${each.base64})`,
+                    contentType: expr`default(${each.contentType}, 'application/octet-stream')`
+                }
+            },
+            output: { uploadUrl: response.body.uploadUrl }
+        },
+        {
+            name: 'upload',
+            forEach: expr`flatMap(largeFiles(${inputs.attachments}), (f, i) => map(chunks(f.base64, ${PART_BYTES}), c => merge(c, {session: i})))`,
+            // Parts across all large attachments. 150 MB is at most ~100 of them: one
+            // 150 MB file makes 51, and ~49 files just over 3 MB make two each.
+            maxIterations: 100,
+            method: 'PUT',
+            url: expr`${steps.sessions}[${each.session}].uploadUrl`,
+            // The upload URL carries its own token; Graph refuses an Authorization header there.
+            auth: false,
+            headers: { 'Content-Range': $`bytes ${each.start}-${each.end}/${each.total}` },
+            body: each.base64,
+            encoding: 'binary',
+            output: { status: response.status }
+        }
+    ];
 }
 
 /** `/me/messages/<id>[suffix]` (or `/users/<mailbox>/…`), encoded. */
@@ -133,7 +186,7 @@ const messageOutput = object({
 export default connector({
     id: 'microsoft-outlook',
     name: 'Microsoft Outlook',
-    version: '1.1.0',
+    version: '1.2.0',
     description: 'Send, draft, reply, forward, search, read, file and delete email in Outlook (Microsoft 365 and Outlook.com).',
     categories: ['email', 'productivity'],
     brandColor: '#0f6cbd',
@@ -148,6 +201,16 @@ export default connector({
             body: `list == undefined ? undefined : map(list, a => contains(a, '<')
                 ? {emailAddress: {name: trim(replace(first(split(a, '<')), '"', '')), address: trim(replace(last(split(a, '<')), '>', ''))}}
                 : {emailAddress: {address: trim(a)}})`
+        },
+        inlineFiles: {
+            params: ['files'],
+            description: 'The attachments small enough to send with the message (3 MB).',
+            body: 'filter(default(files, []), f => byteLength(f.base64) <= 3000000)'
+        },
+        largeFiles: {
+            params: ['files'],
+            description: 'The attachments that need an upload session (over 3 MB).',
+            body: 'filter(default(files, []), f => byteLength(f.base64) > 3000000)'
         },
         fileAttachments: {
             params: ['files'],
@@ -186,7 +249,9 @@ export default connector({
     http: ({ config }) => ({
         baseUrl: config.baseUrl,
         headers: { Accept: 'application/json' },
-        retry: graphRetry
+        retry: graphRetry,
+        // Where attachment upload sessions live.
+        allowHosts: ['outlook.office.com', 'outlook.office365.com']
     }),
     auth: [
         microsoftOAuth({
@@ -203,12 +268,18 @@ export default connector({
     operations: [
         action('send-email', {
             label: 'Send email',
-            description: 'Send a message, with optional attachments (up to 3 MB each). A copy is kept in Sent Items.',
+            description: 'Send a message, with optional attachments (up to 150 MB in all). A copy is kept in Sent Items.',
             group: 'Messages',
             inputs: composeFields,
             rules: [recipientsRule],
             outputs: object({ sent: boolean() }),
-            request: ({ inputs }) => ({ method: 'POST', url: `${ME}/sendMail`, body: { message: message(inputs), saveToSentItems: true } }),
+            steps: uploadSteps,
+            // One sendMail call — or, with large attachments, sending the draft they were uploaded to.
+            request: ({ inputs, steps }) => ({
+                method: 'POST',
+                url: expr`'/' + graphUser(account) + (${hasLarge(inputs)} ? '/messages/' + urlEncode(${steps.draft.id}) + '/send' : '/sendMail')`,
+                body: expr`${hasLarge(inputs)} ? undefined : {message: ${message(inputs)}, saveToSentItems: true}`
+            }),
             errors: ({ response }) => recipientErrors(response),
             output: () => ({ sent: true })
         }),
@@ -219,7 +290,13 @@ export default connector({
             group: 'Messages',
             inputs: composeFields,
             outputs: messageOutput,
-            request: ({ inputs }) => ({ method: 'POST', url: `${ME}/messages`, body: message(inputs) }),
+            steps: uploadSteps,
+            // Create the draft — or, with large attachments, read back the one they were uploaded to.
+            request: ({ inputs, steps }) => ({
+                method: $`${expr`${hasLarge(inputs)} ? 'GET' : 'POST'`}`,
+                url: expr`'/' + graphUser(account) + '/messages' + (${hasLarge(inputs)} ? '/' + urlEncode(${steps.draft.id}) : '')`,
+                body: expr`${hasLarge(inputs)} ? undefined : ${message(inputs)}`
+            }),
             errors: ({ response }) => recipientErrors(response),
             output: ({ response }) => expr`messageOf(${response.body})`
         }),

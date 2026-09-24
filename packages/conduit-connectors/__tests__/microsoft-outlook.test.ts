@@ -55,6 +55,15 @@ function graphStub() {
                     }
                     return new Response(null, { status: 202 });
                 }
+                case 'POST /me/messages/AAMk-draft/attachments/createUploadSession': {
+                    const item = JSON.parse(body).AttachmentItem;
+                    const session = item.name === 'second.bin' ? 's2' : 's1';
+                    return json({ uploadUrl: `https://outlook.office.com/api/v2.0/Users('u')/Messages('AAMk-draft')/AttachmentSessions('${session}')?authtoken=tok-${session}`, nextExpectedRanges: ['0-'] }, 201);
+                }
+                case 'POST /me/messages/AAMk-draft/send':
+                    return new Response(null, { status: 202 });
+                case 'GET /me/messages/AAMk-draft':
+                    return json({ ...m1, id: 'AAMk-draft', isDraft: true, subject: 'Big', hasAttachments: true, flag: { flagStatus: 'notFlagged' } });
                 case 'POST /me/messages':
                     return json({ ...m1, id: 'AAMk-draft', isDraft: true, subject: JSON.parse(body).subject, flag: { flagStatus: 'notFlagged' } }, 201);
                 case 'POST /me/messages/AAMk-m1/reply':
@@ -95,6 +104,24 @@ function graphStub() {
             return undefined;
         }
     });
+}
+
+/**
+ * Graph's upload-session host: takes byte ranges with no Authorization
+ * header (the URL carries its own token) and records them.
+ */
+function withUploads(stub: ReturnType<typeof graphStub>) {
+    const parts: { session: string; range: string | null; auth: string | null; bytes: Buffer }[] = [];
+    const http: typeof stub.http = async (request) => {
+        const url = new URL(request.url);
+        if (url.host !== 'outlook.office.com') return stub.http(request);
+        const session = /AttachmentSessions\('(\w+)'\)/.exec(decodeURIComponent(url.pathname))?.[1] ?? '?';
+        parts.push({ session, range: request.headers.get('content-range'), auth: request.headers.get('authorization'), bytes: Buffer.from(await request.arrayBuffer()) });
+        const total = Number(request.headers.get('content-range')?.split('/')[1]);
+        const end = Number(request.headers.get('content-range')?.split(/[-/]/)[1]);
+        return end + 1 === total ? new Response(null, { status: 201 }) : json({ nextExpectedRanges: [`${end + 1}-`] });
+    };
+    return { ...stub, http, parts };
 }
 
 async function setup() {
@@ -248,6 +275,70 @@ describe('Microsoft Outlook: sending', () => {
 
         const err = await conduit.execute({ connector: 'microsoft-outlook', operation: 'reply-to-message', account, inputs: { messageId: 'missing', body: 'x' } }).catch((e: unknown) => e);
         expect(err).toMatchObject({ kind: 'notFound', issues: [{ path: 'inputs.messageId', code: 'remote' }] });
+    });
+});
+
+describe('Microsoft Outlook: large attachments', () => {
+    const big = Buffer.alloc(7_000_000, 7);
+    const second = Buffer.alloc(3_100_000, 9);
+    const file = (filename: string, bytes: Buffer, contentType = 'application/octet-stream') => ({ filename, contentType, base64: bytes.toString('base64') });
+
+    async function setupUploads() {
+        const stub = withUploads(graphStub());
+        return { ...(await connect('microsoft-outlook', stub.http)), seen: stub.seen, parts: stub.parts };
+    }
+
+    it('keeps small attachments inline, in one sendMail call', async () => {
+        const { conduit, account, seen, parts } = await setupUploads();
+        await conduit.execute({ connector: 'microsoft-outlook', operation: 'send-email', account, inputs: { to: ['ada@example.com'], subject: 's', body: 'b', attachments: [file('small.txt', Buffer.from('hi'), 'text/plain')] } });
+        expect(seen.map((s) => `${s.method} ${s.url.pathname}`).filter((r) => !r.includes('token') && !r.endsWith('/me'))).toEqual(['POST /v1.0/me/sendMail']);
+        expect(parts).toEqual([]);
+    });
+
+    it('uploads large ones through sessions, in ranges, without credentials, then sends the draft', async () => {
+        const { conduit, account, seen, parts } = await setupUploads();
+        const { output } = await conduit.execute({
+            connector: 'microsoft-outlook',
+            operation: 'send-email',
+            account,
+            inputs: { to: ['ada@example.com'], subject: 'Big', body: 'see attached', attachments: [file('small.txt', Buffer.from('hi'), 'text/plain'), file('big.bin', big), file('second.bin', second)] }
+        });
+        expect(output).toEqual({ sent: true });
+
+        // The draft carries only the inline attachment.
+        const draft = JSON.parse(last(seen, 'POST', /\/me\/messages$/).body);
+        expect(draft.attachments.map((a: { name: string }) => a.name)).toEqual(['small.txt']);
+        expect(draft).toMatchObject({ subject: 'Big', toRecipients: [{ emailAddress: { address: 'ada@example.com' } }] });
+
+        const sessions = seen.filter((s) => s.url.pathname.endsWith('/createUploadSession')).map((s) => JSON.parse(s.body).AttachmentItem);
+        expect(sessions).toEqual([
+            { attachmentType: 'file', name: 'big.bin', size: 7_000_000, contentType: 'application/octet-stream' },
+            { attachmentType: 'file', name: 'second.bin', size: 3_100_000, contentType: 'application/octet-stream' }
+        ]);
+
+        expect(parts.map((p) => [p.session, p.range])).toEqual([
+            ['s1', 'bytes 0-2949119/7000000'],
+            ['s1', 'bytes 2949120-5898239/7000000'],
+            ['s1', 'bytes 5898240-6999999/7000000'],
+            ['s2', 'bytes 0-2949119/3100000'],
+            ['s2', 'bytes 2949120-3099999/3100000']
+        ]);
+        expect(parts.every((p) => p.auth === null)).toBe(true);
+        expect(Buffer.concat(parts.filter((p) => p.session === 's1').map((p) => p.bytes)).equals(big)).toBe(true);
+        expect(Buffer.concat(parts.filter((p) => p.session === 's2').map((p) => p.bytes)).equals(second)).toBe(true);
+
+        const send = last(seen, 'POST', /\/send$/);
+        expect(send.url.pathname).toBe('/v1.0/me/messages/AAMk-draft/send');
+        expect(send.body).toBe('');
+        expect(seen.some((s) => s.url.pathname.endsWith('/sendMail'))).toBe(false);
+    });
+
+    it('creates a draft with large attachments and returns it', async () => {
+        const { conduit, account, seen, parts } = await setupUploads();
+        const { output } = await conduit.execute({ connector: 'microsoft-outlook', operation: 'create-draft', account, inputs: { subject: 'Big', body: 'b', attachments: [file('big.bin', big)] } });
+        expect(parts).toHaveLength(3);
+        expect(last(seen, 'GET', /AAMk-draft$/)).toBeDefined();
+        expect(output).toMatchObject({ id: 'AAMk-draft', isDraft: true, hasAttachments: true });
     });
 });
 
