@@ -242,9 +242,10 @@ export function object<F extends Fields>(fields: F, options?: CommonOptions<Infe
     return makeField(p, true);
 }
 
-/** Free-form JSON (the `json` widget). */
-export function json<T = unknown>(options?: CommonOptions<T>): Field<T> {
-    return makeField(common(options, { type: 'object', 'x-widget': 'json' }), true);
+/** Free-form JSON (the `json` widget): an object, or with `type: 'array'` a list. */
+export function json<T = unknown>(options?: CommonOptions<T> & { type?: 'object' | 'array' }): Field<T> {
+    const { type = 'object', ...rest } = options ?? {};
+    return makeField(common(rest as CommonOptions<T>, { type, 'x-widget': 'json' }), true);
 }
 
 function compileFields(fields: Fields): { properties: Record<string, InputProperty>; required: string[] } {

@@ -48,7 +48,7 @@ as options. Fields are **required unless** `.optional()`.
 | `number()`, `integer()`, `boolean()` | |
 | `array(item)`, `emails()` | arrays |
 | `file()`, `files()` | `{ filename, contentType?, base64 }` (`file` widget) |
-| `object({...})`, `json()` | objects |
+| `object({...})`, `json()` | objects; `json({ type: 'array' })` is free-form JSON holding a list |
 
 The shared options are:
 - labels and help: `title`, `description`, `placeholder`;

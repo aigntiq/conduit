@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { createConduit, memorySource, validateConnector, type CatalogOf, type ConnectorSpec } from '@aigntiq/conduit';
+import { buildForm, createConduit, memorySource, prepareForm, validateConnector, validateForm, type CatalogOf, type ConnectorSpec } from '@aigntiq/conduit';
 import {
     $,
     action,
@@ -12,6 +12,7 @@ import {
     file,
     files,
     integer,
+    json,
     object,
     ref,
     rules,
@@ -85,6 +86,30 @@ describe('fields', () => {
         expect(inputs.properties.address).toEqual({ type: 'object', properties: { city: { type: 'string' }, zip: { type: 'string' } }, required: ['city'] });
         expect(inputs['x-rules']).toEqual([{ check: '{{ !isEmpty(inputs.to) || !isEmpty(inputs.cc) }}', message: 'Fill in at least one of: to, cc', fields: ['to', 'cc'] }]);
         expect(built.spec).toMatchObject({ group: 'Messages', destructive: false, readOnly: false, request: { body: { to: '{{inputs.to}}', when: '{{inputs.sendAt}}' } } });
+    });
+});
+
+describe('json fields', () => {
+    const op = action('write', {
+        label: 'Write',
+        inputs: {
+            settings: json<Record<string, unknown>>().optional(),
+            rows: json<unknown[]>({ type: 'array', title: 'Rows' })
+        },
+        request: { method: 'POST', url: '/write' }
+    });
+
+    it('hold an object by default, or a list', () => {
+        expect(op.spec.inputs!.properties.settings).toEqual({ type: 'object', 'x-widget': 'json' });
+        expect(op.spec.inputs!.properties.rows).toEqual({ type: 'array', title: 'Rows', 'x-widget': 'json' });
+    });
+
+    it('take a list of mixed rows, and wrap a single row or parse JSON text as a list', async () => {
+        const model = buildForm(op.spec.inputs!);
+        expect(model.groups[0]!.fields.map((f) => `${f.name}:${f.widget}`)).toEqual(['settings:json', 'rows:json']);
+        expect(await validateForm(model, { rows: [['Ada', 36], { Name: 'Grace' }] })).toEqual([]);
+        expect((await prepareForm(model, { rows: { Name: 'Grace' } })).value.rows).toEqual([{ Name: 'Grace' }]);
+        expect((await prepareForm(model, { rows: '[["Ada", 36]]' })).value.rows).toEqual([['Ada', 36]]);
     });
 });
 
