@@ -16,7 +16,7 @@ The connected account is identified by its email address.
 
 ## Contacts
 
-Contacts come back flat: `{ id, resourceName, name, givenName, familyName,
+Contacts come back flat: `{ id, resourceName, etag, name, givenName, familyName,
 emails, phones, organization, jobTitle, address, birthday, notes, groups,
 photo }`. `id` is the short id (`c123…`); every operation takes either that
 or the resource name (`people/c123…`). A birthday is `1990-05-04`, or

@@ -31,7 +31,7 @@ import { googleOAuth, googleRetry, googleSetup } from '../_shared/google';
 const SCOPES = ['https://www.googleapis.com/auth/contacts'];
 
 /** Everything `contactOf` reads. */
-const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata';
+const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos';
 
 // ── Shared pieces ───────────────────────────────────────────────────────
 

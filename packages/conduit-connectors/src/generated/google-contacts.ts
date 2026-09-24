@@ -324,8 +324,8 @@ const connector = {
             "request": {
                 "query": {
                     "query": "{{isEmpty(inputs.query) ? undefined : inputs.query}}",
-                    "readMask": "{{isEmpty(inputs.query) ? undefined : \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata\"}}",
-                    "personFields": "{{isEmpty(inputs.query) ? \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata\" : undefined}}",
+                    "readMask": "{{isEmpty(inputs.query) ? undefined : \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos\"}}",
+                    "personFields": "{{isEmpty(inputs.query) ? \"names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos\" : undefined}}",
                     "sortOrder": "{{isEmpty(inputs.query) ? 'FIRST_NAME_ASCENDING' : undefined}}",
                     "pageSize": "{{isEmpty(inputs.query) ? 1000 : 30}}"
                 },
@@ -435,7 +435,7 @@ const connector = {
             "output": "{{contactOf(response.body)}}",
             "request": {
                 "query": {
-                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata"
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
                 },
                 "url": "/people/{{urlEncode(replace(inputs.id, 'people/', ''))}}"
             }
@@ -607,7 +607,7 @@ const connector = {
             "request": {
                 "method": "POST",
                 "query": {
-                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata"
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
                 },
                 "body": {
                     "names": "{{inputs.givenName == undefined && inputs.familyName == undefined ? undefined : [compactObject({givenName: inputs.givenName, familyName: inputs.familyName})]}}",
@@ -818,7 +818,7 @@ const connector = {
                 "method": "PATCH",
                 "query": {
                     "updatePersonFields": "{{compact([ inputs.givenName != undefined || inputs.familyName != undefined ? 'names' : undefined, inputs.emails != undefined ? 'emailAddresses' : undefined, inputs.phones != undefined ? 'phoneNumbers' : undefined, inputs.organization != undefined || inputs.jobTitle != undefined ? 'organizations' : undefined, inputs.address != undefined ? 'addresses' : undefined, inputs.birthday != undefined ? 'birthdays' : undefined, inputs.notes != undefined ? 'biographies' : undefined ]) | join(',')}}",
-                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata"
+                    "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos"
                 },
                 "body": {
                     "etag": "{{steps.current.etag}}",
@@ -1058,7 +1058,7 @@ const connector = {
                 "type": "poll",
                 "request": {
                     "query": {
-                        "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos,metadata",
+                        "personFields": "names,emailAddresses,phoneNumbers,organizations,addresses,biographies,birthdays,memberships,photos",
                         "sortOrder": "LAST_MODIFIED_DESCENDING",
                         "pageSize": 50
                     },
