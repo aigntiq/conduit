@@ -47,6 +47,7 @@ one connector (earlier sources win), for example to pin an older version.
 | [Microsoft Outlook](connectors/microsoft-outlook/README.md) | Microsoft OAuth | send email, create draft, reply (all), forward, search messages, get message, download attachment, folders (options), move message, mark/flag/categorize, delete message, new email (webhook trigger) |
 | [Microsoft Calendar](connectors/microsoft-calendar/README.md) | Microsoft OAuth | calendars (options), search events, get event, create event (attendees, Teams meeting), update event, delete event, respond to invitation, find meeting times, free/busy, event created/changed/deleted (webhook trigger) |
 | [Google Contacts](connectors/google-contacts/README.md) | Google OAuth | search contacts, get contact, create contact, update contact, delete contact, contact groups (options), add/remove group members, new contact (trigger) |
+| [Google Sheets](connectors/google-sheets/README.md) | Google OAuth | spreadsheets (options), sheets (options), get spreadsheet, create spreadsheet, add sheet, get rows, append rows, update cells, clear cells, new row (trigger) |
 
 ## Versioning
 
@@ -72,6 +73,8 @@ directory without an `index.ts` is never built as a connector) — for example
 `graphPaging()` and `graphSubscription()` (a Graph change-notification
 webhook trigger) for every Microsoft 365 one. Replay tests build their scripted
 provider with `scriptedHttp()` and connect an account with `connect()` from
-`__tests__/support/stub.ts`.
+`__tests__/support/stub.ts`. `renderPoll()` from `__tests__/support/poll.ts`
+renders one step of a poll trigger (request, items, cursor, dedupe keys and
+events) against a canned answer, since the trigger runtime isn't released yet.
 
 MIT © Andreas Ekdahl

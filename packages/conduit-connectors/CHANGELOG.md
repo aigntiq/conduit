@@ -15,6 +15,7 @@ any connector a major. Each connector also carries its own `version`.
 - **Microsoft Outlook** 1.0.0: send, draft, reply or reply all, forward, search (text, folder, unread), get message (HTML or text body, attachment list), download attachment, folders (options), move, mark/flag/categorize, delete, and a new-email webhook trigger over Graph change notifications (runtime pending). Sign-in through the Microsoft identity platform, with the tenant in `config.tenant` (default `common`).
 - **Microsoft Calendar** 1.0.0: calendars (options), search events (a calendar view, recurring events expanded), get, create (all-day or timed, required and optional attendees, Teams meeting, reminder), update (only the fields given), delete, respond to invitations, find meeting times, free/busy, and an event-changed webhook trigger (runtime pending). Times come back in UTC.
 - **Google Contacts** 1.0.0: search (by text, or everyone, paged), get, create, update (only the fields given, guarded by the contact's etag), delete, contact groups (options), add/remove group members, and a new-contact poll trigger (runtime pending).
+- **Google Sheets** 1.0.0: spreadsheets and sheets (options), get and create spreadsheet, add sheet, get rows (as header-keyed objects or lists), append rows (lists, or objects matched to the header row), update and clear cells, and a new-row poll trigger (runtime pending).
 
 ## [0.1.1] - 2026-09-24
 
