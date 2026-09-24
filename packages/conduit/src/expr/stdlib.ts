@@ -54,9 +54,10 @@ function byteLength(v: unknown): number {
 /** The longest base64 slice `chunks` hands out: the evaluator's string cap. */
 const MAX_CHUNK_CHARS = 5_000_000;
 
-function chunks(ctx: CallContext, v: unknown, size: unknown): { base64: string; start: number; end: number; total: number }[] {
+function chunks(ctx: CallContext, v: unknown, sizeArg: unknown): { base64: string; start: number; end: number; total: number }[] {
+    const size = asNumber(ctx, sizeArg);
     // Whole base64 quanta (3 bytes = 4 characters), so every slice decodes on its own.
-    if (typeof size !== 'number' || !Number.isInteger(size) || size <= 0 || size % 3 !== 0) {
+    if (!Number.isInteger(size) || size <= 0 || size % 3 !== 0) {
         return ctx.fail(`chunks: size must be a positive multiple of 3`);
     }
     const chars = (size / 3) * 4;

@@ -222,6 +222,8 @@ describe('chunks and byteLength (splitting a file into byte ranges)', () => {
         ]);
         expect(Buffer.concat(out.map((c) => Buffer.from(c.base64, 'base64')))).toEqual(Buffer.from(bytes));
         expect(await run('chunks(b, 30) | length', { b: b64 })).toBe(1);
+        // A numeric string (from inputs or config) counts, as elsewhere in the stdlib.
+        expect(await run("chunks(b, '3') | length", { b: b64 })).toBe(4);
         expect(await run('chunks(b, 3) | length', { b: bytes })).toBe(4);
         expect(await run('chunks("", 3)')).toEqual([]);
         const wrapped = (await run('chunks(b, 3)', { b: ` ${b64.replace(/(.{4})/g, '$1\n')} ` })) as { base64: string; start: number; end: number }[];
@@ -231,5 +233,6 @@ describe('chunks and byteLength (splitting a file into byte ranges)', () => {
     it('chunks refuses a size that would cut base64 mid-character', async () => {
         await expect(run('chunks(b, 4)', { b: b64 })).rejects.toThrow(/multiple of 3/);
         await expect(run('chunks(b, 0)', { b: b64 })).rejects.toThrow(/multiple of 3/);
+        await expect(run("chunks(b, 'big')", { b: b64 })).rejects.toThrow(/number/);
     });
 });
