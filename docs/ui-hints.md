@@ -53,6 +53,7 @@ standard functions.
 |---|---|---|
 | operation | `group` | catalog grouping ("Messages", "Labels") |
 | operation | `destructive` | deletes or irreversibly changes data: UIs ask for confirmation |
+| operation | `readOnly` | only reads, no side effects: hosts may run it without asking. Not with `destructive` |
 | operation | `helpUrl` | |
 | auth method | `setup` | markdown instructions: register an app, the redirect URI, scopes |
 | auth method | `helpUrl` | |

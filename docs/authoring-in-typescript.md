@@ -84,7 +84,7 @@ The builder functions (`request`, `output`, `errors`, `steps`, `paginate`,
 ## Operations
 
 - **Operation types:** `action`, `search` (with `paginate: paging.cursor/offset/page/nextUrl/linkHeader(...)`), `options`, `pollTrigger`, `webhookTrigger`.
-- **Shared fields:** each takes `label`, `description`, `group`, `destructive`, `helpUrl`, `hidden`, `tags`, `auth`, `inputs`, `rules`, `outputs`, `steps`, `output`, `errors` and `retry`.
+- **Shared fields:** each takes `label`, `description`, `group`, `destructive`, `readOnly`, `helpUrl`, `hidden`, `tags`, `auth`, `inputs`, `rules`, `outputs`, `steps`, `output`, `errors` and `retry`.
 - **Auth:** `auth.oauth2`, `auth.apiKey`, `auth.basic`, `auth.bearer`, `auth.jwt`, `auth.custom`. Their definitions can be a function of the scope.
 
 ## Typed `execute`

@@ -23,3 +23,4 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 - The `email` format accepts `Name <address>` as well as a bare address.
 - Typed `execute`: `createConduit<CatalogOf<typeof connector>>()` checks connector and operation ids, inputs and outputs.
 - Error rules can attribute a failure to an input (`field`); the HTTP surface answers 422 with the issues.
+- `readOnly` on operations: the operation only reads, so a host may run it without asking. Validation rejects an operation that is both `readOnly` and `destructive` (`operation_read_only_destructive`); the builder accepts it.

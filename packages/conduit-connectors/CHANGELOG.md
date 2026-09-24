@@ -12,3 +12,4 @@ any connector a major. Each connector also carries its own `version`.
 
 - The package: `connectorCatalog({ include })`, per-connector subpaths, plain JSON under `json/`, and a `Connectors` type for typed `execute`.
 - **Gmail** 1.0.0: send, draft, reply, search, get message/conversation/attachment, labels (options, add/remove), trash, and a new-email poll trigger (runtime pending).
+- Gmail marks its pure reads `readOnly`: `search-messages`, `get-message`, `get-thread`, `get-attachment`, `list-labels` and the `new-email` trigger.

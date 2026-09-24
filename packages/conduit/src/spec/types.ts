@@ -412,6 +412,11 @@ interface OperationBase {
     group?: string;
     /** Deletes or irreversibly changes data — UIs ask for confirmation. */
     destructive?: boolean;
+    /**
+     * Has no side effects: it only reads. Hosts may run it without asking.
+     * Absent means unknown, not "writes". Cannot be combined with `destructive`.
+     */
+    readOnly?: boolean;
     helpUrl?: string;
 }
 
