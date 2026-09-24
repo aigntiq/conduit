@@ -242,7 +242,7 @@ export default connector({
                 query: {
                     mimeType: expr`${steps.meta.google} ? exportMime(${inputs.exportAs}) : undefined`,
                     alt: expr`${steps.meta.google} ? undefined : 'media'`,
-                    supportsAllDrives: expr`${steps.meta.google} ? undefined : true`
+                    ...allDrives
                 },
                 responseType: 'binary'
             }),
@@ -475,7 +475,7 @@ export default connector({
                 url: '/files',
                 query: {
                     q: expr`compact([
-                        'createdTime > ' + quote(default(${state.cursor}, now())),
+                        'createdTime >= ' + quote(default(${state.cursor}, now())),
                         'mimeType != ' + quote(${FOLDER}),
                         'trashed = false',
                         isEmpty(${inputs.folderId}) ? undefined : quote(${inputs.folderId}) + ' in parents'
@@ -488,6 +488,8 @@ export default connector({
                 }
             }),
             items: ({ response }) => expr`default(${response.body.files}, [])`,
+            // Inclusive (>=): files sharing the newest createdTime aren't skipped;
+            // the repeat is dropped by dedupeKey.
             cursor: ({ response, state }) => expr`default(last(default(${response.body.files}, []))?.createdTime, ${state.cursor})`,
             dedupeKey: ({ item }) => item.id,
             event: ({ item }) => expr`fileOf(${item})`

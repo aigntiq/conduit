@@ -45,7 +45,7 @@ second call fails, an empty file with that name is left behind.
 | `create-folder` | action | |
 | `update-file` | action | rename, move to another folder, description, star; only the fields given |
 | `copy-file` | action | optionally renamed, into another folder |
-| `share-file` | action | a person or group (with an optional email), a domain, or anyone with the link; as viewer, commenter or editor |
+| `share-file` | action | a person or group (by email address, required for them; optionally notified with a message), a domain, or anyone with the link; as viewer, commenter or editor |
 | `trash-file` | action | **destructive**. Moves the file, or the folder and everything in it, to the trash (Drive deletes after 30 days) |
 | `list-folders` | options | **read-only**. My Drive first, then folders by name; searchable |
 | `new-file` | trigger (poll) | **read-only**. Files created after the trigger is turned on, in one folder or anywhere, checked every 2 minutes. The trigger is defined, but the trigger runtime is not released yet |

@@ -465,7 +465,7 @@
                 "query": {
                     "mimeType": "{{steps.meta.google ? exportMime(inputs.exportAs) : undefined}}",
                     "alt": "{{steps.meta.google ? undefined : 'media'}}",
-                    "supportsAllDrives": "{{steps.meta.google ? undefined : true}}"
+                    "supportsAllDrives": true
                 },
                 "responseType": "binary",
                 "url": "/files/{{urlEncode(inputs.fileId)}}{{steps.meta.google ? '/export' : ''}}"
@@ -1380,7 +1380,7 @@
                 "type": "poll",
                 "request": {
                     "query": {
-                        "q": "{{compact([ 'createdTime > ' + quote(default(state.cursor, now())), 'mimeType != ' + quote(\"application/vnd.google-apps.folder\"), 'trashed = false', isEmpty(inputs.folderId) ? undefined : quote(inputs.folderId) + ' in parents' ]) | join(' and ')}}",
+                        "q": "{{compact([ 'createdTime >= ' + quote(default(state.cursor, now())), 'mimeType != ' + quote(\"application/vnd.google-apps.folder\"), 'trashed = false', isEmpty(inputs.folderId) ? undefined : quote(inputs.folderId) + ' in parents' ]) | join(' and ')}}",
                         "fields": "files(id,name,mimeType,parents,size,createdTime,modifiedTime,webViewLink,starred,trashed,description,owners(emailAddress))",
                         "orderBy": "createdTime",
                         "pageSize": 100,

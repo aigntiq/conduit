@@ -162,9 +162,10 @@ describe('Google Drive: downloading', () => {
         expect(Object.fromEntries(seen.at(-1)!.url.searchParams)).toEqual({ alt: 'media', supportsAllDrives: 'true' });
     });
 
-    it('exports a Google Doc, PDF by default, adding the extension', async () => {
-        const { conduit, account } = await setup();
+    it('exports a Google Doc, PDF by default, adding the extension, from shared drives too', async () => {
+        const { conduit, account, seen } = await setup();
         const pdf = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'd1' } });
+        expect(Object.fromEntries(last(seen, 'GET', /\/export$/).url.searchParams)).toEqual({ mimeType: 'application/pdf', supportsAllDrives: 'true' });
         expect(pdf.output).toMatchObject({ filename: 'Plan.pdf', contentType: 'application/pdf' });
         expect(Buffer.from(pdf.output.base64, 'base64').toString()).toBe('exported as application/pdf');
         const docx = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'd1', exportAs: 'docx' } });
