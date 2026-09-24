@@ -151,6 +151,12 @@ describe('Google Calendar: reading events', () => {
         expectTypeOf(output[0]!.allDay).toEqualTypeOf<boolean>();
     });
 
+    it('reads as many pages as the caller allows', async () => {
+        const { conduit, account } = await setup();
+        const { output, pages } = await conduit.execute({ connector: 'google-calendar', operation: 'search-events', account, paging: { maxPages: 1 } });
+        expect([pages, output.map((e) => e.id)]).toEqual([1, ['ev1']]);
+    });
+
     it('reports a missing calendar or event on the field', async () => {
         const { conduit, account } = await setup();
         const search = await conduit.execute({ connector: 'google-calendar', operation: 'search-events', account, inputs: { calendarId: 'missing@example.com' } }).catch((e: unknown) => e);

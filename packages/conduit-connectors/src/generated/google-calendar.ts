@@ -15,7 +15,6 @@ export type Operations = {
             to?: string;
             query?: string;
             includeCancelled?: boolean;
-            maxPages?: number;
         };
         output: Array<{
             id: string;
@@ -381,15 +380,6 @@ const connector = {
                         "title": "Include cancelled events",
                         "default": false,
                         "x-advanced": true
-                    },
-                    "maxPages": {
-                        "type": "integer",
-                        "title": "Pages to read",
-                        "description": "Up to 250 events per page.",
-                        "default": 4,
-                        "x-advanced": true,
-                        "minimum": 1,
-                        "maximum": 40
                     }
                 }
             },

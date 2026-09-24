@@ -15,7 +15,6 @@ import {
     datetime,
     emails,
     expr,
-    integer,
     object,
     options,
     paging,
@@ -187,8 +186,7 @@ export default connector({
                 from: datetime({ title: 'From', description: 'Events ending after this time. Default: now.' }).optional(),
                 to: datetime({ title: 'To', description: 'Events starting before this time.' }).optional(),
                 query: string({ title: 'Search', description: 'Free text matched against title, description, location and attendees.' }).optional(),
-                includeCancelled: boolean({ title: 'Include cancelled events', default: false, advanced: true }).optional(),
-                maxPages: integer({ title: 'Pages to read', description: 'Up to 250 events per page.', default: 4, minimum: 1, maximum: 40, advanced: true }).optional()
+                includeCancelled: boolean({ title: 'Include cancelled events', default: false, advanced: true }).optional()
             },
             outputs: array(eventOutput),
             request: ({ inputs }) => ({

@@ -32,7 +32,7 @@ calendar picker loads its choices from `list-calendars`.
 | Operation | Kind | Notes |
 |---|---|---|
 | `list-calendars` | options | **read-only**: the calendars you can edit (or all of them), primary first |
-| `search-events` | search | **read-only**: a time range (default: from now), free-text search, cancelled events optional. Recurring events are expanded into their occurrences, ordered by start; up to 40 pages of 250 |
+| `search-events` | search | **read-only**: a time range (default: from now), free-text search, cancelled events optional. Recurring events are expanded into their occurrences, ordered by start. Pages of 250, at most 40 (lower it with `execute({ paging: { maxPages } })`) |
 | `get-event` | action | **read-only** |
 | `create-event` | action | title, start/end or all-day, time zone, location, description, guests, a Google Meet link, and `RRULE` recurrence. `sendUpdates` chooses who is notified (default: everyone) |
 | `quick-add-event` | action | an event from a sentence, like "Lunch with Ada tomorrow 12:30" |
