@@ -11,6 +11,7 @@ any connector a major. Each connector also carries its own `version`.
 ### Added
 
 - **Google Calendar** 1.0.0: calendars (options), search events (expanding recurring events), get, create (all-day or timed, guests, Google Meet link, recurrence), quick add, update (only the fields given), delete, busy times, and an event-changed poll trigger (runtime pending).
+- **Google Drive** 1.0.0: search (plain fields, quoted into Drive's query language, or a raw query), get, download (a file value; Docs, Sheets and Slides exported), upload, create folder, rename/move/star, copy, share, trash, folders (options), and a new-file poll trigger (runtime pending). Shared drives included.
 
 ## [0.1.1] - 2026-09-24
 

@@ -24,6 +24,12 @@
             "production": "./dist/google-calendar.prod.js",
             "import": "./dist/google-calendar.js"
         },
+        "./google-drive": {
+            "types": "./dist/generated/google-drive.d.ts",
+            "development": "./dist/google-drive.js",
+            "production": "./dist/google-drive.prod.js",
+            "import": "./dist/google-drive.js"
+        },
         "./json/*": "./json/*",
         "./package.json": "./package.json"
     },
@@ -44,7 +50,8 @@
         "connectors",
         "integrations",
         "gmail",
-        "google-calendar"
+        "google-calendar",
+        "google-drive"
     ],
     "author": "Andreas Ekdahl",
     "license": "MIT",
