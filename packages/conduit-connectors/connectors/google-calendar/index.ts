@@ -60,7 +60,7 @@ function eventsUrl(calendarId: unknown, eventId?: unknown) {
 }
 
 /** A Google `start`/`end` object — see the `timeOf` function below. */
-function timeOf(value: unknown, allDay: Ref, timeZone: Ref) {
+function timeOf(value: unknown, allDay: unknown, timeZone: Ref) {
     return expr`timeOf(${value}, ${allDay}, ${timeZone})`;
 }
 
@@ -118,8 +118,8 @@ export default connector({
     functions: {
         timeOf: {
             params: ['value', 'allDay', 'timeZone'],
-            description: 'A Google start/end object: `date` for all-day events, `dateTime` (with an optional zone) otherwise.',
-            body: 'value == undefined ? undefined : (allDay ? {date: substring(value, 0, 10)} : compactObject({dateTime: value, timeZone}))'
+            description: 'A Google start/end object: `date` for all-day events and plain dates, `dateTime` (with an optional zone) otherwise.',
+            body: 'value == undefined ? undefined : (allDay || length(value) == 10 ? {date: substring(value, 0, 10)} : compactObject({dateTime: value, timeZone}))'
         },
         eventOf: {
             params: ['e'],
@@ -250,10 +250,10 @@ export default connector({
                     location: inputs.location,
                     description: inputs.description,
                     start: timeOf(inputs.start, inputs.allDay, inputs.timeZone),
-                    // All-day: the day after the start's own date (not its UTC date).
+                    // All-day (or a plain-date start): the day after the start's own date, not its UTC date.
                     end: timeOf(
-                        expr`default(${inputs.end}, ${inputs.allDay} ? addTime(substring(${inputs.start}, 0, 10), 1, 'd') : addTime(${inputs.start}, 1, 'h'))`,
-                        inputs.allDay,
+                        expr`default(${inputs.end}, ${inputs.allDay} || length(${inputs.start}) == 10 ? addTime(substring(${inputs.start}, 0, 10), 1, 'd') : addTime(${inputs.start}, 1, 'h'))`,
+                        expr`${inputs.allDay} || length(${inputs.start}) == 10`,
                         inputs.timeZone
                     ),
                     attendees: guests(inputs.attendees),

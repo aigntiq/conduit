@@ -220,6 +220,15 @@ describe('Google Calendar: writing events', () => {
         expect(seen.length).toBe(before);
     });
 
+    it('treats a plain date as all-day even without allDay, never sending it as a date-time', async () => {
+        const { conduit, account, seen } = await setup();
+        await conduit.execute({ connector: 'google-calendar', operation: 'create-event', account, inputs: { summary: 'x', start: '2026-05-06' } });
+        const body = JSON.parse(last(seen, 'POST', /\/events$/).body);
+        expect([body.start, body.end]).toEqual([{ date: '2026-05-06' }, { date: '2026-05-07' }]);
+        await conduit.execute({ connector: 'google-calendar', operation: 'update-event', account, inputs: { eventId: 'ev1', end: '2026-05-08' } });
+        expect(JSON.parse(last(seen, 'PATCH', /ev1$/).body)).toEqual({ end: { date: '2026-05-08' } });
+    });
+
     it('puts an end before the start on the end field', async () => {
         const { conduit, account } = await setup();
         const err = await conduit

@@ -23,8 +23,9 @@ strings: a date-time for timed events, and a date for all-day events with
 on `2026-05-02`. `attendees` lists `{ email, name, response, organizer }`, and
 `meetLink` is the Google Meet link, if the event has one.
 
-When creating an event, `end` defaults to one hour after `start`, or to the
-next day for an all-day event. `calendarId` defaults to `primary`, and every
+A plain date (`2026-05-06`) always makes an all-day event, even without
+`allDay`. When creating an event, `end` defaults to one hour after `start`,
+or to the next day for an all-day event. `calendarId` defaults to `primary`, and every
 calendar picker loads its choices from `list-calendars`.
 
 ## Operations
