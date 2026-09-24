@@ -4,7 +4,8 @@
  * the fixture connectors. Tests drive Conduit against it end to end, over
  * real sockets.
  *
- * Alias-only inside this workspace (never published).
+ * Workspace-only (`@aigntiq/conduit/test/mock-provider`, an alias in
+ * `tsconfig.json` and `vitest.config.ts`); never published — it needs Node.
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createHash, createHmac, randomBytes } from 'node:crypto';

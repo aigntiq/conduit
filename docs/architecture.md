@@ -38,7 +38,7 @@ These are what reviews enforce.
 
 1. **One request executor.** `performRequest` sends every outbound call: operations, steps, pages, token exchanges, refreshes, identity lookups, tests and revocations. Retries, the host guard, redirects, middleware, timeouts, classification and tracing therefore behave the same everywhere. Never add a second path that builds or sends a request.
 2. **One credential path.** Only the account service (`src/runtime/accounts.ts`) opens, seals, stores or renews credentials. Everything that needs a usable credential calls `ensureFresh`.
-3. **Zero runtime dependencies, no Node in core.** Core uses `fetch` and WebCrypto only. `node:` imports are allowed only under `src/node` and `src/testing`, and `verify:pack` fails if one leaks into a runtime-neutral entry.
+3. **Zero runtime dependencies, no Node in core.** Core uses `fetch` and WebCrypto only. `node:` imports are allowed only under `src/node` (test helpers such as the mock provider live outside `src`, in `test/`), and `verify:pack` fails if one leaks into a runtime-neutral entry.
 4. **The host owns identity.** Conduit has no user model. An account's `owner` is an opaque string, and `resolveOwner` is the HTTP surface's only authentication hook. A mismatched owner reads exactly like a missing account, so there is no existence oracle.
 5. **Specs are data.** Expressions are parsed, never evaluated as JavaScript. Member access reads only own properties, calls are limited to named registry functions, and every run has a step budget. Connector functions cannot recurse; validation rejects cycles.
 
@@ -74,9 +74,11 @@ Multi-process deployments need a shared `AccountStore` and `TransientStore`
 distributed `LockProvider` if single-flight refresh must hold across
 processes. Without one, compare-and-set still guarantees no refresh is lost:
 the loser adopts the winner's credentials. Adapter packages prove their
-behaviour with the conformance suites in `./testing`:
-`accountStoreConformance`, `transientStoreConformance` and
-`lockProviderConformance`.
+behaviour with the conformance suites published as
+`@aigntiq/conduit/testing`: `accountStoreConformance`,
+`transientStoreConformance` and `lockProviderConformance`. They are
+runner-agnostic data, registered with `registerConformance(suites, { describe, it })`
+([integrating](integrating.md#4-test-your-own-ports)).
 
 ## Plugins
 

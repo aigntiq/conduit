@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createConduit, type Conduit } from '@aigntiq/conduit';
 import { fileSource } from '@aigntiq/conduit/node';
-import { mockProvider, type MockProvider } from '@aigntiq/conduit/testing';
+import { mockProvider, type MockProvider } from '@aigntiq/conduit/test/mock-provider';
 import { createApp } from '../src/app';
 
 const FIXTURES = join(__dirname, '..', '..', '..', 'packages', 'conduit', 'test', 'fixtures', 'connectors');

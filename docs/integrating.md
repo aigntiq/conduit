@@ -145,6 +145,45 @@ do {
 } while (cursor !== undefined);
 ```
 
+## 4. Test your own ports
+
+A store, lock or transient adapter you write for `accounts`, `transient` or
+`locks` should pass the same conformance suites as the built-in ones. They
+ship as `@aigntiq/conduit/testing` and depend on no test runner: each suite is
+data — a name and named cases whose `run()` rejects with a `ConformanceError`
+on a failure — and `registerConformance` hands them to your runner's
+`describe` and `it`.
+
+```ts
+import { describe, it } from 'vitest'; // or 'node:test', or Jest/Mocha globals
+import {
+    accountStoreConformance,
+    lockProviderConformance,
+    registerConformance,
+    transientStoreConformance
+} from '@aigntiq/conduit/testing';
+
+registerConformance(
+    [
+        accountStoreConformance('pg', () => pgAccounts(freshDb())),
+        transientStoreConformance('redis', (clock) => redisTransient(redis, { now: () => clock.now })),
+        lockProviderConformance('redis', () => redisLocks(redis))
+    ],
+    { describe, it }
+);
+```
+
+| Export | |
+|---|---|
+| `accountStoreConformance(name, factory)` | CRUD, listing by owner and connector, duplicate ids rejected, compare-and-set `update`, results are copies. `factory` returns an empty store each call |
+| `transientStoreConformance(name, factory)` | take-once values that expire. `factory(clock)` gets a `{ now }` object the store must read the time from, so the suite can move it |
+| `lockProviderConformance(name, factory)` | work on one key runs one at a time and a failure releases the lock; different keys do not wait |
+| `registerConformance(suites, { describe, it })` | one `describe` per suite, one `it` per case |
+| `ConformanceSuite`, `ConformanceCase`, `ConformanceError`, `TestRegistrar` | the types |
+
+Without a runner, loop over `suite.cases` and `await c.run()`. The entry is
+runtime-neutral (no `node:` imports), so the suites also run inside a Worker.
+
 ## Runnable examples
 
 - [`examples/express`](../examples/express) — Express, with a server-side route that calls `execute`.

@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { inProcessLocks, memoryAccounts, memoryTransient, webCryptoCipher } from '@aigntiq/conduit';
-import { accountStoreConformance, lockProviderConformance, transientStoreConformance } from '@aigntiq/conduit/testing';
+import { accountStoreConformance, lockProviderConformance, registerConformance, transientStoreConformance } from '@aigntiq/conduit/testing';
 
-accountStoreConformance('memoryAccounts', () => memoryAccounts());
-transientStoreConformance('memoryTransient', (clock) => memoryTransient({ now: () => clock.now }));
-lockProviderConformance('inProcessLocks', () => inProcessLocks());
+registerConformance(
+    [
+        accountStoreConformance('memoryAccounts', () => memoryAccounts()),
+        transientStoreConformance('memoryTransient', (clock) => memoryTransient({ now: () => clock.now })),
+        lockProviderConformance('inProcessLocks', () => inProcessLocks())
+    ],
+    { describe, it }
+);
 
 describe('webCryptoCipher', () => {
     const secret = 'a-very-long-secret-used-only-for-this-test-suite';

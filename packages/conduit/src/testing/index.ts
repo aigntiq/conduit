@@ -1,6 +1,15 @@
 /**
- * `@aigntiq/conduit/testing` — alias-only inside this workspace, never
- * published: the mock provider and the port conformance suites.
+ * `@aigntiq/conduit/testing` — the port conformance suites. Runner-agnostic
+ * and runtime-neutral: suites are data, registered with the host's own
+ * `describe`/`it` through `registerConformance`.
  */
-export { mockProvider, type MockProvider, type MockProviderOptions, type RecordedRequest, type Contact } from './mock-provider';
-export { accountStoreConformance, transientStoreConformance, lockProviderConformance } from './conformance';
+export {
+    accountStoreConformance,
+    transientStoreConformance,
+    lockProviderConformance,
+    registerConformance,
+    ConformanceError,
+    type ConformanceCase,
+    type ConformanceSuite,
+    type TestRegistrar
+} from './conformance';

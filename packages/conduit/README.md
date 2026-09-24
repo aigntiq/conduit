@@ -38,6 +38,7 @@ const { output } = await conduit.execute({
 | `@aigntiq/conduit/server` | `createFetchHandler` — `Request → Response` for Hono, Bun, Deno, Workers, Next.js |
 | `@aigntiq/conduit/builder` | author connectors in TypeScript — typed inputs and templates, compiled to JSON; typed `execute` via `CatalogOf` |
 | `@aigntiq/conduit/node` | `createNodeHandler` (Express/Connect) and `fileSource` |
+| `@aigntiq/conduit/testing` | conformance suites for your own `AccountStore`, `TransientStore` and `LockProvider`, for any test runner |
 
 No runtime dependencies. Node `^20.19.0 || >=22.12.0`, or any runtime with
 `fetch` and WebCrypto.

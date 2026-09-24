@@ -20,6 +20,7 @@
       "@aigntiq/conduit/node": ["./packages/conduit/src/node/index.ts"],
       "@aigntiq/conduit/builder": ["./packages/conduit/src/builder/index.ts"],
       "@aigntiq/conduit/testing": ["./packages/conduit/src/testing/index.ts"],
+      "@aigntiq/conduit/test/mock-provider": ["./packages/conduit/test/mock-provider.ts"],
       "@aigntiq/conduit-connectors": ["./packages/conduit-connectors/src/index.ts"],
       "@aigntiq/conduit-connectors/*": ["./packages/conduit-connectors/src/generated/*.ts"]
     }
@@ -27,6 +28,7 @@
   "include": [
     "packages/*/src/**/*.ts",
     "packages/*/__tests__/**/*.ts",
+    "packages/*/test/**/*.ts",
     "packages/*/connectors/**/*.ts",
     "packages/*/scripts/**/*.ts",
     "examples/*/src/**/*.ts",

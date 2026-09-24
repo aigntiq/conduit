@@ -28,6 +28,8 @@ export default defineConfig({
             '@aigntiq/conduit/node': src('node/index.ts'),
             '@aigntiq/conduit/builder': src('builder/index.ts'),
             '@aigntiq/conduit/testing': src('testing/index.ts'),
+            // Workspace-only: the Node mock provider is not part of any published entry.
+            '@aigntiq/conduit/test/mock-provider': resolve(__dirname, 'packages/conduit/test/mock-provider.ts'),
             '@aigntiq/conduit': src('index.ts'),
             '@aigntiq/conduit-connectors/gmail': resolve(__dirname, 'packages/conduit-connectors/src/generated/gmail.ts'),
             '@aigntiq/conduit-connectors': resolve(__dirname, 'packages/conduit-connectors/src/index.ts')

@@ -35,7 +35,7 @@ const PACKAGES = ['packages/conduit', 'packages/conduit-connectors'];
 // Entries that must run on ANY WinterCG runtime — no `node:` specifier may
 // appear in their built output (or in a chunk they pull in). `./node` is the
 // one entry allowed to touch Node built-ins.
-const NEUTRAL_SUBPATHS = ['.', './expr', './schema', './oauth', './server', './builder'];
+const NEUTRAL_SUBPATHS = ['.', './expr', './schema', './oauth', './server', './builder', './testing'];
 
 const sandbox = join(tmpdir(), `aigntiq-conduit-verify-pack-${Date.now()}`);
 const tarballDir = join(sandbox, 'tarballs');
