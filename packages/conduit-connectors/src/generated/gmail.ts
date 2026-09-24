@@ -70,7 +70,6 @@ export type Operations = {
             query?: string;
             labelIds?: Array<string>;
             includeSpamTrash?: boolean;
-            maxPages?: number;
         };
         output: Array<{
             id: string;
@@ -756,15 +755,6 @@ const connector = {
                         "title": "Include spam and trash",
                         "default": false,
                         "x-advanced": true
-                    },
-                    "maxPages": {
-                        "type": "integer",
-                        "title": "Pages to read",
-                        "description": "Up to 100 messages per page.",
-                        "default": 5,
-                        "x-advanced": true,
-                        "minimum": 1,
-                        "maximum": 50
                     }
                 }
             },

@@ -29,6 +29,11 @@ describe('generated output', () => {
         expect(manifest.exports).toEqual(exportsMap(IDS));
     });
 
+    it.each(IDS)('%s declares no maxPages input (the caller sets paging.maxPages)', async (id) => {
+        const spec = ((await import(`../src/generated/${id}.ts`)) as { default: ConnectorSpec }).default;
+        for (const op of spec.operations) expect(Object.keys(op.inputs?.properties ?? {}), `${id} ${op.id}`).not.toContain('maxPages');
+    });
+
     it.each(IDS)('%s ships an icon, a README and replay tests', (id) => {
         for (const path of [`connectors/${id}/icon.svg`, `connectors/${id}/README.md`, `__tests__/${id}.test.ts`]) {
             expect(existsSync(join(ROOT, path)), path).toBe(true);
