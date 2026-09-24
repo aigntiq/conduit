@@ -58,6 +58,13 @@ Connectors are written in TypeScript with `@aigntiq/conduit/builder`, in
 `connectors/<id>/index.ts`, plus `icon.svg` and a README. They are compiled
 by `pnpm --filter @aigntiq/conduit-connectors generate`. The build refuses any
 connector with a validation diagnostic, and every connector needs replay
-tests (see `__tests__/gmail.test.ts`).
+tests (see `__tests__/gmail.test.ts`) — a test checks each one has its icon,
+README and `__tests__/<id>.test.ts`.
+
+What a family of connectors shares lives in `connectors/_shared/` (a
+directory without an `index.ts` is never built as a connector) — for example
+`googleOAuth()` for every Google connector. Replay tests build their scripted
+provider with `scriptedHttp()` and connect an account with `connect()` from
+`__tests__/support/stub.ts`.
 
 MIT © Andreas Ekdahl
