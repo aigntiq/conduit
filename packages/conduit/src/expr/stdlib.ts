@@ -39,9 +39,9 @@ function asBytes(v: unknown): Uint8Array {
     return v instanceof Uint8Array ? v : utf8(asString(v));
 }
 
-/** Base64 text as it is; bytes (a binary response body) encoded. */
+/** Base64 text without whitespace, as the decoder reads it; bytes (a binary response body) encoded. */
 function asBase64(v: unknown): string {
-    return v instanceof Uint8Array ? toBase64(v) : asString(v).trim();
+    return v instanceof Uint8Array ? toBase64(v) : asString(v).replace(/\s+/g, '');
 }
 
 function byteLength(v: unknown): number {

@@ -208,6 +208,8 @@ describe('chunks and byteLength (splitting a file into byte ranges)', () => {
         expect(await run('byteLength(b)', { b: Buffer.from(bytes).toString('base64url') })).toBe(10);
         expect(await run('byteLength(b)', { b: bytes })).toBe(10);
         expect(await run('byteLength(null)')).toBe(0);
+        // Wrapped base64 (MIME-style line breaks) counts as the decoder reads it.
+        expect(await run('byteLength(b)', { b: b64.replace(/(.{4})/g, '$1\r\n') })).toBe(10);
     });
 
     it('chunks splits into ranges of size bytes, with inclusive offsets and the total', async () => {
@@ -222,6 +224,8 @@ describe('chunks and byteLength (splitting a file into byte ranges)', () => {
         expect(await run('chunks(b, 30) | length', { b: b64 })).toBe(1);
         expect(await run('chunks(b, 3) | length', { b: bytes })).toBe(4);
         expect(await run('chunks("", 3)')).toEqual([]);
+        const wrapped = (await run('chunks(b, 3)', { b: ` ${b64.replace(/(.{4})/g, '$1\n')} ` })) as { base64: string; start: number; end: number }[];
+        expect(wrapped).toEqual(out);
     });
 
     it('chunks refuses a size that would cut base64 mid-character', async () => {
