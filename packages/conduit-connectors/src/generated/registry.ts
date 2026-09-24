@@ -23,13 +23,26 @@ export const summaries: readonly ConnectorSummary[] = [
             "calendar",
             "productivity"
         ]
+    },
+    {
+        "id": "google-drive",
+        "name": "Google Drive",
+        "version": "1.0.0",
+        "description": "Find, download, upload, organise, share and trash files in Google Drive.",
+        "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cGF0aCBkPSJNOC41IDMuNWg3bDYgMTAuNS0zLjUgNmgtMTJMMi41IDE0eiIvPjxwYXRoIGQ9Ik04LjUgMy41bDYgMTAuNWg3TTE1LjUgMy41bC05LjUgMTYuNU0yLjUgMTRoMTIiLz48L3N2Zz4K",
+        "categories": [
+            "files",
+            "storage",
+            "productivity"
+        ]
     }
 ];
 
 export const loaders = {
     "gmail": () => import('./gmail'),
-    "google-calendar": () => import('./google-calendar')
+    "google-calendar": () => import('./google-calendar'),
+    "google-drive": () => import('./google-drive')
 } satisfies Record<string, () => Promise<{ default: ConnectorSpec }>>;
 
 /** Every connector in the package — `CatalogOf<Connectors>` types `execute` for all of them. */
-export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default;
+export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-drive').default;
