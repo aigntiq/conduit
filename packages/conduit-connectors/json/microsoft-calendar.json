@@ -1000,7 +1000,7 @@
                 "body": {
                     "subject": "{{inputs.subject}}",
                     "body": "{{inputs.body == undefined ? undefined : {contentType: 'HTML', content: inputs.body}}}",
-                    "isAllDay": "{{inputs.allDay}}",
+                    "isAllDay": "{{inputs.allDay != undefined ? inputs.allDay : (length(default(inputs.start, '')) == 10 || length(default(inputs.end, '')) == 10 ? true : undefined)}}",
                     "start": "{{graphTime(inputs.start, inputs.allDay)}}",
                     "end": "{{graphTime(inputs.end, inputs.allDay)}}",
                     "location": "{{inputs.location == undefined ? undefined : {displayName: inputs.location}}}",
@@ -1416,7 +1416,7 @@
                     "body": {
                         "changeType": "created,updated,deleted",
                         "notificationUrl": "{{subscription.callbackUrl}}",
-                        "resource": "{{isEmpty(inputs.calendarId) ? 'me/events' : 'me/calendars/' + inputs.calendarId + '/events'}}",
+                        "resource": "{{isEmpty(inputs.calendarId) ? 'me/events' : 'me/calendars/' + urlEncode(inputs.calendarId) + '/events'}}",
                         "expirationDateTime": "{{addTime(now(), 4320, 'm')}}",
                         "clientState": "{{subscription.secret}}"
                     },

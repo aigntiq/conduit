@@ -260,6 +260,12 @@ describe('Microsoft Calendar: writing', () => {
             end: { dateTime: '2026-05-04T09:00:00', timeZone: 'UTC' }
         });
         expect(output).toMatchObject({ subject: 'Planning (moved)', start: '2026-05-04T08:00:00Z', attendees: [{ address: 'grace@contoso.example' }] });
+        await conduit.execute({ connector: 'microsoft-calendar', operation: 'update-event', account, inputs: { eventId: 'AAMk-e1', start: '2026-05-06', end: '2026-05-07' } });
+        expect(JSON.parse(last(seen, 'PATCH', /AAMk-e1$/).body)).toEqual({
+            isAllDay: true,
+            start: { dateTime: '2026-05-06T00:00:00', timeZone: 'UTC' },
+            end: { dateTime: '2026-05-07T00:00:00', timeZone: 'UTC' }
+        });
         const err = await conduit.execute({ connector: 'microsoft-calendar', operation: 'update-event', account, inputs: { eventId: 'AAMk-e1' } }).catch((e: unknown) => e);
         expect(err).toMatchObject({ code: 'inputs_invalid' });
     });
@@ -327,6 +333,8 @@ describe('Microsoft Calendar: event-changed trigger', () => {
         expect(main.body).toMatchObject({ resource: 'me/events', changeType: 'created,updated,deleted', clientState: 's3cret' });
         const team = (await render(spec!.subscribe, { inputs: { calendarId: 'cal-team' }, subscription })) as { body: Record<string, string> };
         expect(team.body.resource).toBe('me/calendars/cal-team/events');
+        const odd = (await render(spec!.subscribe, { inputs: { calendarId: 'AAMk/x?y=1' }, subscription })) as { body: Record<string, string> };
+        expect(odd.body.resource).toBe('me/calendars/AAMk%2Fx%3Fy%3D1/events');
     });
 });
 

@@ -307,7 +307,8 @@ export default connector({
                 body: {
                     subject: inputs.subject,
                     body: expr`${inputs.body} == undefined ? undefined : {contentType: 'HTML', content: ${inputs.body}}`,
-                    isAllDay: inputs.allDay,
+                    // A plain date is all-day, as when creating.
+                    isAllDay: expr`${inputs.allDay} != undefined ? ${inputs.allDay} : (length(default(${inputs.start}, '')) == 10 || length(default(${inputs.end}, '')) == 10 ? true : undefined)`,
                     start: expr`graphTime(${inputs.start}, ${inputs.allDay})`,
                     end: expr`graphTime(${inputs.end}, ${inputs.allDay})`,
                     location: expr`${inputs.location} == undefined ? undefined : {displayName: ${inputs.location}}`,
@@ -435,7 +436,7 @@ export default connector({
             inputs: { calendarId: calendarField().optional() },
             outputs: object({ id: string(), changeType: string(), subscriptionId: string() }),
             trigger: graphSubscription({
-                resource: ({ inputs }) => expr`isEmpty(${inputs.calendarId}) ? 'me/events' : 'me/calendars/' + ${inputs.calendarId} + '/events'`,
+                resource: ({ inputs }) => expr`isEmpty(${inputs.calendarId}) ? 'me/events' : 'me/calendars/' + urlEncode(${inputs.calendarId}) + '/events'`,
                 changeType: 'created,updated,deleted',
                 // Event subscriptions live at most 10 080 minutes (7 days).
                 lifetimeMinutes: 4320,
