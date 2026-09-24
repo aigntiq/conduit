@@ -90,6 +90,11 @@ or an empty result out rather than an error.
 `contains(textOrListOrObject, item)` · `substring(text, start, end?)` · `padStart(text, n, fill?)` ·
 `length` · `urlEncode` · `urlDecode` · `base64` · `base64url` · `fromBase64`
 
+A binary response body (`responseType: 'binary'`) is bytes. `base64` and
+`base64url` encode bytes as they are, and `length` counts them, so a download
+maps to a file value:
+`{filename: 'report.pdf', contentType: response.headers['content-type'], base64: base64(response.body)}`.
+
 **Lists:** `map(list, fn)` · `filter` · `find` · `some` · `every` · `flatMap` ·
 `sortBy(list, fn, 'asc' | 'desc')` · `groupBy` · `first` · `last` · `slice(list, start, end?)` ·
 `concat` · `reverse` · `unique` · `flatten` · `compact` · `range(start, end)` · `sum` · `min` · `max`

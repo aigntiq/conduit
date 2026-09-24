@@ -34,6 +34,11 @@ function asString(v: unknown): string {
     return display(v);
 }
 
+/** Bytes as they are (a binary response body); anything else as UTF-8 text. */
+function asBytes(v: unknown): Uint8Array {
+    return v instanceof Uint8Array ? v : utf8(asString(v));
+}
+
 function asNumber(ctx: CallContext, v: unknown): number {
     if (typeof v === 'number') return v;
     if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v);
@@ -204,15 +209,15 @@ export const STANDARD_FUNCTIONS: Record<string, ExprFunction> = {
     ),
     length: define(
         'length(value)',
-        'Length of text or a list, or the number of keys of an object.',
-        ([v]) => (isNil(v) ? 0 : Array.isArray(v) || typeof v === 'string' ? v.length : isPlainObject(v) ? Object.keys(v).length : 0),
+        'Length of text, a list or bytes, or the number of keys of an object.',
+        ([v]) => (isNil(v) ? 0 : Array.isArray(v) || typeof v === 'string' || v instanceof Uint8Array ? v.length : isPlainObject(v) ? Object.keys(v).length : 0),
         1,
         1
     ),
     urlEncode: define('urlEncode(text)', 'Percent-encode a URL component.', ([v]) => encodeURIComponent(asString(v)), 1, 1),
     urlDecode: define('urlDecode(text)', 'Decode a percent-encoded URL component.', ([v]) => decodeURIComponent(asString(v)), 1, 1),
-    base64: define('base64(text)', 'Base64-encode UTF-8 text.', ([v]) => toBase64(utf8(asString(v))), 1, 1),
-    base64url: define('base64url(text)', 'Unpadded base64url-encode UTF-8 text.', ([v]) => toBase64Url(utf8(asString(v))), 1, 1),
+    base64: define('base64(textOrBytes)', 'Base64-encode UTF-8 text, or bytes (a binary response body) as they are.', ([v]) => toBase64(asBytes(v)), 1, 1),
+    base64url: define('base64url(textOrBytes)', 'Unpadded base64url-encode UTF-8 text, or bytes as they are.', ([v]) => toBase64Url(asBytes(v)), 1, 1),
     fromBase64: define('fromBase64(text)', 'Decode base64 or base64url to UTF-8 text.', ([v]) => (isNil(v) ? v : fromUtf8(fromBase64(asString(v)))), 1, 1),
 
     // ── lists ───────────────────────────────────────────────────────────

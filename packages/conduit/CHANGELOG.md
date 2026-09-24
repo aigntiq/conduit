@@ -20,6 +20,7 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 - `format` is now validated (`email`, `uri`, `date`, `date-time`, `uuid`).
 - `@aigntiq/conduit/builder`: author connectors in TypeScript. Field helpers carry UI hints and constraints; typed refs, `$` and `expr` build templates (a misspelled input does not compile); every builder returns plain `conduit/1` JSON. `emitTypes` writes declarations for JSON-shipped connectors.
 - `mime()` and `flattenTree()` in the expression standard library.
+- `base64`, `base64url` and `length` work on bytes, so a binary response body maps to a file value (`base64: base64(response.body)`).
 - The `email` format accepts `Name <address>` as well as a bare address.
 - Typed `execute`: `createConduit<CatalogOf<typeof connector>>()` checks connector and operation ids, inputs and outputs.
 - Error rules can attribute a failure to an input (`field`); the HTTP surface answers 422 with the issues.
