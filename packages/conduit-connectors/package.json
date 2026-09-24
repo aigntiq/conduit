@@ -18,6 +18,12 @@
             "production": "./dist/gmail.prod.js",
             "import": "./dist/gmail.js"
         },
+        "./google-calendar": {
+            "types": "./dist/generated/google-calendar.d.ts",
+            "development": "./dist/google-calendar.js",
+            "production": "./dist/google-calendar.prod.js",
+            "import": "./dist/google-calendar.js"
+        },
         "./json/*": "./json/*",
         "./package.json": "./package.json"
     },
@@ -37,7 +43,8 @@
         "conduit",
         "connectors",
         "integrations",
-        "gmail"
+        "gmail",
+        "google-calendar"
     ],
     "author": "Andreas Ekdahl",
     "license": "MIT",
