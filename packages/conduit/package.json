@@ -1,6 +1,6 @@
 {
     "name": "@aigntiq/conduit",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Declarative, pluggable connectors — describe an API's auth and operations once as data, then call it from any host framework",
     "type": "module",
     "main": "./dist/index.js",
