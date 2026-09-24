@@ -30,8 +30,17 @@ displayed by its mailbox address.
 ## Messages
 
 Recipients are plain address lists; `Name <address>` keeps the name.
-Attachments are file values of up to 3 MB each, which is Graph's limit for
-attachments sent with the message.
+Attachments are file values, up to the 150 MB a message may hold. Those of
+3 MB or less go with the message, which is Graph's limit for that. Larger ones
+go through upload sessions, and `send-email` and `create-draft` do that for
+you:
+1. The message is saved as a draft, with the small attachments.
+2. Each large attachment gets an upload session and is sent in parts of about
+   2.9 MB. The parts go to the session's own URL, never with the account's
+   credentials.
+3. The draft is sent, or, for `create-draft`, returned.
+
+A message without large attachments is still a single call.
 
 Messages come back flat: `{ id, conversationId, subject, from, to, cc,
 receivedAt, sentAt, isRead, isDraft, importance, hasAttachments, preview,
@@ -67,7 +76,7 @@ every operation acts on `/users/<mailbox>` instead of `/me`. The `new-email` tri
 
 | Operation | Kind | Notes |
 |---|---|---|
-| `send-email` | action | to/cc/bcc (at least one), subject, HTML or text, importance, attachments, reply-to; kept in Sent Items. A bad address comes back as a validation issue on `to` |
+| `send-email` | action | to/cc/bcc (at least one), subject, HTML or text, importance, attachments (large ones through upload sessions), reply-to; kept in Sent Items. A bad address comes back as a validation issue on `to` |
 | `create-draft` | action | same fields; saved in Drafts |
 | `reply-to-message` | action | reply, or reply to all, in the conversation, with Outlook's quoting |
 | `forward-message` | action | to one or more addresses, with a note |
@@ -83,6 +92,7 @@ every operation acts on `/users/<mailbox>` instead of `/me`. The `new-email` tri
 ## Limits
 
 Graph throttles per mailbox and per app, answering `429` with `Retry-After`.
-Conduit waits and retries. A message can hold up to 150 MB in total, but
-attachments over 3 MB need an upload session, which this connector doesn't
-make yet.
+Conduit waits and retries. A message holds up to 150 MB in total. An
+attachment larger than 3 MB takes one request per 2.9 MB part, and the host
+must allow the upload-session hosts, `outlook.office.com` and
+`outlook.office365.com`. The connector already declares them.

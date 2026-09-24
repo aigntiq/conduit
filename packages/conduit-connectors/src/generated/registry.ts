@@ -73,7 +73,7 @@ export const summaries: readonly ConnectorSummary[] = [
     {
         "id": "microsoft-outlook",
         "name": "Microsoft Outlook",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "description": "Send, draft, reply, forward, search, read, file and delete email in Outlook (Microsoft 365 and Outlook.com).",
         "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cmVjdCB4PSI5IiB5PSI0IiB3aWR0aD0iMTIiIGhlaWdodD0iMTUiIHJ4PSIxLjUiLz48cGF0aCBkPSJNOSA3LjVsNiA0LjUgNi00LjUiLz48cmVjdCB4PSIzIiB5PSI3IiB3aWR0aD0iOSIgaGVpZ2h0PSIxMCIgcng9IjEuNSIvPjxlbGxpcHNlIGN4PSI3LjUiIGN5PSIxMiIgcng9IjIiIHJ5PSIyLjUiLz48L3N2Zz4K",
         "categories": [
