@@ -5,11 +5,11 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createConduit, type CatalogOf } from '@aigntiq/conduit';
-import { renderTemplate, standardRegistry } from '@aigntiq/conduit/expr';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
 import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 import outlook from '@aigntiq/conduit-connectors/microsoft-outlook';
 import { connect, json, last, REDIRECT, scriptedHttp, SECRET } from './support/stub';
+import { renderWebhook } from './support/triggers';
 
 const inbox = { id: 'AAMk-inbox', displayName: 'Inbox', wellKnownName: 'inbox' };
 
@@ -293,48 +293,47 @@ describe('Microsoft Outlook: filing', () => {
 });
 
 describe('Microsoft Outlook: new-email trigger', () => {
-    const trigger = outlook.operations.find((o) => o.id === 'new-email')!;
-    const spec = trigger.kind === 'trigger' && trigger.trigger.type === 'webhook' ? trigger.trigger : undefined;
-    const render = (t: unknown, scope: Record<string, unknown>) => renderTemplate(t, scope, { functions: standardRegistry });
     const subscription = { callbackUrl: 'https://app.example/conduit/hooks/abc', secret: 'client-state-secret', data: { id: 'sub-1' } };
+    const hook = (inputs: Record<string, unknown> = {}) => renderWebhook(outlook, 'new-email', { inputs, subscription });
 
     it('subscribes a folder (the Inbox by default) for created messages, and renews and ends that subscription', async () => {
-        const inboxSub = (await render(spec!.subscribe, { inputs: {}, subscription })) as { url: string; body: Record<string, string> };
-        expect(inboxSub.url).toBe('https://graph.microsoft.com/v1.0/subscriptions');
-        expect(inboxSub.body).toMatchObject({
+        const inbox = (await (await hook()).subscribe()) as { url: string; body: Record<string, string> };
+        expect(inbox.url).toBe('https://graph.microsoft.com/v1.0/subscriptions');
+        expect(inbox.body).toMatchObject({
             changeType: 'created',
             notificationUrl: 'https://app.example/conduit/hooks/abc',
             resource: "me/mailFolders('inbox')/messages",
             clientState: 'client-state-secret'
         });
-        const expires = Date.parse(inboxSub.body.expirationDateTime!) - Date.now();
+        const expires = Date.parse(inbox.body.expirationDateTime!) - Date.now();
         expect(expires / 60_000).toBeGreaterThan(4300);
         expect(expires / 60_000).toBeLessThanOrEqual(10_080);
-        const folderSub = (await render(spec!.subscribe, { inputs: { folderId: 'f-projects' }, subscription })) as { body: { resource: string } };
-        expect(folderSub.body.resource).toBe("me/mailFolders('f-projects')/messages");
-        expect(spec!.renew!.everyMinutes).toBeLessThan(4320);
-        expect(await render(spec!.renew!.request.url, { subscription })).toBe('https://graph.microsoft.com/v1.0/subscriptions/sub-1');
-        expect(await render(spec!.unsubscribe, { subscription })).toMatchObject({ method: 'DELETE', url: 'https://graph.microsoft.com/v1.0/subscriptions/sub-1' });
+        const folder = (await (await hook({ folderId: 'f-projects' })).subscribe()) as { body: { resource: string } };
+        expect(folder.body.resource).toBe("me/mailFolders('f-projects')/messages");
+        const renew = await (await hook()).renew();
+        expect(renew!.everyMinutes).toBeLessThan(4320);
+        expect(renew!.request).toMatchObject({ method: 'PATCH', url: 'https://graph.microsoft.com/v1.0/subscriptions/sub-1' });
+        expect(await (await hook()).unsubscribe()).toMatchObject({ method: 'DELETE', url: 'https://graph.microsoft.com/v1.0/subscriptions/sub-1' });
     });
 
     it('echoes the validation token, and accepts only notifications with its clientState', async () => {
-        const handshake = { query: { validationToken: 'Validation: token 123' }, body: undefined };
-        expect(await render(spec!.handshake!.when, { request: handshake })).toBe(true);
-        expect(await render(spec!.handshake!.respond, { request: handshake })).toEqual({ status: 200, headers: { 'Content-Type': 'text/plain' }, body: 'Validation: token 123' });
+        const webhook = await hook();
+        expect(await webhook.deliver({ query: { validationToken: 'Validation: token 123' } })).toEqual({
+            handshake: { status: 200, headers: { 'Content-Type': 'text/plain' }, body: 'Validation: token 123' }
+        });
 
         const note = (clientState: string, id: string) => ({ subscriptionId: 'sub-1', clientState, changeType: 'created', resource: `me/messages/${id}`, resourceData: { id } });
-        const genuine = { query: {}, body: { value: [note('client-state-secret', 'AAMk-a'), note('client-state-secret', 'AAMk-b')] } };
-        const forged = { query: {}, body: { value: [note('client-state-secret', 'AAMk-a'), note('guess', 'AAMk-x')] } };
-        const valid = spec!.verify!.type === 'custom' ? spec!.verify!.valid : '';
-        expect(await render(spec!.handshake!.when, { request: genuine })).toBe(false);
-        expect(await render(valid, { request: genuine, subscription })).toBe(true);
-        expect(await render(valid, { request: forged, subscription })).toBe(false);
-        expect(await render(valid, { request: { query: {}, body: {} }, subscription })).toBe(false);
-        expect(await render(spec!.event, { request: genuine })).toEqual([
-            { id: 'AAMk-a', changeType: 'created', subscriptionId: 'sub-1' },
-            { id: 'AAMk-b', changeType: 'created', subscriptionId: 'sub-1' }
-        ]);
-        expect(await render(spec!.dedupeKey, { request: genuine })).toBe('created:AAMk-a,created:AAMk-b');
+        expect(await webhook.deliver({ body: { value: [note('client-state-secret', 'AAMk-a'), note('client-state-secret', 'AAMk-b')] } })).toEqual({
+            valid: true,
+            accepted: true,
+            events: [
+                { id: 'AAMk-a', changeType: 'created', subscriptionId: 'sub-1' },
+                { id: 'AAMk-b', changeType: 'created', subscriptionId: 'sub-1' }
+            ],
+            dedupeKey: 'created:AAMk-a,created:AAMk-b'
+        });
+        expect(await webhook.deliver({ body: { value: [note('client-state-secret', 'AAMk-a'), note('guess', 'AAMk-x')] } })).toMatchObject({ valid: false });
+        expect(await webhook.deliver({ body: {} })).toMatchObject({ valid: false });
     });
 });
 

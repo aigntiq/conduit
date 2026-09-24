@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
 import sheets from '@aigntiq/conduit-connectors/google-sheets';
-import { renderPoll } from './support/poll';
+import { renderPoll } from './support/triggers';
 import { connect, json, last, scriptedHttp } from './support/stub';
 
 const TABLE = [

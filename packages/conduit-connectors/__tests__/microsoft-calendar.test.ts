@@ -5,10 +5,10 @@
  * mapping back.
  */
 import { describe, expect, it } from 'vitest';
-import { renderTemplate, standardRegistry } from '@aigntiq/conduit/expr';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
 import calendar from '@aigntiq/conduit-connectors/microsoft-calendar';
 import { connect, json, last, scriptedHttp } from './support/stub';
+import { renderWebhook } from './support/triggers';
 
 const utc = (t: string) => ({ dateTime: `${t}.0000000`, timeZone: 'UTC' });
 
@@ -323,18 +323,27 @@ describe('Microsoft Calendar: availability', () => {
 });
 
 describe('Microsoft Calendar: event-changed trigger', () => {
-    const op = calendar.operations.find((o) => o.id === 'event-changed')!;
-    const spec = op.kind === 'trigger' && op.trigger.type === 'webhook' ? op.trigger : undefined;
-    const render = (t: unknown, scope: Record<string, unknown>) => renderTemplate(t, scope, { functions: standardRegistry });
     const subscription = { callbackUrl: 'https://app.example/conduit/hooks/cal', secret: 's3cret', data: { id: 'sub-9' } };
+    const subscribe = async (inputs: Record<string, unknown> = {}) =>
+        ((await (await renderWebhook(calendar, 'event-changed', { inputs, subscription })).subscribe()) as { body: Record<string, string> }).body;
 
-    it('watches the main calendar, or a chosen one, for every kind of change', async () => {
-        const main = (await render(spec!.subscribe, { inputs: {}, subscription })) as { body: Record<string, string> };
-        expect(main.body).toMatchObject({ resource: 'me/events', changeType: 'created,updated,deleted', clientState: 's3cret' });
-        const team = (await render(spec!.subscribe, { inputs: { calendarId: 'cal-team' }, subscription })) as { body: Record<string, string> };
-        expect(team.body.resource).toBe('me/calendars/cal-team/events');
-        const odd = (await render(spec!.subscribe, { inputs: { calendarId: 'AAMk/x?y=1' }, subscription })) as { body: Record<string, string> };
-        expect(odd.body.resource).toBe('me/calendars/AAMk%2Fx%3Fy%3D1/events');
+    it('watches the main calendar, or a chosen one (encoded), for every kind of change', async () => {
+        expect(await subscribe()).toMatchObject({ resource: 'me/events', changeType: 'created,updated,deleted', clientState: 's3cret' });
+        expect((await subscribe({ calendarId: 'cal-team' })).resource).toBe('me/calendars/cal-team/events');
+        expect((await subscribe({ calendarId: 'AAMk/x?y=1' })).resource).toBe('me/calendars/AAMk%2Fx%3Fy%3D1/events');
+    });
+
+    it('turns a notification into one event per changed event', async () => {
+        const webhook = await renderWebhook(calendar, 'event-changed', { subscription });
+        const note = (changeType: string, id: string) => ({ subscriptionId: 'sub-9', clientState: 's3cret', changeType, resourceData: { id } });
+        expect(await webhook.deliver({ body: { value: [note('updated', 'AAMk-e1'), note('deleted', 'AAMk-e2')] } })).toMatchObject({
+            valid: true,
+            events: [
+                { id: 'AAMk-e1', changeType: 'updated', subscriptionId: 'sub-9' },
+                { id: 'AAMk-e2', changeType: 'deleted', subscriptionId: 'sub-9' }
+            ],
+            dedupeKey: 'updated:AAMk-e1,deleted:AAMk-e2'
+        });
     });
 });
 
