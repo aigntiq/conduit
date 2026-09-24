@@ -110,4 +110,9 @@ describe('toolDefinitions', () => {
             ['list', { readOnly: true }]
         ]);
     });
+
+    it('treats a null decision entry as no decision', () => {
+        const decisions = JSON.parse('{"send":null}') as Record<string, 'allow'>;
+        expect(toolDefinitions(description, { decisions }).map((t) => t.name)).toEqual(['send', 'get', 'delete', 'list']);
+    });
 });

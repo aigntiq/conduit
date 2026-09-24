@@ -82,7 +82,9 @@ export function toolSchema(inputs: InputSchema | undefined): JsonSchema {
     return inputs === undefined ? { type: 'object', properties: {} } : (withoutHints(inputs) as JsonSchema);
 }
 
-const decisionOf = (d: Decision | PolicyVerdict | undefined): Decision | undefined => (typeof d === 'object' ? d.decision : d);
+/** Anything but a decision (or a verdict holding one) — e.g. a `null` from JSON — counts as none. */
+const decisionOf = (d: Decision | PolicyVerdict | null | undefined): Decision | undefined =>
+    typeof d === 'string' ? d : d !== null && typeof d === 'object' ? d.decision : undefined;
 
 function annotations(op: OperationDescription, decision: Decision | undefined): ToolAnnotations {
     const out: ToolAnnotations = {};
