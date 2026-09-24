@@ -30,6 +30,12 @@
             "production": "./dist/google-drive.prod.js",
             "import": "./dist/google-drive.js"
         },
+        "./microsoft-outlook": {
+            "types": "./dist/generated/microsoft-outlook.d.ts",
+            "development": "./dist/microsoft-outlook.js",
+            "production": "./dist/microsoft-outlook.prod.js",
+            "import": "./dist/microsoft-outlook.js"
+        },
         "./json/*": "./json/*",
         "./package.json": "./package.json"
     },
@@ -51,7 +57,8 @@
         "integrations",
         "gmail",
         "google-calendar",
-        "google-drive"
+        "google-drive",
+        "microsoft-outlook"
     ],
     "author": "Andreas Ekdahl",
     "license": "MIT",
