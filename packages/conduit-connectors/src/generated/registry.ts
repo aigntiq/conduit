@@ -37,6 +37,17 @@ export const summaries: readonly ConnectorSummary[] = [
         ]
     },
     {
+        "id": "microsoft-calendar",
+        "name": "Microsoft Calendar",
+        "version": "1.0.0",
+        "description": "Find, create, update, answer and delete events in Outlook calendars, and find times that suit everyone.",
+        "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cmVjdCB4PSIzIiB5PSI1IiB3aWR0aD0iMTgiIGhlaWdodD0iMTYiIHJ4PSIyIi8+PHBhdGggZD0iTTMgMTBoMThNOCAzdjRNMTYgM3Y0Ii8+PGNpcmNsZSBjeD0iMTUuNSIgY3k9IjE1LjUiIHI9IjIuNSIvPjxwYXRoIGQ9Ik0xNS41IDE0LjV2MWwuNy43Ii8+PC9zdmc+Cg==",
+        "categories": [
+            "calendar",
+            "productivity"
+        ]
+    },
+    {
         "id": "microsoft-outlook",
         "name": "Microsoft Outlook",
         "version": "1.0.0",
@@ -53,8 +64,9 @@ export const loaders = {
     "gmail": () => import('./gmail'),
     "google-calendar": () => import('./google-calendar'),
     "google-drive": () => import('./google-drive'),
+    "microsoft-calendar": () => import('./microsoft-calendar'),
     "microsoft-outlook": () => import('./microsoft-outlook')
 } satisfies Record<string, () => Promise<{ default: ConnectorSpec }>>;
 
 /** Every connector in the package — `CatalogOf<Connectors>` types `execute` for all of them. */
-export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-drive').default | typeof import('./microsoft-outlook').default;
+export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-drive').default | typeof import('./microsoft-calendar').default | typeof import('./microsoft-outlook').default;
