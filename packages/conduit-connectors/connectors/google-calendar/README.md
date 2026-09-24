@@ -19,7 +19,8 @@ whose id is the account's email address.
 
 Every operation returns events in one flat shape. `start` and `end` are ISO
 strings: a date-time for timed events, and a date for all-day events with
-`allDay: true`. For all-day events `end` is exclusive: an event on 1 May ends
+`allDay: true`. When writing, a date-time needs its offset
+(`2026-05-04T09:00:00+02:00` or `…Z`). For all-day events `end` is exclusive: an event on 1 May ends
 on `2026-05-02`. `attendees` lists `{ email, name, response, organizer }`, and
 `meetLink` is the Google Meet link, if the event has one.
 

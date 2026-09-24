@@ -58,7 +58,7 @@ function calendarStub() {
                 case 'POST /calendars/primary/events':
                 case 'POST /calendars/team%40group.calendar.google.com/events': {
                     const event = JSON.parse(body);
-                    if ((event.end.dateTime ?? event.end.date) < (event.start.dateTime ?? event.start.date)) {
+                    if (Date.parse(event.end.dateTime ?? event.end.date) < Date.parse(event.start.dateTime ?? event.start.date)) {
                         return json({ error: { code: 400, message: 'The specified time range is empty.' } }, 400);
                     }
                     const meet = url.searchParams.get('conferenceDataVersion') === '1' && event.conferenceData ? { hangoutLink: 'https://meet.google.com/new-meet' } : {};
@@ -207,7 +207,7 @@ describe('Google Calendar: writing events', () => {
         expect(output).toMatchObject({ start: '2026-05-06', end: '2026-05-07', allDay: true, meetLink: 'https://meet.google.com/new-meet' });
     });
 
-    it('ends a zoned all-day start on the next local day, and refuses a start that is not a date', async () => {
+    it('ends a zoned all-day start on the next local day, and takes only dates and date-times with an offset', async () => {
         const { conduit, account, seen } = await setup();
         // 00:00 in Stockholm is still the 5th in UTC: the day must come from the text, not UTC.
         await conduit.execute({ connector: 'google-calendar', operation: 'create-event', account, inputs: { summary: 'x', start: '2026-05-06T00:00:00+02:00', allDay: true } });
@@ -215,9 +215,14 @@ describe('Google Calendar: writing events', () => {
         expect([body.start, body.end]).toEqual([{ date: '2026-05-06' }, { date: '2026-05-07' }]);
 
         const before = seen.length;
-        const err = await conduit.execute({ connector: 'google-calendar', operation: 'create-event', account, inputs: { summary: 'x', start: 'tomorrow' } }).catch((e: unknown) => e);
-        expect(err).toMatchObject({ issues: [{ path: 'inputs.start', code: 'pattern' }] });
+        for (const start of ['tomorrow', '2026-05-04 anything', '2026-05-04Tnoon', '2026-05-04T09:00+2', '2026-05-04T09:00']) {
+            const err = await conduit.execute({ connector: 'google-calendar', operation: 'create-event', account, inputs: { summary: 'x', start } }).catch((e: unknown) => e);
+            expect(err, start).toMatchObject({ issues: [{ path: 'inputs.start', code: 'pattern' }] });
+        }
         expect(seen.length).toBe(before);
+        for (const start of ['2026-05-04', '2026-05-04T09:00Z', '2026-05-04T09:00:00Z', '2026-05-04T09:00:00.123+02:00']) {
+            await expect(conduit.execute({ connector: 'google-calendar', operation: 'create-event', account, inputs: { summary: 'x', start } }), start).resolves.toBeDefined();
+        }
     });
 
     it('treats a plain date as all-day even without allDay, never sending it as a date-time', async () => {

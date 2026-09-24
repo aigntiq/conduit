@@ -644,9 +644,9 @@ const connector = {
                         "x-group": "Event",
                         "x-widget": "datetime",
                         "x-errorMessage": {
-                            "pattern": "Use a date (2026-05-04) or a date and time (2026-05-04T09:00:00+02:00)"
+                            "pattern": "Use a date (2026-05-04) or a date and time with its offset (2026-05-04T09:00:00+02:00)"
                         },
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}([T ].+)?$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
                     },
                     "end": {
                         "type": "string",
@@ -655,9 +655,9 @@ const connector = {
                         "x-group": "Event",
                         "x-widget": "datetime",
                         "x-errorMessage": {
-                            "pattern": "Use a date (2026-05-04) or a date and time (2026-05-04T09:00:00+02:00)"
+                            "pattern": "Use a date (2026-05-04) or a date and time with its offset (2026-05-04T09:00:00+02:00)"
                         },
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}([T ].+)?$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
                     },
                     "allDay": {
                         "type": "boolean",
@@ -1026,18 +1026,18 @@ const connector = {
                         "title": "Start",
                         "x-widget": "datetime",
                         "x-errorMessage": {
-                            "pattern": "Use a date (2026-05-04) or a date and time (2026-05-04T09:00:00+02:00)"
+                            "pattern": "Use a date (2026-05-04) or a date and time with its offset (2026-05-04T09:00:00+02:00)"
                         },
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}([T ].+)?$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
                     },
                     "end": {
                         "type": "string",
                         "title": "End",
                         "x-widget": "datetime",
                         "x-errorMessage": {
-                            "pattern": "Use a date (2026-05-04) or a date and time (2026-05-04T09:00:00+02:00)"
+                            "pattern": "Use a date (2026-05-04) or a date and time with its offset (2026-05-04T09:00:00+02:00)"
                         },
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}([T ].+)?$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2}))?$"
                     },
                     "allDay": {
                         "type": "boolean",

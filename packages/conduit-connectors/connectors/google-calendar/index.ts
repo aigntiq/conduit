@@ -42,8 +42,10 @@ const moment = (options: { title: string; description?: string; group?: string }
     string({
         ...options,
         widget: 'datetime',
-        pattern: String.raw`^\d{4}-\d{2}-\d{2}([T ].+)?$`,
-        messages: { pattern: 'Use a date (2026-05-04) or a date and time (2026-05-04T09:00:00+02:00)' }
+        // A date, or an RFC 3339 date-time with its offset (seconds and fraction optional):
+        // without one, the default end would depend on the server's zone.
+        pattern: String.raw`^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2}))?$`,
+        messages: { pattern: 'Use a date (2026-05-04) or a date and time with its offset (2026-05-04T09:00:00+02:00)' }
     });
 
 const calendarField = string({ title: 'Calendar', default: 'primary', options: calendarOptions });
