@@ -73,6 +73,8 @@ directory without an `index.ts` is never built as a connector) — for example
 `graphPaging()` and `graphSubscription()` (a Graph change-notification
 webhook trigger) for every Microsoft 365 one. Replay tests build their scripted
 provider with `scriptedHttp()` and connect an account with `connect()` from
-`__tests__/support/stub.ts`.
+`__tests__/support/stub.ts`. `renderPoll()` from `__tests__/support/poll.ts`
+renders one step of a poll trigger (request, items, cursor, dedupe keys and
+events) against a canned answer, since the trigger runtime isn't released yet.
 
 MIT © Andreas Ekdahl
