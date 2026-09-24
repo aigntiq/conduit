@@ -8,7 +8,7 @@
  * Every route except the OAuth callback requires an owner, and every
  * account operation is scoped to it.
  */
-import { ConduitAuthError, ConduitError, ConduitRateLimitError, ConduitRequestError, ConduitSpecError, ConduitValidationError, isConduitError } from '../errors';
+import { ConduitAuthError, ConduitError, ConduitPolicyError, ConduitRateLimitError, ConduitRequestError, ConduitSpecError, ConduitValidationError, isConduitError } from '../errors';
 import type { Conduit } from '../runtime/conduit';
 import type { ConduitRoute } from '../runtime/plugins';
 
@@ -17,6 +17,11 @@ export interface FetchHandlerOptions {
     basePath?: string;
     /** Who is calling. Return undefined for "not signed in" (→ 401). */
     resolveOwner: (request: Request) => string | undefined | Promise<string | undefined>;
+    /**
+     * Which caller the operation policy sees for `/execute` and `/options`
+     * (an app, a workflow, an API key…). Optional; opaque to Conduit.
+     */
+    resolveCaller?: (request: Request) => string | undefined | Promise<string | undefined>;
     /** Allow `POST {base}/execute`. Default false — most hosts call `conduit.execute` server-side. */
     exposeExecute?: boolean;
     /** Include the (masked) request trace in execute responses. Default false. */
@@ -80,6 +85,10 @@ function toErrorResponse(error: unknown): Response {
     if (error instanceof ConduitValidationError) return json(400, { error: { code: error.code, message: error.message, issues: error.issues } });
     if (error instanceof ConduitAuthError) {
         return json(error.needsReauth ? 409 : 401, { error: { code: error.code, message: error.message, needsReauth: error.needsReauth, account: error.accountId } });
+    }
+    if (error instanceof ConduitPolicyError) {
+        // No way to confirm over HTTP: `confirmed` is trusted, so only in-process hosts set it.
+        return json(403, { error: { code: error.code, message: error.message, ...(error.reason === undefined ? {} : { reason: error.reason }) } });
     }
     if (error instanceof ConduitRateLimitError) {
         const headers: Record<string, string> = error.retryAfterMs === undefined ? {} : { 'retry-after': String(Math.ceil(error.retryAfterMs / 1000)) };
@@ -206,14 +215,16 @@ export function createFetchHandler(conduit: Conduit, options: FetchHandlerOption
         }),
         owned('POST', '/options/:connector/:operation', async (r, p, owner) => {
             const body = await readJson(r);
-            const options = await conduit.options({
+            const caller = await options.resolveCaller?.(r);
+            const items = await conduit.options({
                 connector: p.connector!,
                 operation: p.operation!,
                 owner,
+                caller,
                 account: optStr(body.account),
                 inputs: optObj(body.inputs)
             });
-            return json(200, { options });
+            return json(200, { options: items });
         })
     ];
 
@@ -226,6 +237,7 @@ export function createFetchHandler(conduit: Conduit, options: FetchHandlerOption
                     connector: str(body.connector, 'connector'),
                     operation: str(body.operation, 'operation'),
                     owner,
+                    caller: await options.resolveCaller?.(r),
                     account: optStr(body.account),
                     inputs: optObj(body.inputs),
                     paging: paging

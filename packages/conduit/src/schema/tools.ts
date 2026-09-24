@@ -1,9 +1,11 @@
 /**
  * Operations as tool definitions — for hosts that hand a connector's
  * operations to a model or an MCP-style tool list. Pure data in, pure data
- * out: naming, error wording and approval policy stay with the host.
+ * out: naming and error wording stay with the host. To reflect an operation
+ * policy, pass the verdicts from `conduit.decide` as `decisions`.
  */
 
+import type { Decision, PolicyVerdict } from '../runtime/policy';
 import type { ConnectorDescription, OperationDescription } from '../runtime/types';
 import type { InputSchema, JsonSchema } from '../spec/types';
 
@@ -12,6 +14,8 @@ export interface ToolAnnotations {
     readOnly?: true;
     /** Deletes or irreversibly changes data — confirm first. */
     destructive?: true;
+    /** The host's policy wants each call confirmed — run it with `confirmed: true` once approved. */
+    confirm?: true;
 }
 
 export interface ToolDefinition {
@@ -28,6 +32,12 @@ export interface ToolDefinition {
 export interface ToolDefinitionOptions {
     /** Include operations marked `hidden` (default: false). */
     includeHidden?: boolean;
+    /**
+     * Policy verdicts by operation id, e.g. from `conduit.decide`. `deny`
+     * drops the operation; `confirm` sets `annotations.confirm`. Operations
+     * not listed are kept as they are.
+     */
+    decisions?: Record<string, Decision | PolicyVerdict>;
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -72,11 +82,14 @@ export function toolSchema(inputs: InputSchema | undefined): JsonSchema {
     return inputs === undefined ? { type: 'object', properties: {} } : (withoutHints(inputs) as JsonSchema);
 }
 
-function annotations(op: OperationDescription): ToolAnnotations {
+const decisionOf = (d: Decision | PolicyVerdict | undefined): Decision | undefined => (typeof d === 'object' ? d.decision : d);
+
+function annotations(op: OperationDescription, decision: Decision | undefined): ToolAnnotations {
     const out: ToolAnnotations = {};
     // A search only lists, so it reads unless it says otherwise.
     if (op.readOnly ?? op.kind === 'search') out.readOnly = true;
     if (op.destructive === true) out.destructive = true;
+    if (decision === 'confirm') out.confirm = true;
     return out;
 }
 
@@ -84,15 +97,17 @@ function annotations(op: OperationDescription): ToolAnnotations {
  * One tool definition per callable operation (`action` and `search`) of a
  * connector, from `conduit.connectors.describe(id)`. `options` operations feed
  * form pickers and triggers are delivered, so neither becomes a tool.
+ * Operations `decisions` deny are left out.
  */
 export function toolDefinitions(description: ConnectorDescription, options: ToolDefinitionOptions = {}): ToolDefinition[] {
+    const decision = (op: OperationDescription) => decisionOf(options.decisions?.[op.id]);
     return description.operations
-        .filter((op) => (op.kind === 'action' || op.kind === 'search') && (options.includeHidden === true || !op.hidden))
+        .filter((op) => (op.kind === 'action' || op.kind === 'search') && (options.includeHidden === true || !op.hidden) && decision(op) !== 'deny')
         .map((op) => ({
             name: op.id,
             operation: op.id,
             description: op.description ? `${op.label}. ${op.description}` : op.label,
             inputSchema: toolSchema(op.inputs),
-            annotations: annotations(op)
+            annotations: annotations(op, decision(op))
         }));
 }

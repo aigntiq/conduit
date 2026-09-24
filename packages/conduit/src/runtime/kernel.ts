@@ -13,6 +13,7 @@ import type { AccountStore, ClientResolver, Credentials, LockProvider, SecretCip
 import { authInputs, secretInputNames } from '../spec/inputs';
 import type { AuthMethod, ErrorRule, RequestSpec } from '../spec/types';
 import type { PluginHost } from './plugins';
+import type { OperationPolicy } from './policy';
 import type { ConnectorRegistry, LoadedConnector } from './registry';
 
 export interface Kernel {
@@ -28,6 +29,7 @@ export interface Kernel {
     env: Record<string, unknown>;
     now: () => number;
     redirectUri: string | undefined;
+    policy: OperationPolicy | undefined;
 }
 
 /** The non-secret view of an account that templates read as `account`. */

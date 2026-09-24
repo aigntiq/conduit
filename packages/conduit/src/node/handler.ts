@@ -12,9 +12,11 @@ import { Readable } from 'node:stream';
 import type { Conduit } from '../runtime/conduit';
 import { createFetchHandler, type FetchHandlerOptions } from '../server';
 
-export interface NodeHandlerOptions extends Omit<FetchHandlerOptions, 'resolveOwner'> {
+export interface NodeHandlerOptions extends Omit<FetchHandlerOptions, 'resolveOwner' | 'resolveCaller'> {
     /** Who is calling — read your session from the Node request. */
     resolveOwner: (req: IncomingMessage, request: Request) => string | undefined | Promise<string | undefined>;
+    /** Which caller the operation policy sees on `/execute` and `/options`. Optional. */
+    resolveCaller?: (req: IncomingMessage, request: Request) => string | undefined | Promise<string | undefined>;
     /**
      * Trust `X-Forwarded-Proto` / `X-Forwarded-Host` when rebuilding the
      * request URL. Enable only behind a proxy you control. Default false.
@@ -78,7 +80,8 @@ export function createNodeHandler(conduit: Conduit, options: NodeHandlerOptions)
     const owners = new WeakMap<Request, IncomingMessage>();
     const handler = createFetchHandler(conduit, {
         ...options,
-        resolveOwner: (request) => options.resolveOwner(owners.get(request)!, request)
+        resolveOwner: (request) => options.resolveOwner(owners.get(request)!, request),
+        resolveCaller: options.resolveCaller && ((request) => options.resolveCaller!(owners.get(request)!, request))
     });
 
     return (req, res, next) => {

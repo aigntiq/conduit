@@ -96,12 +96,30 @@ definePlugin({
 });
 ```
 
+## Operation policy
+
+`ConduitOptions.policy` is the one place a host decides which operations may
+run. The executor asks it right after the inputs are validated and before
+`authorize`, so a refused call renews no credential and sends no request. The
+context carries the connector, the operation description with its hints, the
+owner, the account, the inputs and an opaque `caller` from the request.
+
+The answer is `allow`, `confirm` or `deny`, or `undefined` to abstain.
+`deny` throws `ConduitPolicyError` (`operation_denied`). `confirm` throws
+`confirmation_required` unless the request carries `confirmed: true`, a
+trusted flag the host sets after its own approval step. Conduit keeps no
+policy state, and the HTTP surface never accepts `confirmed` from a client:
+approval UX, storage and identity stay with the host. `strictest`, `firstOf`,
+`annotationPolicy` and `operationRules` compose layered rules, and
+`conduit.decide` evaluates the same policy ahead of a call, without inputs.
+
 ## Security model
 
 - **Credentials at rest** are sealed by the `SecretCipher` before they reach a store. The store sees `v1.<ciphertext>`.
 - **OAuth state** is HMAC-signed with a key derived from `secret`, expires (10 minutes by default), and carries a nonce. The nonce's server-side record, which holds the PKCE verifier and the sealed connect inputs, is **taken once**, so replaying a callback fails. The owner is bound inside the signed state: a callback can only ever connect an account for the owner who started the connection.
 - **PKCE** (S256) is on by default for the authorization-code grant.
 - **The host guard** limits outbound requests to the rendered `baseUrl` host, the connector's auth endpoints, `http.allowHosts` and the host's `allowHosts`. It is checked on every redirect hop and every next-page URL. Non-HTTP schemes are refused.
+- **Operation policy**, when set, runs before any credential is renewed or request sent. `confirmed` is an in-process flag that the HTTP surface never takes from a request body.
 - **Traces** mask credential values, secret inputs and well-known secret query parameters.
 - **Token requests** send secrets as pre-rendered data, never through the template engine.
 - **The HTTP surface** accepts JSON bodies only (no simple cross-site form posts). It follows only same-site relative `returnTo` paths (no open redirects), and its callback page posts only to its own origin. Internal errors are reported without detail.

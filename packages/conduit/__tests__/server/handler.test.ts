@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createConduit, definePlugin, memorySource, type ConnectorSpec } from '@aigntiq/conduit';
+import { createConduit, definePlugin, memorySource, operationRules, type ConnectorSpec, type PolicyContext } from '@aigntiq/conduit';
 import { createFetchHandler, safeReturnPath } from '@aigntiq/conduit/server';
 
 const SECRET = 'handler-test-secret-that-is-long-enough';
@@ -148,5 +148,46 @@ describe('createFetchHandler', () => {
         expect(res.status).toBe(400);
         const missing = await handler()(post('/conduit/accounts', { method: 't' }));
         expect(await missing.json()).toMatchObject({ error: { message: '"connector" is required' } });
+    });
+});
+
+describe('createFetchHandler with an operation policy', () => {
+    const make = (policy: Parameters<typeof operationRules>[0]) => {
+        const seen: PolicyContext[] = [];
+        let sent = 0;
+        const rules = operationRules(policy);
+        const conduit = createConduit({
+            sources: memorySource([spec]),
+            secret: SECRET,
+            http: async () => (sent++, new Response('{"pong":true}', { headers: { 'content-type': 'application/json' } })),
+            policy: (c) => (seen.push(c), rules(c))
+        });
+        const handler = createFetchHandler(conduit, {
+            resolveOwner: (r) => r.headers.get('x-user') ?? undefined,
+            resolveCaller: (r) => r.headers.get('x-caller') ?? undefined,
+            exposeExecute: true
+        });
+        return { conduit, handler, seen, sent: () => sent };
+    };
+
+    it('answers 403 with the code and reason, and passes the caller through', async () => {
+        const { conduit, handler, seen, sent } = make({ 'svc/ping': { decision: 'deny', reason: 'not on weekends' } });
+        const account = await conduit.auth.connect({ connector: 'svc', method: 't', owner: 'u1', inputs: { token: 'tok' } });
+        const req = post('/conduit/execute', { connector: 'svc', operation: 'ping', account: account.id });
+        req.headers.set('x-caller', 'app-3');
+        const res = await handler(req);
+        expect(res.status).toBe(403);
+        expect(await res.json()).toEqual({ error: { code: 'operation_denied', message: 'policy denies "svc/ping": not on weekends', reason: 'not on weekends' } });
+        expect(seen[0]).toMatchObject({ owner: 'u1', caller: 'app-3' });
+        expect(sent()).toBe(0);
+    });
+
+    it('ignores confirmed in the body — confirmation is not an HTTP input', async () => {
+        const { conduit, handler, sent } = make({ 'svc/ping': 'confirm' });
+        const account = await conduit.auth.connect({ connector: 'svc', method: 't', owner: 'u1', inputs: { token: 'tok' } });
+        const res = await handler(post('/conduit/execute', { connector: 'svc', operation: 'ping', account: account.id, confirmed: true }));
+        expect(res.status).toBe(403);
+        expect(await res.json()).toMatchObject({ error: { code: 'confirmation_required' } });
+        expect(sent()).toBe(0);
     });
 });

@@ -43,6 +43,13 @@ interface ExecuteBase<K extends string, O extends string> {
     account?: string;
     /** When given, the account must belong to this owner. */
     owner?: string;
+    /** Who is calling — an agent, a workflow, an API key. Opaque to Conduit; handed to the operation policy. */
+    caller?: string;
+    /**
+     * The host has confirmed this call, so a policy's `confirm` lets it run.
+     * Trusted: set it only after your own approval step, never from client input.
+     */
+    confirmed?: boolean;
     /** Extra `env` values for this call, merged over the host's. */
     env?: Record<string, unknown>;
     signal?: AbortSignal;

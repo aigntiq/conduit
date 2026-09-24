@@ -2,15 +2,17 @@
  * Operation execution: resolve → authorize → inputs → steps → request
  * (paged) → output. One path for every operation kind the runtime runs.
  */
-import { ConduitAuthError, ConduitError, ConduitRequestError, isConduitError } from '../errors';
+import { ConduitAuthError, ConduitError, ConduitPolicyError, ConduitRequestError, isConduitError } from '../errors';
 import { display, isPlainObject } from '../expr/evaluate';
 import { renderTemplate } from '../expr/template';
 import { resolveRetry, type TraceEntry } from '../http/perform';
 import { nextLink, type ResponseView } from '../http/response';
 import { assertInputs } from '../spec/inputs';
 import type { AuthMethod, OperationSpec, PaginateSpec, RequestSpec, StepSpec } from '../spec/types';
-import { ensureFresh, loadAccount, open, type Fresh } from './accounts';
+import { ensureFresh, loadAccount, open, toInfo, type Fresh } from './accounts';
+import { describeOperation } from './describe';
 import { accountScope, authScope, maskerFor, send, type CallContext, type Kernel } from './kernel';
+import { evaluatePolicy } from './policy';
 import type { LoadedConnector } from './registry';
 import type { ExecuteRequest, ExecuteResult, OptionItem } from './types';
 
@@ -68,6 +70,35 @@ async function prepare(k: Kernel, req: ExecuteRequest, trace: TraceEntry[]): Pro
         rules: op.errors
     };
     return { loaded, op, method, fresh, inputs, env, ctx };
+}
+
+/**
+ * Ask the host's policy about this call — after the inputs are validated,
+ * before any credential is renewed or request sent.
+ */
+async function enforcePolicy(k: Kernel, req: ExecuteRequest, p: Prepared): Promise<void> {
+    if (!k.policy) return;
+    const connector = p.loaded.spec.id;
+    const account = p.fresh ? toInfo(p.fresh.account) : undefined;
+    const verdict = await evaluatePolicy(k.policy, {
+        connector,
+        operation: describeOperation(p.loaded.spec, p.op),
+        owner: req.owner ?? account?.owner,
+        caller: req.caller,
+        account,
+        inputs: p.inputs
+    });
+    if (verdict.decision === 'allow' || (verdict.decision === 'confirm' && req.confirmed === true)) return;
+
+    const target = `"${connector}/${p.op.id}"`;
+    const because = verdict.reason === undefined ? '' : `: ${verdict.reason}`;
+    const details: Record<string, unknown> = { connector, operation: p.op.id };
+    if (account) details.account = account.id;
+    if (req.caller !== undefined) details.caller = req.caller;
+    if (verdict.reason !== undefined) details.reason = verdict.reason;
+    throw verdict.decision === 'deny'
+        ? new ConduitPolicyError('deny', `policy denies ${target}${because}`, { reason: verdict.reason, details })
+        : new ConduitPolicyError('confirm', `${target} needs confirmation${because}`, { reason: verdict.reason, details });
 }
 
 function baseScope(p: Prepared, extra: Scope = {}): Scope {
@@ -231,6 +262,7 @@ export async function execute(k: Kernel, req: ExecuteRequest): Promise<ExecuteRe
     let p: Prepared | undefined;
     try {
         p = await prepare(k, req, trace);
+        await enforcePolicy(k, req, p);
         await authorize(k, p);
         const scope = baseScope(p);
         const steps = await runSteps(k, p, p.op.steps, scope);
