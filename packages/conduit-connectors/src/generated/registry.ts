@@ -49,6 +49,17 @@ export const summaries: readonly ConnectorSummary[] = [
         ]
     },
     {
+        "id": "google-sheets",
+        "name": "Google Sheets",
+        "version": "1.0.0",
+        "description": "Read, append, update and clear rows in Google Sheets, and create spreadsheets and sheets.",
+        "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cGF0aCBkPSJNNiAyLjVoOC41TDE5IDd2MTMuNWExIDEgMCAwIDEtMSAxSDZhMSAxIDAgMCAxLTEtMXYtMTdhMSAxIDAgMCAxIDEtMXoiLz48cGF0aCBkPSJNMTQuNSAyLjVWN0gxOSIvPjxyZWN0IHg9IjgiIHk9IjExIiB3aWR0aD0iOCIgaGVpZ2h0PSI3Ii8+PHBhdGggZD0iTTggMTQuNWg4TTExIDExdjciLz48L3N2Zz4K",
+        "categories": [
+            "spreadsheets",
+            "productivity"
+        ]
+    },
+    {
         "id": "microsoft-calendar",
         "name": "Microsoft Calendar",
         "version": "1.0.0",
@@ -77,9 +88,10 @@ export const loaders = {
     "google-calendar": () => import('./google-calendar'),
     "google-contacts": () => import('./google-contacts'),
     "google-drive": () => import('./google-drive'),
+    "google-sheets": () => import('./google-sheets'),
     "microsoft-calendar": () => import('./microsoft-calendar'),
     "microsoft-outlook": () => import('./microsoft-outlook')
 } satisfies Record<string, () => Promise<{ default: ConnectorSpec }>>;
 
 /** Every connector in the package — `CatalogOf<Connectors>` types `execute` for all of them. */
-export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-contacts').default | typeof import('./google-drive').default | typeof import('./microsoft-calendar').default | typeof import('./microsoft-outlook').default;
+export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default | typeof import('./google-contacts').default | typeof import('./google-drive').default | typeof import('./google-sheets').default | typeof import('./microsoft-calendar').default | typeof import('./microsoft-outlook').default;

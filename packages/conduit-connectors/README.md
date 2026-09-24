@@ -47,6 +47,7 @@ one connector (earlier sources win), for example to pin an older version.
 | [Microsoft Outlook](connectors/microsoft-outlook/README.md) | Microsoft OAuth | send email, create draft, reply (all), forward, search messages, get message, download attachment, folders (options), move message, mark/flag/categorize, delete message, new email (webhook trigger) |
 | [Microsoft Calendar](connectors/microsoft-calendar/README.md) | Microsoft OAuth | calendars (options), search events, get event, create event (attendees, Teams meeting), update event, delete event, respond to invitation, find meeting times, free/busy, event created/changed/deleted (webhook trigger) |
 | [Google Contacts](connectors/google-contacts/README.md) | Google OAuth | search contacts, get contact, create contact, update contact, delete contact, contact groups (options), add/remove group members, new contact (trigger) |
+| [Google Sheets](connectors/google-sheets/README.md) | Google OAuth | spreadsheets (options), sheets (options), get spreadsheet, create spreadsheet, add sheet, get rows, append rows, update cells, clear cells, new row (trigger) |
 
 ## Versioning
 
