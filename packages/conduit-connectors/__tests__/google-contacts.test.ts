@@ -36,7 +36,8 @@ function peopleStub() {
                     if (!url.searchParams.get('pageToken')) return json({ connections: [ada], nextPageToken: 'p2', totalPeople: 2 });
                     return json({ connections: [grace], totalPeople: 2 });
                 case 'GET /people:searchContacts':
-                    return json({ results: url.searchParams.get('query') === 'ada' ? [{ person: ada }] : [] });
+                    // Offers a next page, which a text search must not follow.
+                    return json({ results: url.searchParams.get('query') === 'ada' ? [{ person: ada }] : [], nextPageToken: 'more' });
                 case 'GET /people/c1':
                     return json(ada);
                 case 'GET /people/c404':
@@ -117,12 +118,14 @@ describe('Google Contacts: reading', () => {
 
     it('searches by text with searchContacts and a read mask', async () => {
         const { conduit, account, seen } = await setup();
-        const { output } = await conduit.execute({ connector: 'google-contacts', operation: 'search-contacts', account, inputs: { query: 'ada' } });
+        const { output, pages } = await conduit.execute({ connector: 'google-contacts', operation: 'search-contacts', account, inputs: { query: 'ada' } });
+        expect(pages).toBe(1);
         const params = Object.fromEntries(last(seen, 'GET', /searchContacts$/).url.searchParams);
         expect(params).toMatchObject({ query: 'ada', pageSize: '30' });
         expect(params).not.toHaveProperty('personFields');
         expect(params.readMask).toContain('names');
         expect(output.map((c) => c.id)).toEqual(['c1']);
+        expect(seen.filter((s) => s.url.pathname.endsWith(':searchContacts'))).toHaveLength(1);
     });
 
     it('gets one contact by id or resource name, and reports a missing one on the field', async () => {

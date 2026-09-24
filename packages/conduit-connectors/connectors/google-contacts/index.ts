@@ -192,11 +192,12 @@ export default connector({
                     pageSize: expr`isEmpty(${inputs.query}) ? 1000 : 30`
                 }
             }),
-            paginate: ({ response }) =>
+            paginate: ({ response, inputs }) =>
                 paging.cursor({
                     param: 'pageToken',
                     items: expr`${response.body.connections} ?? map(default(${response.body.results}, []), r => r.person)`,
-                    next: response.body.nextPageToken,
+                    // A text search is one page, whatever Google offers next.
+                    next: expr`isEmpty(${inputs.query}) ? ${response.body.nextPageToken} : undefined`,
                     maxPages: 50
                 }),
             output: ({ items }) => expr`${items} | map(p => contactOf(p))`

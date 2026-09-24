@@ -336,7 +336,7 @@ const connector = {
                 "param": "pageToken",
                 "maxPages": 50,
                 "items": "{{response.body.connections ?? map(default(response.body.results, []), r => r.person)}}",
-                "next": "{{response.body.nextPageToken}}"
+                "next": "{{isEmpty(inputs.query) ? response.body.nextPageToken : undefined}}"
             }
         },
         {
