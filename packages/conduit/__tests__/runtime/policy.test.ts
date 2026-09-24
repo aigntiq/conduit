@@ -25,6 +25,9 @@ describe('policy helpers', () => {
 
     it('rejects a decision it does not know', async () => {
         await expect(evaluatePolicy(() => 'maybe' as never, ctx())).rejects.toMatchObject({ code: 'policy_invalid' });
+        const circular: Record<string, unknown> = {};
+        circular.self = circular;
+        for (const bad of [10n, circular]) await expect(evaluatePolicy(() => bad as never, ctx())).rejects.toMatchObject({ code: 'policy_invalid' });
     });
 
     it('strictest lets deny beat confirm beat allow, and skips abstentions', async () => {

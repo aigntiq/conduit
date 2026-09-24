@@ -42,11 +42,20 @@ export type OperationPolicy = (ctx: PolicyContext) => PolicyResult | Promise<Pol
 
 const RANK: Record<Decision, number> = { allow: 0, confirm: 1, deny: 2 };
 
+/** A bad result for the error message — never throws, whatever the policy returned. */
+function shown(value: unknown): string {
+    try {
+        return JSON.stringify(value) ?? String(value);
+    } catch {
+        return typeof value === 'object' ? 'an unserialisable object' : String(value);
+    }
+}
+
 function verdict(result: PolicyResult): PolicyVerdict | undefined {
     if (result === undefined) return undefined;
     const v = typeof result === 'string' ? { decision: result } : result;
     if (typeof v !== 'object' || v === null || !Object.hasOwn(RANK, v.decision)) {
-        throw new ConduitError('policy_invalid', `a policy returned ${JSON.stringify(result)} — expected "allow", "confirm", "deny" or undefined`);
+        throw new ConduitError('policy_invalid', `a policy returned ${shown(result)} — expected "allow", "confirm", "deny" or undefined`);
     }
     return v.reason === undefined ? { decision: v.decision } : { decision: v.decision, reason: v.reason };
 }
