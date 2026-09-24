@@ -242,6 +242,9 @@ describe('Google Sheets: new-row trigger', () => {
         const first = await renderPoll(sheets, 'new-row', { inputs: { spreadsheetId: 'ss1', sheet: 'People' } });
         expect(first.request).toMatchObject({ url: '/spreadsheets/ss1/values:batchGet', query: { ranges: ["'People'!1:1", "'People'!A2:ZZZ"] } });
         const seen = await first.answer({ valueRanges: [{ values: [TABLE[0]] }, { values: TABLE.slice(1) }] });
+        const url = new URL(seen.response.url);
+        expect(url.origin + url.pathname).toBe('https://sheets.googleapis.com/v4/spreadsheets/ss1/values:batchGet');
+        expect(url.searchParams.getAll('ranges')).toEqual(["'People'!1:1", "'People'!A2:ZZZ"]);
         expect(seen.keys).toEqual(['2', '3']);
         expect(seen.cursor).toBe('3');
         expect(seen.events[1]).toEqual({ row: 3, values: ['Grace', 'grace@example.com'], record: { Name: 'Grace', Email: 'grace@example.com', Age: '' } });

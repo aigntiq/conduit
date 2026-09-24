@@ -30,7 +30,7 @@ export interface PollStep {
     /** The rendered request (method, url, query, …). */
     request: Record<string, unknown>;
     /** Render what the trigger makes of the provider's answer. */
-    answer(body: unknown, status?: number): Promise<{ items: unknown[]; cursor: unknown; keys: unknown[]; events: unknown[] }>;
+    answer(body: unknown, status?: number): Promise<{ response: { url: string }; items: unknown[]; cursor: unknown; keys: unknown[]; events: unknown[] }>;
 }
 
 export interface RenderPollOptions {
@@ -53,16 +53,26 @@ export async function renderPoll(spec: ConnectorSpec, operation: string, options
     const scope = { inputs: options.inputs ?? {}, auth: options.auth ?? {}, account: options.account ?? {}, config: spec.config ?? {}, env, state: options.state ?? {} };
     const render = (template: unknown, extra: Record<string, unknown> = {}) => renderTemplate(template, { ...scope, ...extra }, { functions });
     const rendered = (await render(trigger.request)) as Record<string, unknown>;
+    /** Where the request went, as ResponseView.url has it: against the base URL, with the query. */
+    const absoluteUrl = async () => {
+        const base = spec.http?.baseUrl === undefined ? undefined : String(await render(spec.http.baseUrl));
+        const path = String(rendered.url ?? '');
+        const url = new URL(/^https?:\/\//.test(path) || !base ? path : `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`);
+        for (const [key, value] of Object.entries((rendered.query ?? {}) as Record<string, unknown>)) {
+            for (const v of Array.isArray(value) ? value : [value]) if (v !== undefined && v !== null) url.searchParams.append(key, String(v));
+        }
+        return url.toString();
+    };
     return {
         request: rendered,
         async answer(body, status = 200) {
             // The ResponseView templates see at run time (url: where the request went).
-            const response = { status, ok: status < 400, headers: {}, body, url: String(rendered.url ?? '') };
+            const response = { status, ok: status < 400, headers: {}, body, url: await absoluteUrl() };
             const items = ((await render(trigger.items, { response })) as unknown[]) ?? [];
             const cursor = trigger.cursor === undefined ? undefined : await render(trigger.cursor, { response });
             const keys = await Promise.all(items.map((item) => render(trigger.dedupeKey, { response, item })));
             const events = await Promise.all(items.map((item) => (trigger.event === undefined ? item : render(trigger.event, { response, item }))));
-            return { items, cursor, keys, events };
+            return { response, items, cursor, keys, events };
         }
     };
 }
