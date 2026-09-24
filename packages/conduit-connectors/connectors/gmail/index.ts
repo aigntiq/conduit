@@ -8,7 +8,6 @@ import {
     $,
     action,
     array,
-    auth,
     boolean,
     connector,
     email,
@@ -28,6 +27,9 @@ import {
     type ErrorRuleDef,
     type Ref
 } from '@aigntiq/conduit/builder';
+import { googleOAuth, googleRetry, googleSetup } from '../_shared/google';
+
+const SCOPE = 'https://www.googleapis.com/auth/gmail.modify';
 
 // ── Shared pieces ───────────────────────────────────────────────────────
 
@@ -114,18 +116,11 @@ export default connector({
     http: ({ config }) => ({
         baseUrl: config.baseUrl,
         headers: { Accept: 'application/json' },
-        retry: { attempts: 3, initialDelayMs: 500, maxDelayMs: 20_000 }
+        retry: googleRetry
     }),
     auth: [
-        auth.oauth2('oauth', ({ response }) => ({
-            label: 'Sign in with Google',
-            authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-            tokenUrl: 'https://oauth2.googleapis.com/token',
-            revokeUrl: 'https://oauth2.googleapis.com/revoke',
-            scopes: ['https://www.googleapis.com/auth/gmail.modify'],
-            // Offline access + consent every time: Google only returns a
-            // refresh token on consent.
-            authorizeParams: { access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' },
+        googleOAuth(({ response }) => ({
+            scopes: [SCOPE],
             identity: {
                 request: { url: '/users/me/profile' },
                 id: response.body.emailAddress,
@@ -133,14 +128,9 @@ export default connector({
             },
             test: { url: '/users/me/profile' },
             helpUrl: 'https://developers.google.com/gmail/api/auth/scopes',
-            setup: [
-                '1. In the Google Cloud console, create (or pick) a project and **enable the Gmail API**.',
-                '2. Configure the **OAuth consent screen** and add the scope `https://www.googleapis.com/auth/gmail.modify`.',
-                '3. Create an **OAuth client ID** of type *Web application*. Add your Conduit callback URL (for example `https://app.example/conduit/auth/callback`) as an **authorized redirect URI**.',
-                '4. Give the client id and secret to Conduit: `createConduit({ clients: { gmail: { id, secret } } })`.',
-                '',
+            setup: googleSetup('Gmail API', 'gmail', [SCOPE], [
                 '`gmail.modify` is a *restricted* scope: apps used beyond your own test users need Google verification (and a security assessment).'
-            ].join('\n')
+            ])
         }))
     ],
     operations: [

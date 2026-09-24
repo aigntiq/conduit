@@ -19,20 +19,22 @@ export default defineConfig({
         globals: false
     },
     resolve: {
-        // MORE SPECIFIC FIRST: aliases match by prefix, in order.
-        alias: {
-            '@aigntiq/conduit/expr': src('expr/index.ts'),
-            '@aigntiq/conduit/schema': src('schema/index.ts'),
-            '@aigntiq/conduit/oauth': src('oauth/index.ts'),
-            '@aigntiq/conduit/server': src('server/index.ts'),
-            '@aigntiq/conduit/node': src('node/index.ts'),
-            '@aigntiq/conduit/builder': src('builder/index.ts'),
-            '@aigntiq/conduit/testing': src('testing/index.ts'),
+        // MORE SPECIFIC FIRST: aliases match in order. (An array, so a
+        // pattern can map every connector subpath to its generated module.)
+        alias: [
+            { find: '@aigntiq/conduit/expr', replacement: src('expr/index.ts') },
+            { find: '@aigntiq/conduit/schema', replacement: src('schema/index.ts') },
+            { find: '@aigntiq/conduit/oauth', replacement: src('oauth/index.ts') },
+            { find: '@aigntiq/conduit/server', replacement: src('server/index.ts') },
+            { find: '@aigntiq/conduit/node', replacement: src('node/index.ts') },
+            { find: '@aigntiq/conduit/builder', replacement: src('builder/index.ts') },
+            { find: '@aigntiq/conduit/testing', replacement: src('testing/index.ts') },
             // Workspace-only: the Node mock provider is not part of any published entry.
-            '@aigntiq/conduit/test/mock-provider': resolve(__dirname, 'packages/conduit/test/mock-provider.ts'),
-            '@aigntiq/conduit': src('index.ts'),
-            '@aigntiq/conduit-connectors/gmail': resolve(__dirname, 'packages/conduit-connectors/src/generated/gmail.ts'),
-            '@aigntiq/conduit-connectors': resolve(__dirname, 'packages/conduit-connectors/src/index.ts')
-        }
+            { find: '@aigntiq/conduit/test/mock-provider', replacement: resolve(__dirname, 'packages/conduit/test/mock-provider.ts') },
+            { find: /^@aigntiq\/conduit$/, replacement: src('index.ts') },
+            // `@aigntiq/conduit-connectors/<id>` → that connector's generated module.
+            { find: /^@aigntiq\/conduit-connectors\/([\w-]+)$/, replacement: resolve(__dirname, 'packages/conduit-connectors/src/generated/$1.ts') },
+            { find: /^@aigntiq\/conduit-connectors$/, replacement: resolve(__dirname, 'packages/conduit-connectors/src/index.ts') }
+        ]
     }
 });

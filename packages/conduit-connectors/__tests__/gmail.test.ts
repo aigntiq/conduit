@@ -4,134 +4,109 @@
  * including the decoded MIME message Gmail receives in `raw`.
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import { ConduitRequestError, ConduitValidationError, createConduit, type CatalogOf, type HttpClient } from '@aigntiq/conduit';
+import { ConduitRequestError, ConduitValidationError } from '@aigntiq/conduit';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
-import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
+import { connect, json, last, REDIRECT, scriptedHttp, type Seen } from './support/stub';
 
-const SECRET = 'gmail-connector-tests-secret-long-enough';
-const REDIRECT = 'https://app.example/conduit/auth/callback';
 const b64url = (s: string | Buffer) => Buffer.from(s).toString('base64url');
 
-interface Seen {
-    method: string;
-    url: URL;
-    body: string;
-}
-
 function gmailStub() {
-    const seen: Seen[] = [];
-    const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-    const http: HttpClient = async (request) => {
-        const url = new URL(request.url);
-        const body = request.body ? await request.text() : '';
-        seen.push({ method: request.method, url, body });
-        const path = url.pathname.replace('/gmail/v1', '');
-        const route = `${request.method} ${url.host}${path}`;
-
-        if (route === 'POST oauth2.googleapis.com/token') return json({ access_token: 'ya29.token', refresh_token: '1//refresh', expires_in: 3599, token_type: 'Bearer' });
-        if (route === 'POST oauth2.googleapis.com/revoke') return json({});
-        if (url.host !== 'gmail.googleapis.com') return json({ error: { message: 'unexpected host' } }, 500);
-        if (request.headers.get('authorization') !== 'Bearer ya29.token') return json({ error: { code: 401, message: 'Invalid Credentials' } }, 401);
-
-        switch (`${request.method} ${path}`) {
-            case 'GET /users/me/profile':
-                return json({ emailAddress: 'ada@example.com', messagesTotal: 10 });
-            case 'POST /users/me/messages/send': {
-                const raw = Buffer.from(JSON.parse(body).raw, 'base64url').toString();
-                if (/^To: .*bad@/m.test(raw)) return json({ error: { code: 400, message: 'Invalid To header', status: 'INVALID_ARGUMENT' } }, 400);
-                return json({ id: 'm-sent', threadId: JSON.parse(body).threadId ?? 't-new', labelIds: ['SENT'] });
-            }
-            case 'POST /users/me/drafts':
-                return json({ id: 'd1', message: { id: 'm-draft', threadId: 't-draft' } });
-            case 'GET /users/me/messages/orig':
-                return json({
-                    id: 'orig',
-                    threadId: 't-orig',
-                    payload: {
-                        headers: [
-                            { name: 'Subject', value: 'Quarterly numbers' },
-                            { name: 'From', value: 'Grace <grace@example.com>' },
-                            { name: 'To', value: 'ada@example.com' },
-                            { name: 'Cc', value: 'linus@example.com' },
-                            { name: 'Message-ID', value: '<orig@mail.example>' },
-                            { name: 'References', value: '<root@mail.example>' }
+    return scriptedHttp({
+        tokenEndpoint: 'oauth2.googleapis.com/token',
+        revokeEndpoint: 'oauth2.googleapis.com/revoke',
+        accessToken: 'ya29.token',
+        hosts: ['gmail.googleapis.com'],
+        prefix: '/gmail/v1',
+        routes: ({ route, url, body }) => {
+            switch (route) {
+                case 'GET /users/me/profile':
+                    return json({ emailAddress: 'ada@example.com', messagesTotal: 10 });
+                case 'POST /users/me/messages/send': {
+                    const raw = Buffer.from(JSON.parse(body).raw, 'base64url').toString();
+                    if (/^To: .*bad@/m.test(raw)) return json({ error: { code: 400, message: 'Invalid To header', status: 'INVALID_ARGUMENT' } }, 400);
+                    return json({ id: 'm-sent', threadId: JSON.parse(body).threadId ?? 't-new', labelIds: ['SENT'] });
+                }
+                case 'POST /users/me/drafts':
+                    return json({ id: 'd1', message: { id: 'm-draft', threadId: 't-draft' } });
+                case 'GET /users/me/messages/orig':
+                    return json({
+                        id: 'orig',
+                        threadId: 't-orig',
+                        payload: {
+                            headers: [
+                                { name: 'Subject', value: 'Quarterly numbers' },
+                                { name: 'From', value: 'Grace <grace@example.com>' },
+                                { name: 'To', value: 'ada@example.com' },
+                                { name: 'Cc', value: 'linus@example.com' },
+                                { name: 'Message-ID', value: '<orig@mail.example>' },
+                                { name: 'References', value: '<root@mail.example>' }
+                            ]
+                        }
+                    });
+                case 'GET /users/me/messages': {
+                    const token = url.searchParams.get('pageToken');
+                    if (!token) return json({ messages: [{ id: 'a', threadId: 'ta' }, { id: 'b', threadId: 'tb' }], nextPageToken: 'p2' });
+                    return json({ messages: [{ id: 'c', threadId: 'tc' }] });
+                }
+                case 'GET /users/me/messages/m1':
+                    return json({
+                        id: 'm1',
+                        threadId: 't1',
+                        labelIds: ['INBOX', 'UNREAD'],
+                        snippet: 'Hello there',
+                        internalDate: '1767225600000',
+                        payload: {
+                            mimeType: 'multipart/mixed',
+                            headers: [
+                                { name: 'From', value: 'Grace <grace@example.com>' },
+                                { name: 'To', value: 'ada@example.com' },
+                                { name: 'Subject', value: 'Hello' },
+                                { name: 'Message-ID', value: '<m1@mail.example>' }
+                            ],
+                            parts: [
+                                {
+                                    mimeType: 'multipart/alternative',
+                                    filename: '',
+                                    parts: [
+                                        { mimeType: 'text/plain', filename: '', body: { size: 5, data: b64url('Hej ✓') } },
+                                        { mimeType: 'text/html', filename: '', body: { size: 12, data: b64url('<p>Hej ✓</p>') } }
+                                    ]
+                                },
+                                { mimeType: 'application/pdf', filename: 'report.pdf', body: { size: 2048, attachmentId: 'att-1' } }
+                            ]
+                        }
+                    });
+                case 'GET /users/me/messages/m1/attachments/att-1':
+                    return json({ size: 3, data: b64url('PDF') });
+                case 'GET /users/me/labels':
+                    return json({
+                        labels: [
+                            { id: 'Label_2', name: 'Receipts', type: 'user' },
+                            { id: 'INBOX', name: 'INBOX', type: 'system' },
+                            { id: 'Label_1', name: 'Projects', type: 'user' }
                         ]
-                    }
-                });
-            case 'GET /users/me/messages': {
-                const token = url.searchParams.get('pageToken');
-                if (!token) return json({ messages: [{ id: 'a', threadId: 'ta' }, { id: 'b', threadId: 'tb' }], nextPageToken: 'p2' });
-                return json({ messages: [{ id: 'c', threadId: 'tc' }] });
+                    });
+                case 'POST /users/me/messages/m1/modify':
+                    return json({ id: 'm1', threadId: 't1', labelIds: ['INBOX', ...(JSON.parse(body).addLabelIds ?? [])] });
+                case 'POST /users/me/messages/m1/trash':
+                    return json({ id: 'm1', threadId: 't1', labelIds: ['TRASH'] });
+                case 'POST /users/me/messages/gone/trash':
+                    return json({ error: { code: 404, message: 'Requested entity was not found.' } }, 404);
             }
-            case 'GET /users/me/messages/m1':
-                return json({
-                    id: 'm1',
-                    threadId: 't1',
-                    labelIds: ['INBOX', 'UNREAD'],
-                    snippet: 'Hello there',
-                    internalDate: '1767225600000',
-                    payload: {
-                        mimeType: 'multipart/mixed',
-                        headers: [
-                            { name: 'From', value: 'Grace <grace@example.com>' },
-                            { name: 'To', value: 'ada@example.com' },
-                            { name: 'Subject', value: 'Hello' },
-                            { name: 'Message-ID', value: '<m1@mail.example>' }
-                        ],
-                        parts: [
-                            {
-                                mimeType: 'multipart/alternative',
-                                filename: '',
-                                parts: [
-                                    { mimeType: 'text/plain', filename: '', body: { size: 5, data: b64url('Hej ✓') } },
-                                    { mimeType: 'text/html', filename: '', body: { size: 12, data: b64url('<p>Hej ✓</p>') } }
-                                ]
-                            },
-                            { mimeType: 'application/pdf', filename: 'report.pdf', body: { size: 2048, attachmentId: 'att-1' } }
-                        ]
-                    }
-                });
-            case 'GET /users/me/messages/m1/attachments/att-1':
-                return json({ size: 3, data: b64url('PDF') });
-            case 'GET /users/me/labels':
-                return json({
-                    labels: [
-                        { id: 'Label_2', name: 'Receipts', type: 'user' },
-                        { id: 'INBOX', name: 'INBOX', type: 'system' },
-                        { id: 'Label_1', name: 'Projects', type: 'user' }
-                    ]
-                });
-            case 'POST /users/me/messages/m1/modify':
-                return json({ id: 'm1', threadId: 't1', labelIds: ['INBOX', ...(JSON.parse(body).addLabelIds ?? [])] });
-            case 'POST /users/me/messages/m1/trash':
-                return json({ id: 'm1', threadId: 't1', labelIds: ['TRASH'] });
-            case 'POST /users/me/messages/gone/trash':
-                return json({ error: { code: 404, message: 'Requested entity was not found.' } }, 404);
+            return undefined;
         }
-        return json({ error: { message: `no route ${request.method} ${path}` } }, 404);
-    };
-    return { http, seen };
+    });
 }
 
 async function setup() {
     const stub = gmailStub();
-    const conduit = createConduit<CatalogOf<Connectors>>({
-        sources: connectorCatalog({ include: ['gmail'] }),
-        secret: SECRET,
-        http: stub.http,
-        redirectUri: REDIRECT,
-        clients: { gmail: { id: 'client.apps.googleusercontent.com', secret: 'gcs' } }
-    });
-    const begun = await conduit.auth.begin({ connector: 'gmail', method: 'oauth', owner: 'u1' });
-    if (begun.type !== 'redirect') throw new Error('expected a redirect');
-    const { account } = await conduit.auth.complete({ params: { state: begun.state, code: 'auth-code' } });
-    return { conduit, seen: stub.seen, account: account.id, authorizeUrl: new URL(begun.url) };
+    const connected = await connect('gmail', stub.http, { client: { id: 'client.apps.googleusercontent.com', secret: 'gcs' } });
+    return { ...connected, seen: stub.seen };
 }
 
 /** Decode the MIME message of the last send/draft request. */
 function lastRaw(seen: Seen[]): string {
-    const last = [...seen].reverse().find((s) => s.method === 'POST' && /\/(send|drafts)$/.test(s.url.pathname))!;
-    const body = JSON.parse(last.body);
+    const body = JSON.parse(last(seen, 'POST', /\/(send|drafts)$/).body);
     return Buffer.from(body.raw ?? body.message.raw, 'base64url').toString();
 }
 
