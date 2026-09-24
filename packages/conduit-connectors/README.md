@@ -42,6 +42,7 @@ one connector (earlier sources win), for example to pin an older version.
 | Connector | Auth | Operations |
 |---|---|---|
 | [Gmail](connectors/gmail/README.md) | Google OAuth | send email, create draft, reply, search messages, get message, get conversation, download attachment, labels (options), add/remove labels, move to trash, new email (trigger) |
+| [Google Calendar](connectors/google-calendar/README.md) | Google OAuth | calendars (options), search events, get event, create event (guests, Google Meet), quick add, update event, delete event, find busy times, event created or changed (trigger) |
 
 ## Versioning
 

@@ -8,6 +8,10 @@ any connector a major. Each connector also carries its own `version`.
 
 ## [Unreleased]
 
+### Added
+
+- **Google Calendar** 1.0.0: calendars (options), search events (expanding recurring events), get, create (all-day or timed, guests, Google Meet link, recurrence), quick add, update (only the fields given), delete, busy times, and an event-changed poll trigger (runtime pending).
+
 ## [0.1.1] - 2026-09-24
 
 ### Added

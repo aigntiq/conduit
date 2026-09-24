@@ -12,12 +12,24 @@ export const summaries: readonly ConnectorSummary[] = [
             "email",
             "productivity"
         ]
+    },
+    {
+        "id": "google-calendar",
+        "name": "Google Calendar",
+        "version": "1.0.0",
+        "description": "Find, create, update and delete events in Google Calendar, and check when people are free.",
+        "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS43NSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cmVjdCB4PSIzIiB5PSI1IiB3aWR0aD0iMTgiIGhlaWdodD0iMTYiIHJ4PSIyIi8+PHBhdGggZD0iTTMgMTBoMThNOCAzdjRNMTYgM3Y0Ii8+PHBhdGggZD0iTTggMTRoMk0xNCAxNGgyTTggMTcuNWgyIi8+PC9zdmc+Cg==",
+        "categories": [
+            "calendar",
+            "productivity"
+        ]
     }
 ];
 
 export const loaders = {
-    "gmail": () => import('./gmail')
+    "gmail": () => import('./gmail'),
+    "google-calendar": () => import('./google-calendar')
 } satisfies Record<string, () => Promise<{ default: ConnectorSpec }>>;
 
 /** Every connector in the package — `CatalogOf<Connectors>` types `execute` for all of them. */
-export type Connectors = typeof import('./gmail').default;
+export type Connectors = typeof import('./gmail').default | typeof import('./google-calendar').default;
