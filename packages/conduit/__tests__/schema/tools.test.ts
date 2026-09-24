@@ -27,6 +27,29 @@ describe('toolSchema', () => {
         });
     });
 
+    it('keeps fields named x-… and x- keys inside values — only hint keywords go', () => {
+        const inputs = {
+            type: 'object',
+            properties: {
+                'x-trace-id': { type: 'string', 'x-group': 'Advanced' },
+                headers: { type: 'object', default: { 'x-api-version': '2' }, examples: [{ 'x-mode': 'fast' }], additionalProperties: { type: 'string', 'x-widget': 'text' } },
+                mode: { const: { 'x-a': 1 } },
+                choice: { oneOf: [{ const: 'a', title: 'A', 'x-order': 1 }] }
+            },
+            required: ['x-trace-id']
+        } as unknown as InputSchema;
+        expect(toolSchema(inputs)).toEqual({
+            type: 'object',
+            properties: {
+                'x-trace-id': { type: 'string' },
+                headers: { type: 'object', default: { 'x-api-version': '2' }, examples: [{ 'x-mode': 'fast' }], additionalProperties: { type: 'string' } },
+                mode: { const: { 'x-a': 1 } },
+                choice: { oneOf: [{ const: 'a', title: 'A' }] }
+            },
+            required: ['x-trace-id']
+        });
+    });
+
     it('does not change its input', () => {
         const inputs: InputSchema = { type: 'object', properties: { a: { type: 'string', 'x-group': 'G' } } };
         toolSchema(inputs);

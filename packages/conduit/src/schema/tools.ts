@@ -30,17 +30,42 @@ export interface ToolDefinitionOptions {
     includeHidden?: boolean;
 }
 
-function withoutHints(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map(withoutHints);
-    if (typeof value !== 'object' || value === null) return value;
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** Keywords whose value is a subschema, or a list of them. */
+const SUBSCHEMA = new Set(['items', 'additionalProperties', 'not', 'if', 'then', 'else', 'contains', 'propertyNames']);
+const SUBSCHEMA_LIST = new Set(['oneOf', 'anyOf', 'allOf', 'prefixItems']);
+/** Keywords whose value maps names (field names, not keywords) to subschemas. */
+const SUBSCHEMA_MAP = new Set(['properties', 'patternProperties', 'dependentSchemas', '$defs']);
+
+/**
+ * A schema without its `x-` hint keywords. Only keyword positions are
+ * stripped: field names under `properties` and data under `default`,
+ * `const`, `examples` and the like are copied untouched.
+ */
+function withoutHints(schema: unknown): unknown {
+    if (!isObject(schema)) return schema;
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value)) if (!k.startsWith('x-')) out[k] = withoutHints(v);
+    for (const [k, v] of Object.entries(schema)) {
+        if (k.startsWith('x-')) continue;
+        if (SUBSCHEMA.has(k)) out[k] = Array.isArray(v) ? v.map(withoutHints) : withoutHints(v);
+        else if (SUBSCHEMA_LIST.has(k) && Array.isArray(v)) out[k] = v.map(withoutHints);
+        else if (SUBSCHEMA_MAP.has(k) && isObject(v)) out[k] = Object.fromEntries(Object.entries(v).map(([name, s]) => [name, withoutHints(s)]));
+        else out[k] = jsonCopy(v);
+    }
     return out;
 }
 
+/** A deep copy of plain JSON data, so the result never aliases the spec. */
+function jsonCopy(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(jsonCopy);
+    if (!isObject(value)) return value;
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, jsonCopy(v)]));
+}
+
 /**
- * An operation's inputs as a plain JSON Schema: a copy with every `x-` hint
- * (widgets, groups, option sources, cross-field rules) removed at any depth.
+ * An operation's inputs as a plain JSON Schema: a copy with the `x-` hints
+ * (widgets, groups, option sources, cross-field rules) removed from every subschema.
  * No inputs give an empty object schema.
  */
 export function toolSchema(inputs: InputSchema | undefined): JsonSchema {
