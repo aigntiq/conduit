@@ -617,7 +617,7 @@ const connector = {
                     "addresses": "{{inputs.address == undefined ? undefined : [{formattedValue: inputs.address}]}}",
                     "birthdays": "{{inputs.birthday == undefined ? undefined : [{date: compactObject({ year: startsWith(inputs.birthday, '--') ? undefined : number(substring(inputs.birthday, 0, 4)), month: number(substring(inputs.birthday, length(inputs.birthday) - 5, length(inputs.birthday) - 3)), day: number(substring(inputs.birthday, length(inputs.birthday) - 2)) })}]}}",
                     "biographies": "{{inputs.notes == undefined ? undefined : [{value: inputs.notes, contentType: 'TEXT_PLAIN'}]}}",
-                    "memberships": "{{map(inputs.groups, g => {contactGroupMembership: {contactGroupResourceName: g}})}}"
+                    "memberships": "{{inputs.groups == undefined ? undefined : map(inputs.groups, g => {contactGroupMembership: {contactGroupResourceName: g}})}}"
                 },
                 "url": "/people:createContact"
             }

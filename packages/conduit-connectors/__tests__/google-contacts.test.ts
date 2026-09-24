@@ -168,7 +168,8 @@ describe('Google Contacts: writing', () => {
     it('takes a birthday with or without a year, and nothing else', async () => {
         const { conduit, account, seen } = await setup();
         await conduit.execute({ connector: 'google-contacts', operation: 'create-contact', account, inputs: { givenName: 'Ada', birthday: '--12-10' } });
-        expect(JSON.parse(last(seen, 'POST', /createContact$/).body).birthdays).toEqual([{ date: { month: 12, day: 10 } }]);
+        // No groups given: no memberships sent at all (not an empty list).
+        expect(JSON.parse(last(seen, 'POST', /createContact$/).body)).toEqual({ names: [{ givenName: 'Ada' }], birthdays: [{ date: { month: 12, day: 10 } }] });
         await conduit.execute({ connector: 'google-contacts', operation: 'update-contact', account, inputs: { id: 'c1', birthday: '1815-12-10' } });
         expect(JSON.parse(last(seen, 'PATCH', /updateContact$/).body).birthdays).toEqual([{ date: { year: 1815, month: 12, day: 10 } }]);
         const err = await conduit.execute({ connector: 'google-contacts', operation: 'create-contact', account, inputs: { givenName: 'Ada', birthday: '10 December' } }).catch((e: unknown) => e);

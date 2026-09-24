@@ -243,7 +243,7 @@ export default connector({
                 query: { personFields: PERSON_FIELDS },
                 body: {
                     ...personBody(inputs),
-                    memberships: expr`map(${inputs.groups}, g => {contactGroupMembership: {contactGroupResourceName: g}})`
+                    memberships: expr`${inputs.groups} == undefined ? undefined : map(${inputs.groups}, g => {contactGroupMembership: {contactGroupResourceName: g}})`
                 }
             }),
             output: ({ response }) => expr`contactOf(${response.body})`
