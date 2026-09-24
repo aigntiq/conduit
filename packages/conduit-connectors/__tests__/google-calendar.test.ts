@@ -5,7 +5,9 @@
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
+import googleCalendar from '@aigntiq/conduit-connectors/google-calendar';
 import { connect, json, last, scriptedHttp } from './support/stub';
+import { renderPoll } from './support/triggers';
 
 const timed = {
     id: 'ev1',
@@ -287,6 +289,29 @@ describe('Google Calendar: availability', () => {
         expect(JSON.parse(last(seen, 'POST', /freeBusy$/).body).items).toEqual([{ id: 'primary' }]);
         await conduit.execute({ connector: 'google-calendar', operation: 'find-free-busy', account, inputs: { calendars: ['primary', 'team@group.calendar.google.com'], from: '2026-05-04T06:00:00Z', to: '2026-05-04T18:00:00Z' } });
         expect(JSON.parse(last(seen, 'POST', /freeBusy$/).body).items).toEqual([{ id: 'primary' }, { id: 'team@group.calendar.google.com' }]);
+    });
+});
+
+describe('Google Calendar: event-changed trigger', () => {
+    it('starts from now, then from the newest change seen, dropping the inclusive repeat', async () => {
+        const before = new Date().toISOString();
+        const first = await renderPoll(googleCalendar, 'event-changed');
+        const query = (first.request as { query: Record<string, unknown> }).query;
+        expect(first.request).toMatchObject({ url: '/calendars/primary/events', query: { showDeleted: true, orderBy: 'updated', maxResults: 250 } });
+        expect(String(query.updatedMin) >= before.slice(0, 16)).toBe(true);
+
+        const cancelled = { ...allDay, id: 'ev3', status: 'cancelled', updated: '2026-04-05T08:00:00.000Z' };
+        const seen = await first.answer({ items: [timed, cancelled, allDay] });
+        expect(seen.cursor).toBe('2026-04-05T08:00:00.000Z');
+        expect(seen.keys).toEqual(['ev1@2026-04-02T08:00:00.000Z', 'ev3@2026-04-05T08:00:00.000Z', 'ev2@2026-04-03T08:00:00.000Z']);
+        expect(seen.events[1]).toMatchObject({ id: 'ev3', status: 'cancelled', allDay: true });
+
+        // updatedMin is inclusive: the next poll sees ev3 again, under the same key.
+        const next = await renderPoll(googleCalendar, 'event-changed', { inputs: { calendarId: 'team@group.calendar.google.com' }, state: { cursor: seen.cursor } });
+        expect(next.request).toMatchObject({ url: '/calendars/team%40group.calendar.google.com/events', query: { updatedMin: '2026-04-05T08:00:00.000Z' } });
+        const again = await next.answer({ items: [cancelled] });
+        expect(again.keys).toEqual([seen.keys[1]]);
+        expect((await next.answer({ items: [] })).cursor).toBe('2026-04-05T08:00:00.000Z');
     });
 });
 

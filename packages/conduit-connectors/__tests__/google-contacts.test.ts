@@ -5,7 +5,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
+import googleContacts from '@aigntiq/conduit-connectors/google-contacts';
 import { connect, json, last, scriptedHttp } from './support/stub';
+import { renderPoll } from './support/triggers';
 
 const ada = {
     resourceName: 'people/c1',
@@ -232,6 +234,18 @@ describe('Google Contacts: groups', () => {
         });
         expect(JSON.parse(last(seen, 'POST', /members:modify$/).body)).toEqual({ resourceNamesToAdd: ['people/c2', 'people/c404'], resourceNamesToRemove: ['people/c1'] });
         expect(output).toEqual({ notFound: ['c404'] });
+    });
+});
+
+describe('Google Contacts: new-contact trigger', () => {
+    it('reads the most recently changed contacts, one event per contact, flattened', async () => {
+        const poll = await renderPoll(googleContacts, 'new-contact');
+        expect(poll.request).toMatchObject({ url: '/people/me/connections', query: { sortOrder: 'LAST_MODIFIED_DESCENDING', pageSize: 50 } });
+        expect((poll.request as { query: { personFields: string } }).query.personFields).toContain('emailAddresses');
+        const seen = await poll.answer({ connections: [grace, ada], totalPeople: 2 });
+        expect(seen.keys).toEqual(['people/c2', 'people/c1']);
+        expect(seen.events[1]).toMatchObject({ id: 'c1', name: 'Ada Lovelace', emails: ['ada@example.com', 'ada@work.example'], birthday: '--12-10' });
+        expect((await poll.answer({ totalPeople: 0 })).items).toEqual([]);
     });
 });
 

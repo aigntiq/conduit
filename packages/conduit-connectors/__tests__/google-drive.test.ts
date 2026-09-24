@@ -6,7 +6,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
+import googleDrive from '@aigntiq/conduit-connectors/google-drive';
 import { connect, json, last, scriptedHttp } from './support/stub';
+import { renderPoll } from './support/triggers';
 
 const FOLDER = 'application/vnd.google-apps.folder';
 const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x00, 0xff, 0x80, 0x0a]);
@@ -279,6 +281,27 @@ describe('Google Drive: writing', () => {
         const { output } = await conduit.execute({ connector: 'google-drive', operation: 'trash-file', account, inputs: { fileId: 'f1' } });
         expect(JSON.parse(last(seen, 'PATCH', /\/files\/f1$/).body)).toEqual({ trashed: true });
         expect(output).toMatchObject({ trashed: true });
+    });
+});
+
+describe('Google Drive: new-file trigger', () => {
+    it('asks for files created since the cursor (inclusive), never folders, optionally in one folder', async () => {
+        const before = new Date().toISOString();
+        const first = await renderPoll(googleDrive, 'new-file');
+        const q = String((first.request as { query: { q: string } }).query.q);
+        const since = /^createdTime >= '([^']+)' and mimeType != 'application\/vnd\.google-apps\.folder' and trashed = false$/.exec(q)?.[1];
+        expect(since! >= before.slice(0, 16)).toBe(true);
+        expect(first.request).toMatchObject({ query: { orderBy: 'createdTime', supportsAllDrives: true, includeItemsFromAllDrives: true } });
+
+        const inFolder = await renderPoll(googleDrive, 'new-file', { inputs: { folderId: 'folder-a' }, state: { cursor: '2026-05-01T08:00:00.000Z' } });
+        expect((inFolder.request as { query: { q: string } }).query.q).toBe(
+            "createdTime >= '2026-05-01T08:00:00.000Z' and mimeType != 'application/vnd.google-apps.folder' and trashed = false and 'folder-a' in parents"
+        );
+        const newer = { ...plan, id: 'd2', createdTime: '2026-05-03T08:00:00.000Z' };
+        const seen = await inFolder.answer({ files: [report, newer] });
+        expect([seen.keys, seen.cursor]).toEqual([['f1', 'd2'], '2026-05-03T08:00:00.000Z']);
+        expect(seen.events[0]).toMatchObject({ id: 'f1', name: 'Report.pdf', size: 8, folder: false });
+        expect((await inFolder.answer({ files: [] })).cursor).toBe('2026-05-01T08:00:00.000Z');
     });
 });
 

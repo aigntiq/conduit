@@ -6,7 +6,9 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { ConduitRequestError, ConduitValidationError } from '@aigntiq/conduit';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
+import gmail from '@aigntiq/conduit-connectors/gmail';
 import { connect, json, last, REDIRECT, scriptedHttp, type Seen } from './support/stub';
+import { renderPoll } from './support/triggers';
 
 const b64url = (s: string | Buffer) => Buffer.from(s).toString('base64url');
 
@@ -300,6 +302,20 @@ describe('Gmail: labels and trash', () => {
         expect(output).toMatchObject({ labelIds: ['TRASH'] });
         const err = await conduit.execute({ connector: 'gmail', operation: 'trash-message', account, inputs: { id: 'gone' } }).catch((e: unknown) => e);
         expect(err).toMatchObject({ kind: 'notFound', issues: [{ path: 'inputs.id', code: 'remote' }] });
+    });
+});
+
+describe('Gmail: new-email trigger', () => {
+    it('lists the inbox by default, or a search and labels, one event per message id', async () => {
+        const inbox = await renderPoll(gmail, 'new-email', { inputs: { labelIds: ['INBOX'] } });
+        expect(inbox.request).toMatchObject({ url: '/users/me/messages', query: { labelIds: ['INBOX'], maxResults: 50 } });
+        const search = await renderPoll(gmail, 'new-email', { inputs: { query: 'from:billing@example.com has:attachment', labelIds: ['Label_2'] } });
+        expect(search.request).toMatchObject({ query: { q: 'from:billing@example.com has:attachment', labelIds: ['Label_2'] } });
+
+        const seen = await inbox.answer({ messages: [{ id: 'a', threadId: 'ta' }, { id: 'b', threadId: 'tb' }], resultSizeEstimate: 2 });
+        expect(seen.keys).toEqual(['a', 'b']);
+        expect(seen.events).toEqual([{ id: 'a', threadId: 'ta' }, { id: 'b', threadId: 'tb' }]);
+        expect((await inbox.answer({ resultSizeEstimate: 0 })).items).toEqual([]);
     });
 });
 
