@@ -5,9 +5,11 @@
  * mapping back.
  */
 import { describe, expect, it } from 'vitest';
+import { createConduit, type CatalogOf } from '@aigntiq/conduit';
 import { toolDefinitions } from '@aigntiq/conduit/schema';
+import { connectorCatalog, type Connectors } from '@aigntiq/conduit-connectors';
 import calendar from '@aigntiq/conduit-connectors/microsoft-calendar';
-import { connect, json, last, scriptedHttp } from './support/stub';
+import { connect, json, last, REDIRECT, scriptedHttp, SECRET } from './support/stub';
 import { renderWebhook } from './support/triggers';
 
 const utc = (t: string) => ({ dateTime: `${t}.0000000`, timeZone: 'UTC' });
@@ -38,13 +40,17 @@ const offsite = { ...planning, id: 'AAMk-e2', subject: 'Offsite', isAllDay: true
 
 function graphStub() {
     return scriptedHttp({
-        tokenEndpoint: 'login.microsoftonline.com/common/oauth2/v2.0/token',
+        tokenEndpoint: ['login.microsoftonline.com/common/oauth2/v2.0/token', 'login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/token'],
         accessToken: 'eyJ0eXAi.cal',
         hosts: ['graph.microsoft.com'],
         prefix: '/v1.0',
-        routes: ({ route, url, body, headers }) => {
+        routes: ({ route: asked, url, body, headers }) => {
+            // An app account's /users/<mailbox>/… answers as /me/… does.
+            const route = asked.replace('/users/shared%40contoso.example', '/me');
             if (headers.get('prefer') !== 'outlook.timezone="UTC"') return json({ error: { code: 'NoUtc', message: 'the stub only answers in UTC' } }, 400);
             switch (route) {
+                case 'GET /me/calendar':
+                    return json({ id: 'cal-main', name: 'Calendar', isDefaultCalendar: true });
                 case 'GET /me':
                     return json({ id: 'user-object-id', displayName: 'Ada Lovelace', mail: 'ada@contoso.example' });
                 case 'GET /me/calendars':
@@ -125,6 +131,58 @@ async function setup() {
     const stub = graphStub();
     return { ...(await connect('microsoft-calendar', stub.http)), seen: stub.seen };
 }
+
+/** An app account: client credentials for the contoso tenant, acting on one shared mailbox's calendars. */
+async function connectApp(stub = graphStub()) {
+    const conduit = createConduit<CatalogOf<Connectors>>({
+        sources: connectorCatalog({ include: ['microsoft-calendar'] }),
+        secret: SECRET,
+        http: stub.http,
+        redirectUri: REDIRECT,
+        clients: { 'microsoft-calendar': { id: 'app-id', secret: 'app-secret' } }
+    });
+    const begun = await conduit.auth.begin({
+        connector: 'microsoft-calendar',
+        method: 'app',
+        owner: 'automation',
+        inputs: { tenantId: 'contoso.onmicrosoft.com', mailbox: 'shared@contoso.example' }
+    });
+    if (begun.type !== 'connected') throw new Error('expected an immediate connection');
+    return { conduit, account: begun.account.id, seen: stub.seen };
+}
+
+describe('Microsoft Calendar: app-only accounts', () => {
+    it('connect with client credentials and prove access to the calendar', async () => {
+        const { conduit, account, seen } = await connectApp();
+        expect(last(seen, 'POST', /\/token$/).url.pathname).toBe('/contoso.onmicrosoft.com/oauth2/v2.0/token');
+        expect(last(seen, 'GET', /\/calendar$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/calendar');
+        expect(await conduit.accounts.get(account)).toMatchObject({ method: 'app', externalId: 'shared@contoso.example' });
+    });
+
+    it('act on /users/<mailbox>, and refuse find-meeting-times, which Graph keeps for signed-in users', async () => {
+        const { conduit, account, seen } = await connectApp();
+        await conduit.execute({ connector: 'microsoft-calendar', operation: 'search-events', account, inputs: { from: '2026-05-01T00:00:00Z' }, paging: { maxPages: 1 } });
+        expect(last(seen, 'GET', /calendarView$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/calendar/calendarView');
+        await conduit.execute({ connector: 'microsoft-calendar', operation: 'create-event', account, inputs: { calendarId: 'cal-team', subject: 'x', start: '2026-05-06' } });
+        expect(last(seen, 'POST', /events$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/calendars/cal-team/events');
+        await conduit.execute({ connector: 'microsoft-calendar', operation: 'get-schedule', account, inputs: { addresses: ['grace@contoso.example'], from: '2026-05-04T00:00:00Z', to: '2026-05-05T00:00:00Z' } });
+        expect(last(seen, 'POST', /getSchedule$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/calendar/getSchedule');
+
+        const before = seen.length;
+        const err = await conduit
+            .execute({ connector: 'microsoft-calendar', operation: 'find-meeting-times', account, inputs: { attendees: ['grace@contoso.example'], from: '2026-05-05T00:00:00Z', to: '2026-05-06T00:00:00Z' } })
+            .catch((e: unknown) => e);
+        expect(err).toMatchObject({ code: 'account_mismatch' });
+        expect(seen.length).toBe(before);
+    });
+
+    it('subscribe to the mailbox calendar, not /me', async () => {
+        const account = { method: 'app', data: { mailbox: 'shared@contoso.example' } };
+        const subscription = { callbackUrl: 'https://app.example/hooks/x', secret: 's', data: { id: 'sub' } };
+        const created = (await (await renderWebhook(calendar, 'event-changed', { account, subscription })).subscribe()) as { body: { resource: string } };
+        expect(created.body.resource).toBe('users/shared%40contoso.example/events');
+    });
+});
 
 describe('Microsoft Calendar: connecting', () => {
     it('asks for calendar access and identifies the account by object id', async () => {

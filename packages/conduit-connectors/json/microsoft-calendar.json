@@ -2,7 +2,7 @@
     "spec": "conduit/1",
     "id": "microsoft-calendar",
     "name": "Microsoft Calendar",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Find, create, update, answer and delete events in Outlook calendars, and find times that suit everyone.",
     "categories": [
         "calendar",
@@ -16,6 +16,13 @@
         "tenant": "common"
     },
     "functions": {
+        "graphUser": {
+            "params": [
+                "account"
+            ],
+            "description": "The Graph user segment: me (a signed-in user) or users/<mailbox> (an app account).",
+            "body": "account.method == 'app' ? 'users/' + urlEncode(account.data.mailbox) : 'me'"
+        },
         "timeOf": {
             "params": [
                 "t",
@@ -100,6 +107,49 @@
             },
             "helpUrl": "https://learn.microsoft.com/graph/permissions-reference",
             "setup": "1. In the Microsoft Entra admin center, open **App registrations** and create a **New registration**. Choose who may sign in (any organization and personal accounts suit `tenant: common`).\n2. Under **Authentication**, add a **Web** platform with your Conduit callback URL (for example `https://app.example/conduit/auth/callback`) as a redirect URI.\n3. Under **Certificates & secrets**, create a **client secret**.\n4. Under **API permissions**, add the Microsoft Graph *delegated* permissions `offline_access`, `User.Read`, `Calendars.ReadWrite`.\n5. Give the application (client) id and secret to Conduit: `createConduit({ clients: { 'microsoft-calendar': { id, secret } } })`. To limit sign-in to one organization, set `config: { 'microsoft-calendar': { tenant: '<tenant id or domain>' } }`."
+        },
+        {
+            "id": "app",
+            "type": "oauth2",
+            "label": "Microsoft 365 app (no signed-in user)",
+            "grant": "client_credentials",
+            "tokenUrl": "https://login.microsoftonline.com/{{inputs.tenantId}}/oauth2/v2.0/token",
+            "tokenParams": {
+                "scope": "https://graph.microsoft.com/.default"
+            },
+            "identity": {
+                "id": "{{lower(inputs.mailbox)}}",
+                "name": "{{lower(inputs.mailbox)}}",
+                "data": {
+                    "mailbox": "{{lower(inputs.mailbox)}}",
+                    "tenantId": "{{inputs.tenantId}}"
+                }
+            },
+            "test": {
+                "url": "https://graph.microsoft.com/v1.0/users/{{urlEncode(lower(inputs.mailbox))}}/calendar"
+            },
+            "helpUrl": "https://learn.microsoft.com/graph/auth-v2-service",
+            "setup": "1. In the Microsoft Entra admin center, open **App registrations** and create (or reuse) a registration, with a **client secret** under **Certificates & secrets**.\n2. Under **API permissions**, add the Microsoft Graph *application* permissions `Calendars.ReadWrite`, then **Grant admin consent**.\n3. Application permissions reach every mailbox in the tenant. Limit the app to the mailboxes it should use, with RBAC for Applications in Exchange Online.\n4. Give the client id and secret to Conduit (`createConduit({ clients: { 'microsoft-calendar': { id, secret } } })`), and connect an account with method `app` and inputs `{ tenantId, mailbox }`.",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "tenantId": {
+                        "type": "string",
+                        "title": "Tenant",
+                        "description": "The directory (tenant) id, or a verified domain such as contoso.onmicrosoft.com."
+                    },
+                    "mailbox": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Mailbox",
+                        "description": "The one mailbox this account acts on, e.g. shared@contoso.com."
+                    }
+                },
+                "required": [
+                    "tenantId",
+                    "mailbox"
+                ]
+            }
         }
     ],
     "operations": [
@@ -124,7 +174,7 @@
                     "$select": "id,name,isDefaultCalendar,canEdit",
                     "$top": 100
                 },
-                "url": "/me/calendars"
+                "url": "/{{graphUser(account)}}/calendars"
             },
             "paginate": {
                 "style": "nextUrl",
@@ -302,7 +352,7 @@
                     "$select": "id,subject,bodyPreview,start,end,isAllDay,location,organizer,attendees,isOnlineMeeting,onlineMeeting,showAs,isCancelled,responseStatus,webLink,seriesMasterId,type,categories,importance,createdDateTime,lastModifiedDateTime",
                     "$top": 50
                 },
-                "url": "{{isEmpty(inputs.calendarId) ? '/me/calendar' : '/me/calendars/' + urlEncode(inputs.calendarId)}}/calendarView"
+                "url": "{{'/' + graphUser(account) + (isEmpty(inputs.calendarId) ? '/calendar' : '/calendars/' + urlEncode(inputs.calendarId))}}/calendarView"
             },
             "paginate": {
                 "style": "nextUrl",
@@ -460,7 +510,7 @@
                 "query": {
                     "$select": "id,subject,bodyPreview,start,end,isAllDay,location,organizer,attendees,isOnlineMeeting,onlineMeeting,showAs,isCancelled,responseStatus,webLink,seriesMasterId,type,categories,importance,createdDateTime,lastModifiedDateTime,body"
                 },
-                "url": "/me/events/{{urlEncode(inputs.eventId)}}"
+                "url": "/{{graphUser(account)}}/events/{{urlEncode(inputs.eventId)}}"
             }
         },
         {
@@ -741,7 +791,7 @@
                     "showAs": "{{inputs.showAs}}",
                     "categories": "{{inputs.categories}}"
                 },
-                "url": "{{isEmpty(inputs.calendarId) ? '/me/calendar' : '/me/calendars/' + urlEncode(inputs.calendarId)}}/events"
+                "url": "{{'/' + graphUser(account) + (isEmpty(inputs.calendarId) ? '/calendar' : '/calendars/' + urlEncode(inputs.calendarId))}}/events"
             }
         },
         {
@@ -1008,7 +1058,7 @@
                     "showAs": "{{inputs.showAs}}",
                     "categories": "{{inputs.categories}}"
                 },
-                "url": "/me/events/{{urlEncode(inputs.eventId)}}"
+                "url": "/{{graphUser(account)}}/events/{{urlEncode(inputs.eventId)}}"
             }
         },
         {
@@ -1059,7 +1109,7 @@
             },
             "request": {
                 "method": "DELETE",
-                "url": "/me/events/{{urlEncode(inputs.eventId)}}"
+                "url": "/{{graphUser(account)}}/events/{{urlEncode(inputs.eventId)}}"
             }
         },
         {
@@ -1149,16 +1199,19 @@
                     "comment": "{{inputs.comment}}",
                     "sendResponse": "{{default(inputs.notifyOrganizer, true)}}"
                 },
-                "url": "/me/events/{{urlEncode(inputs.eventId)}}/{{inputs.response}}"
+                "url": "/{{graphUser(account)}}/events/{{urlEncode(inputs.eventId)}}/{{inputs.response}}"
             }
         },
         {
             "id": "find-meeting-times",
             "kind": "action",
             "label": "Find meeting times",
-            "description": "Times within a window when the attendees (and you) are free, best first.",
+            "description": "Times within a window when the attendees (and you) are free, best first. Needs a signed-in user: Graph offers it to no app.",
             "group": "Availability",
             "readOnly": true,
+            "auth": [
+                "oauth"
+            ],
             "inputs": {
                 "type": "object",
                 "properties": {
@@ -1278,7 +1331,7 @@
                     "maxCandidates": "{{default(inputs.maxResults, 5)}}",
                     "returnSuggestionReasons": true
                 },
-                "url": "/me/findMeetingTimes"
+                "url": "/{{graphUser(account)}}/findMeetingTimes"
             }
         },
         {
@@ -1366,7 +1419,7 @@
                     "endTime": "{{graphTime(inputs.to, false)}}",
                     "availabilityViewInterval": 30
                 },
-                "url": "/me/calendar/getSchedule"
+                "url": "/{{graphUser(account)}}/calendar/getSchedule"
             }
         },
         {
@@ -1416,7 +1469,7 @@
                     "body": {
                         "changeType": "created,updated,deleted",
                         "notificationUrl": "{{subscription.callbackUrl}}",
-                        "resource": "{{isEmpty(inputs.calendarId) ? 'me/events' : 'me/calendars/' + urlEncode(inputs.calendarId) + '/events'}}",
+                        "resource": "{{graphUser(account) + (isEmpty(inputs.calendarId) ? '/events' : '/calendars/' + urlEncode(inputs.calendarId) + '/events')}}",
                         "expirationDateTime": "{{addTime(now(), 4320, 'm')}}",
                         "clientState": "{{subscription.secret}}"
                     },

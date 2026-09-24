@@ -2,7 +2,7 @@
     "spec": "conduit/1",
     "id": "microsoft-outlook",
     "name": "Microsoft Outlook",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Send, draft, reply, forward, search, read, file and delete email in Outlook (Microsoft 365 and Outlook.com).",
     "categories": [
         "email",
@@ -16,6 +16,13 @@
         "tenant": "common"
     },
     "functions": {
+        "graphUser": {
+            "params": [
+                "account"
+            ],
+            "description": "The Graph user segment: me (a signed-in user) or users/<mailbox> (an app account).",
+            "body": "account.method == 'app' ? 'users/' + urlEncode(account.data.mailbox) : 'me'"
+        },
         "recipients": {
             "params": [
                 "list"
@@ -90,6 +97,49 @@
             },
             "helpUrl": "https://learn.microsoft.com/graph/permissions-reference",
             "setup": "1. In the Microsoft Entra admin center, open **App registrations** and create a **New registration**. Choose who may sign in (any organization and personal accounts suit `tenant: common`).\n2. Under **Authentication**, add a **Web** platform with your Conduit callback URL (for example `https://app.example/conduit/auth/callback`) as a redirect URI.\n3. Under **Certificates & secrets**, create a **client secret**.\n4. Under **API permissions**, add the Microsoft Graph *delegated* permissions `offline_access`, `User.Read`, `Mail.ReadWrite`, `Mail.Send`.\n5. Give the application (client) id and secret to Conduit: `createConduit({ clients: { 'microsoft-outlook': { id, secret } } })`. To limit sign-in to one organization, set `config: { 'microsoft-outlook': { tenant: '<tenant id or domain>' } }`.\n\nPersonal Outlook.com accounts work too when the app registration allows personal accounts."
+        },
+        {
+            "id": "app",
+            "type": "oauth2",
+            "label": "Microsoft 365 app (no signed-in user)",
+            "grant": "client_credentials",
+            "tokenUrl": "https://login.microsoftonline.com/{{inputs.tenantId}}/oauth2/v2.0/token",
+            "tokenParams": {
+                "scope": "https://graph.microsoft.com/.default"
+            },
+            "identity": {
+                "id": "{{lower(inputs.mailbox)}}",
+                "name": "{{lower(inputs.mailbox)}}",
+                "data": {
+                    "mailbox": "{{lower(inputs.mailbox)}}",
+                    "tenantId": "{{inputs.tenantId}}"
+                }
+            },
+            "test": {
+                "url": "https://graph.microsoft.com/v1.0/users/{{urlEncode(lower(inputs.mailbox))}}/mailFolders/inbox"
+            },
+            "helpUrl": "https://learn.microsoft.com/graph/auth-v2-service",
+            "setup": "1. In the Microsoft Entra admin center, open **App registrations** and create (or reuse) a registration, with a **client secret** under **Certificates & secrets**.\n2. Under **API permissions**, add the Microsoft Graph *application* permissions `Mail.ReadWrite`, `Mail.Send`, then **Grant admin consent**.\n3. Application permissions reach every mailbox in the tenant. Limit the app to the mailboxes it should use, with RBAC for Applications in Exchange Online.\n4. Give the client id and secret to Conduit (`createConduit({ clients: { 'microsoft-outlook': { id, secret } } })`), and connect an account with method `app` and inputs `{ tenantId, mailbox }`.",
+            "inputs": {
+                "type": "object",
+                "properties": {
+                    "tenantId": {
+                        "type": "string",
+                        "title": "Tenant",
+                        "description": "The directory (tenant) id, or a verified domain such as contoso.onmicrosoft.com."
+                    },
+                    "mailbox": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Mailbox",
+                        "description": "The one mailbox this account acts on, e.g. shared@contoso.com."
+                    }
+                },
+                "required": [
+                    "tenantId",
+                    "mailbox"
+                ]
+            }
         }
     ],
     "operations": [
@@ -272,7 +322,7 @@
                     },
                     "saveToSentItems": true
                 },
-                "url": "/me/sendMail"
+                "url": "/{{graphUser(account)}}/sendMail"
             }
         },
         {
@@ -533,7 +583,7 @@
                     "importance": "{{inputs.importance}}",
                     "attachments": "{{fileAttachments(inputs.attachments)}}"
                 },
-                "url": "/me/messages"
+                "url": "/{{graphUser(account)}}/messages"
             }
         },
         {
@@ -592,7 +642,7 @@
                 "body": {
                     "comment": "{{inputs.body}}"
                 },
-                "url": "/me/messages/{{urlEncode(inputs.messageId)}}{{inputs.replyAll ? '/replyAll' : '/reply'}}"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.messageId)}}{{inputs.replyAll ? '/replyAll' : '/reply'}}"
             }
         },
         {
@@ -662,7 +712,7 @@
                     "toRecipients": "{{recipients(inputs.to)}}",
                     "comment": "{{inputs.body}}"
                 },
-                "url": "/me/messages/{{urlEncode(inputs.messageId)}}/forward"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.messageId)}}/forward"
             }
         },
         {
@@ -822,7 +872,7 @@
                     "$select": "id,conversationId,subject,from,toRecipients,ccRecipients,replyTo,receivedDateTime,sentDateTime,isRead,isDraft,importance,hasAttachments,bodyPreview,webLink,categories,flag,parentFolderId",
                     "$top": 50
                 },
-                "url": "{{isEmpty(inputs.folderId) ? '/me/messages' : '/me/mailFolders/' + urlEncode(inputs.folderId) + '/messages'}}"
+                "url": "{{'/' + graphUser(account) + (isEmpty(inputs.folderId) ? '/messages' : '/mailFolders/' + urlEncode(inputs.folderId) + '/messages')}}"
             },
             "paginate": {
                 "style": "nextUrl",
@@ -1002,7 +1052,7 @@
                 "headers": {
                     "Prefer": "{{'outlook.body-content-type=\"' + (inputs.format == 'text' ? 'text' : 'html') + '\"'}}"
                 },
-                "url": "/me/messages/{{urlEncode(inputs.id)}}"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.id)}}"
             }
         },
         {
@@ -1073,7 +1123,7 @@
                 "size": "{{response.body.size}}"
             },
             "request": {
-                "url": "/me/messages/{{urlEncode(inputs.messageId)}}/attachments/{{urlEncode(inputs.attachmentId)}}"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.messageId)}}/attachments/{{urlEncode(inputs.attachmentId)}}"
             }
         },
         {
@@ -1096,7 +1146,7 @@
                     "$top": 100,
                     "$select": "id,displayName,wellKnownName"
                 },
-                "url": "/me/mailFolders"
+                "url": "/{{graphUser(account)}}/mailFolders"
             },
             "paginate": {
                 "style": "nextUrl",
@@ -1258,7 +1308,7 @@
                 "body": {
                     "destinationId": "{{inputs.folderId}}"
                 },
-                "url": "/me/messages/{{urlEncode(inputs.id)}}/move"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.id)}}/move"
             }
         },
         {
@@ -1462,7 +1512,7 @@
                     "categories": "{{inputs.categories}}",
                     "importance": "{{inputs.importance}}"
                 },
-                "url": "/me/messages/{{urlEncode(inputs.id)}}"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.id)}}"
             }
         },
         {
@@ -1513,7 +1563,7 @@
             },
             "request": {
                 "method": "DELETE",
-                "url": "/me/messages/{{urlEncode(inputs.id)}}"
+                "url": "/{{graphUser(account)}}/messages/{{urlEncode(inputs.id)}}"
             }
         },
         {
@@ -1564,7 +1614,7 @@
                     "body": {
                         "changeType": "created",
                         "notificationUrl": "{{subscription.callbackUrl}}",
-                        "resource": "me/mailFolders('{{default(inputs.folderId, 'inbox')}}')/messages",
+                        "resource": "{{graphUser(account)}}/mailFolders('{{default(inputs.folderId, 'inbox')}}')/messages",
                         "expirationDateTime": "{{addTime(now(), 4320, 'm')}}",
                         "clientState": "{{subscription.secret}}"
                     },

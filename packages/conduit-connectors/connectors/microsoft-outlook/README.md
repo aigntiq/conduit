@@ -39,6 +39,30 @@ webLink, categories, flagged, folderId }`. Addresses are `{ name, address }`.
 `get-message` adds the body (HTML, or text on request) and the attachment
 list.
 
+## Without a signed-in user
+
+For automation on a shared or service mailbox, connect an account with the
+`app` method instead: OAuth client credentials, no user present. Each such
+account acts on one mailbox.
+
+```ts
+await conduit.auth.begin({
+    connector: 'microsoft-outlook',
+    method: 'app',
+    owner,
+    inputs: { tenantId: 'contoso.onmicrosoft.com', mailbox: 'shared@contoso.com' }
+});
+```
+
+1. Use the same app registration and client secret, or a separate one.
+2. Under **API permissions**, add the Microsoft Graph *application* permissions `Mail.ReadWrite` and `Mail.Send`, then **Grant admin consent**.
+3. Application permissions reach every mailbox in the tenant. Limit the app to the mailboxes it should use with [RBAC for Applications in Exchange Online](https://learn.microsoft.com/exchange/permissions-exo/application-rbac).
+
+Connecting mints a token for the tenant (`https://graph.microsoft.com/.default`)
+and reads its Inbox folder to prove access. There is no redirect, and a new token is
+minted whenever the old one expires. The account is named by its mailbox, and
+every operation acts on `/users/<mailbox>` instead of `/me`. The `new-email` trigger subscribes to that mailbox.
+
 ## Operations
 
 | Operation | Kind | Notes |
@@ -61,4 +85,4 @@ list.
 Graph throttles per mailbox and per app, answering `429` with `Retry-After`.
 Conduit waits and retries. A message can hold up to 150 MB in total, but
 attachments over 3 MB need an upload session, which this connector doesn't
-make yet. App-only access, without a signed-in user, is not supported yet.
+make yet.
