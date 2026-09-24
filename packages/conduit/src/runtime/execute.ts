@@ -3,7 +3,7 @@
  * (paged) → output. One path for every operation kind the runtime runs.
  */
 import { ConduitAuthError, ConduitError, ConduitPolicyError, ConduitRequestError, isConduitError } from '../errors';
-import { display, isPlainObject } from '../expr/evaluate';
+import { describeType, display, isPlainObject } from '../expr/evaluate';
 import { renderTemplate } from '../expr/template';
 import { resolveRetry, type TraceEntry } from '../http/perform';
 import { nextLink, type ResponseView } from '../http/response';
@@ -136,11 +136,34 @@ async function runSteps(k: Kernel, p: Prepared, steps: readonly StepSpec[] | und
     const results: Scope = {};
     for (const step of steps ?? []) {
         const s = { ...scope, steps: results };
-        if (step.when !== undefined && !(await renderWithAuth(k, p, step.when, s))) continue;
-        const view = await send(k, p.ctx, { label: `step ${step.name}`, purpose: 'step', spec: step, scope: s });
-        results[step.name] = step.output === undefined ? view.body : await renderWithAuth(k, p, step.output, { ...s, response: view });
+        if (step.forEach === undefined) {
+            const out = await runStep(k, p, step, s, `step ${step.name}`);
+            if (out !== SKIPPED) results[step.name] = out;
+            continue;
+        }
+        const items = await renderWithAuth(k, p, step.forEach, s);
+        const max = step.maxIterations ?? DEFAULT_MAX_ITERATIONS;
+        if (!Array.isArray(items)) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach must be a list, got ${describeType(items)}`);
+        if (items.length > max) throw new ConduitError('step_foreach_invalid', `step "${step.name}": forEach has ${items.length} items; at most ${max} are allowed (maxIterations)`);
+        // Outputs so far are visible as steps.<name> while the loop runs.
+        const outputs: unknown[] = [];
+        results[step.name] = outputs;
+        for (const [index, each] of items.entries()) {
+            const out = await runStep(k, p, step, { ...s, each, index }, `step ${step.name}[${index}]`);
+            outputs.push(out === SKIPPED ? null : out);
+        }
     }
     return results;
+}
+
+const DEFAULT_MAX_ITERATIONS = 100;
+const SKIPPED = Symbol('skipped');
+
+/** One run of a step: its `when`, the request through the one executor, and its `output`. */
+async function runStep(k: Kernel, p: Prepared, step: StepSpec, s: Scope, label: string): Promise<unknown> {
+    if (step.when !== undefined && !(await renderWithAuth(k, p, step.when, s))) return SKIPPED;
+    const view = await send(k, p.ctx, { label, purpose: 'step', spec: step, scope: s });
+    return step.output === undefined ? view.body : renderWithAuth(k, p, step.output, { ...s, response: view });
 }
 
 /** Render with the current `auth` scope (which changes if credentials are renewed mid-call). */

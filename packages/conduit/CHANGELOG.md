@@ -6,6 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 
 ## [Unreleased]
 
+### Added
+
+- Steps can repeat over a list: `forEach` runs a step once per item (with `each` and `index` in scope), collecting `steps.<name>` as a list; `maxIterations` (default 100) bounds it. Operation steps only.
+- `chunks(base64OrBytes, size)` and `byteLength(base64OrBytes)` in the expression standard library: split a file into byte ranges for upload sessions.
+
 ## [0.2.0] - 2026-09-24
 
 ### Added

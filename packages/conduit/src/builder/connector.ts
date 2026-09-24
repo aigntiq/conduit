@@ -64,7 +64,7 @@ export interface AuthScope {
     now: AnyRef;
 }
 
-const ROOTS = ['inputs', 'auth', 'account', 'config', 'env', 'steps', 'page', 'response', 'items', 'oauth', 'client', 'token', 'jwt', 'now', 'request', 'subscription', 'state', 'item'];
+const ROOTS = ['inputs', 'auth', 'account', 'config', 'env', 'steps', 'page', 'response', 'items', 'oauth', 'client', 'token', 'jwt', 'now', 'request', 'subscription', 'state', 'item', 'each', 'index'];
 
 function scope(): Record<string, unknown> {
     return Object.fromEntries(ROOTS.map((r) => [r, ref(r)]));
@@ -110,7 +110,13 @@ export interface StepDef extends RequestDef {
     name: string;
     when?: T;
     output?: T;
+    /** Run once per item of this list; the step reads `each` and `index`. */
+    forEach?: T;
+    maxIterations?: number;
 }
+
+/** What step templates can read: a `forEach` step adds `each` and `index`. */
+export type StepScope<I> = ResultScope<I> & { each: AnyRef; index: AnyRef };
 
 export interface ErrorRuleDef {
     when: T;
@@ -127,8 +133,11 @@ function compileRequest(def: RequestDef): RequestSpec {
 }
 
 function compileStep(def: StepDef): StepSpec {
-    const { when, output, ...request } = def;
-    const step = { ...compileRequest(request), name: def.name } as StepSpec;
+    const { name, when, output, forEach, maxIterations, ...request } = def;
+    const step = { name } as StepSpec;
+    if (forEach !== undefined) step.forEach = toTemplateString(forEach);
+    if (maxIterations !== undefined) step.maxIterations = maxIterations;
+    Object.assign(step, compileRequest(request));
     if (when !== undefined) step.when = toTemplateString(when);
     if (output !== undefined) step.output = toTemplate(output);
     return step;
@@ -174,7 +183,7 @@ interface OperationCommon<F extends Fields, O> {
     rules?: InputRule[];
     /** The output's shape — documents it and types `execute`. */
     outputs?: Field<O, boolean>;
-    steps?: Built<StepDef[], ResultScope<InferFields<F>>>;
+    steps?: Built<StepDef[], StepScope<InferFields<F>>>;
     output?: Built<T, ResultScope<InferFields<F>>>;
     errors?: Built<ErrorRuleDef[], ResultScope<InferFields<F>>>;
     retry?: RetryPolicy | false;

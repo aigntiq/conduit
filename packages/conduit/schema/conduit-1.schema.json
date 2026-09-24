@@ -350,6 +350,14 @@
         },
         "output": {
           "description": "A template: any JSON value; strings may contain {{ expressions }}."
+        },
+        "forEach": {
+          "type": "string",
+          "description": "A template string."
+        },
+        "maxIterations": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },

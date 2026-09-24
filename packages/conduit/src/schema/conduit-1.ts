@@ -151,7 +151,9 @@ export const conduitSchema: SchemaNode = {
                 ...requestProperties,
                 name: { type: 'string', pattern: '^[A-Za-z_$][A-Za-z0-9_$]*$' },
                 when: templateString,
-                output: template
+                output: template,
+                forEach: templateString,
+                maxIterations: { type: 'integer', minimum: 1 }
             }
         },
         condition: {

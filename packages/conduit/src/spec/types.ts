@@ -133,6 +133,14 @@ export interface StepSpec extends RequestSpec {
     when?: TemplateString;
     /** What `steps.<name>` holds. Default: the response body. Scope adds `response`. */
     output?: Template;
+    /**
+     * Run the step once per item of this list (operation steps only). `when`,
+     * the request and `output` also see `each` (the item) and `index`;
+     * `steps.<name>` becomes the list of outputs (`null` where `when` skipped).
+     */
+    forEach?: TemplateString;
+    /** The most items `forEach` may take. Default 100. */
+    maxIterations?: number;
 }
 
 // ── Inputs ──────────────────────────────────────────────────────────────

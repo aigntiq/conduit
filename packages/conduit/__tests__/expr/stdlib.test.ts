@@ -198,3 +198,34 @@ describe('bytes (binary response bodies)', () => {
         expect(await run('length(b)', { b: new Uint8Array() })).toBe(0);
     });
 });
+
+describe('chunks and byteLength (splitting a file into byte ranges)', () => {
+    const bytes = Uint8Array.from({ length: 10 }, (_, i) => i * 25);
+    const b64 = Buffer.from(bytes).toString('base64');
+
+    it('byteLength counts the bytes of base64 or base64url, with or without padding, or of bytes', async () => {
+        expect(await run('byteLength(b)', { b: b64 })).toBe(10);
+        expect(await run('byteLength(b)', { b: Buffer.from(bytes).toString('base64url') })).toBe(10);
+        expect(await run('byteLength(b)', { b: bytes })).toBe(10);
+        expect(await run('byteLength(null)')).toBe(0);
+    });
+
+    it('chunks splits into ranges of size bytes, with inclusive offsets and the total', async () => {
+        const out = (await run('chunks(b, 3)', { b: b64 })) as { base64: string; start: number; end: number; total: number }[];
+        expect(out.map(({ start, end, total }) => [start, end, total])).toEqual([
+            [0, 2, 10],
+            [3, 5, 10],
+            [6, 8, 10],
+            [9, 9, 10]
+        ]);
+        expect(Buffer.concat(out.map((c) => Buffer.from(c.base64, 'base64')))).toEqual(Buffer.from(bytes));
+        expect(await run('chunks(b, 30) | length', { b: b64 })).toBe(1);
+        expect(await run('chunks(b, 3) | length', { b: bytes })).toBe(4);
+        expect(await run('chunks("", 3)')).toEqual([]);
+    });
+
+    it('chunks refuses a size that would cut base64 mid-character', async () => {
+        await expect(run('chunks(b, 4)', { b: b64 })).rejects.toThrow(/multiple of 3/);
+        await expect(run('chunks(b, 0)', { b: b64 })).rejects.toThrow(/multiple of 3/);
+    });
+});

@@ -68,6 +68,7 @@ export {
     type ConnectorDef,
     type RequestDef,
     type StepDef,
+    type StepScope,
     type ErrorRuleDef,
     type RequestScope,
     type ResultScope,

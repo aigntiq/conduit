@@ -82,6 +82,18 @@ the main request. Each is a request plus:
 | `name` | required; the result is `steps.<name>` |
 | `when` | *template*; the step is skipped unless truthy |
 | `output` | *template* for `steps.<name>`. Default: the response body. Scope adds `response` |
+| `forEach` | *template* rendering to a list (operation steps only). The step runs once per item, in order; `when`, the request and `output` also read `each` (the item) and `index`. `steps.<name>` is then the list of outputs, `null` where `when` skipped an item |
+| `maxIterations` | the most items `forEach` may take. Default 100; more is an error before any request |
+
+A `forEach` step makes an upload session easy to fill — `chunks()` splits a
+file into byte ranges, and `auth: false` keeps credentials off an upload URL:
+
+```json
+{ "name": "parts", "forEach": "{{chunks(inputs.file.base64, 2949120)}}",
+  "method": "PUT", "url": "{{steps.session.uploadUrl}}", "auth": false, "encoding": "binary",
+  "headers": { "Content-Range": "bytes {{each.start}}-{{each.end}}/{{each.total}}" },
+  "body": "{{each.base64}}" }
+```
 
 ## Auth methods
 
@@ -304,7 +316,7 @@ Delivery scope: `request` (`headers`, `query`, `body`, `rawBody`), `inputs`,
 | Where | Readable roots |
 |---|---|
 | `http.baseUrl`, `http.headers`, `http.query` | `inputs` `auth` `account` `config` `env` |
-| operation `request`, step `when`/request | the above + `steps` `page` |
+| operation `request`, step `when`/request | the above + `steps` `page` (a `forEach` step adds `each` `index`) |
 | step `output` | the above + `response` |
 | operation `output` | `inputs` `auth` `account` `config` `env` `steps` `response` `items` |
 | `errors[].when` / `message` | `inputs` `auth` `account` `config` `env` `steps` `response` |
