@@ -60,6 +60,10 @@ standard functions.
 | connector | `brandColor`, `helpUrl` | `#rrggbb` |
 | error rule | `field` | attribute a remote validation failure to an input |
 
+`conduit.connectors.describe(id)` (and `GET {base}/connectors/:id`) carries
+an operation's `group`, `destructive` and `readOnly`, so a catalog or tool
+list built from it needs nothing else.
+
 ## Widgets
 
 The set is closed, so every renderer implements the same list:
