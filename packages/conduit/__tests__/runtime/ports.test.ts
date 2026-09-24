@@ -20,7 +20,8 @@ describe('webCryptoCipher', () => {
 
     it('detects tampering and wrong keys', async () => {
         const sealed = await webCryptoCipher(secret).seal('data');
-        const flipped = sealed.slice(0, -2) + (sealed.endsWith('A') ? 'B' : 'A') + sealed.slice(-1);
+        const flipped = sealed.slice(0, -2) + (sealed.at(-2) === 'A' ? 'B' : 'A') + sealed.slice(-1);
+        expect(flipped).not.toBe(sealed);
         await expect(webCryptoCipher(secret).open(flipped)).rejects.toThrow(/could not be opened/);
         await expect(webCryptoCipher(`${secret}-other`).open(sealed)).rejects.toThrow(/could not be opened/);
         await expect(webCryptoCipher(secret).open('plain')).rejects.toThrow(/unrecognised/);
