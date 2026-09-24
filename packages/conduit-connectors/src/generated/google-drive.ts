@@ -657,7 +657,8 @@ const connector = {
                     "output": {
                         "name": "{{response.body.name}}",
                         "mimeType": "{{response.body.mimeType}}",
-                        "google": "{{startsWith(default(response.body.mimeType, ''), 'application/vnd.google-apps.')}}"
+                        "folder": "{{response.body.mimeType == \"application/vnd.google-apps.folder\"}}",
+                        "google": "{{startsWith(default(response.body.mimeType, ''), 'application/vnd.google-apps.') && response.body.mimeType != \"application/vnd.google-apps.folder\"}}"
                     }
                 }
             ],
@@ -669,16 +670,28 @@ const connector = {
                     "field": "fileId"
                 },
                 {
+                    "when": "{{response.status >= 400 && steps.meta.folder}}",
+                    "error": "validation",
+                    "message": "A folder has no contents to download",
+                    "field": "fileId"
+                },
+                {
                     "when": "{{response.status == 403 && contains(textOf(response.body), 'exportSizeLimitExceeded')}}",
                     "error": "validation",
                     "message": "The file is too large to export (Google’s limit is 10 MB)",
                     "field": "fileId"
                 },
                 {
-                    "when": "{{response.status == 400 || (response.status == 403 && contains(textOf(response.body), 'fileNotDownloadable'))}}",
+                    "when": "{{steps.meta.google && (response.status == 400 || response.status == 403 && contains(textOf(response.body), 'fileNotDownloadable'))}}",
                     "error": "validation",
-                    "message": "This file cannot be downloaded in that format",
+                    "message": "This file cannot be exported in that format",
                     "field": "exportAs"
+                },
+                {
+                    "when": "{{!steps.meta.google && response.status == 403 && (contains(textOf(response.body), 'fileNotDownloadable') || contains(textOf(response.body), 'cannotDownloadFile'))}}",
+                    "error": "validation",
+                    "message": "This file cannot be downloaded",
+                    "field": "fileId"
                 }
             ],
             "output": {

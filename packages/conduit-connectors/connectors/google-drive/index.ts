@@ -233,7 +233,9 @@ export default connector({
                     output: {
                         name: response.body.name,
                         mimeType: response.body.mimeType,
-                        google: expr`startsWith(default(${response.body.mimeType}, ''), 'application/vnd.google-apps.')`
+                        folder: expr`${response.body.mimeType} == ${FOLDER}`,
+                        // Docs, Sheets, Slides…: exported. Folders are Google types too, but have nothing to export.
+                        google: expr`startsWith(default(${response.body.mimeType}, ''), 'application/vnd.google-apps.') && ${response.body.mimeType} != ${FOLDER}`
                     }
                 }
             ],
@@ -246,8 +248,10 @@ export default connector({
                 },
                 responseType: 'binary'
             }),
-            errors: ({ response }) => [
+            // The field follows what was tried: an export's format, or the file itself.
+            errors: ({ response, steps }) => [
                 notFound(response, 'fileId'),
+                { when: expr`${response.status} >= 400 && ${steps.meta.folder}`, error: 'validation', field: 'fileId', message: 'A folder has no contents to download' },
                 {
                     when: expr`${response.status} == 403 && contains(textOf(${response.body}), 'exportSizeLimitExceeded')`,
                     error: 'validation',
@@ -255,10 +259,16 @@ export default connector({
                     message: 'The file is too large to export (Google’s limit is 10 MB)'
                 },
                 {
-                    when: expr`${response.status} == 400 || (${response.status} == 403 && contains(textOf(${response.body}), 'fileNotDownloadable'))`,
+                    when: expr`${steps.meta.google} && (${response.status} == 400 || ${response.status} == 403 && contains(textOf(${response.body}), 'fileNotDownloadable'))`,
                     error: 'validation',
                     field: 'exportAs',
-                    message: 'This file cannot be downloaded in that format'
+                    message: 'This file cannot be exported in that format'
+                },
+                {
+                    when: expr`!${steps.meta.google} && ${response.status} == 403 && (contains(textOf(${response.body}), 'fileNotDownloadable') || contains(textOf(${response.body}), 'cannotDownloadFile'))`,
+                    error: 'validation',
+                    field: 'fileId',
+                    message: 'This file cannot be downloaded'
                 }
             ],
             output: ({ response, steps, inputs }) => ({

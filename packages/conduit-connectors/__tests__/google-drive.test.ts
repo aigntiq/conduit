@@ -59,9 +59,19 @@ function driveStub() {
                         status: 403,
                         headers: { 'content-type': 'application/json' }
                     });
+                case 'GET /files/folder-a':
+                    if (url.searchParams.get('alt') === 'media') return json({ error: { code: 403, message: 'Only files with binary content can be downloaded.', errors: [{ reason: 'fileNotDownloadable' }] } }, 403);
+                    return json(projects);
+                case 'GET /files/folder-a/export':
+                    return json({ error: { code: 400, message: 'Export only supports Docs Editors files.' } }, 400);
+                case 'GET /files/locked':
+                    if (url.searchParams.get('alt') === 'media') return json({ error: { code: 403, message: 'The user has not granted the app access.', errors: [{ reason: 'cannotDownloadFile' }] } }, 403);
+                    return json({ id: 'locked', name: 'Locked.pdf', mimeType: 'application/pdf' });
                 case 'GET /files/gone':
                     return json({ error: { code: 404, message: 'File not found: gone.' } }, 404);
                 case 'GET /files/d1/export':
+                    // A Doc can't become CSV (that's for Sheets).
+                    if (url.searchParams.get('mimeType') === 'text/csv') return json({ error: { code: 400, message: 'The requested conversion is not supported.' } }, 400);
                     return bytes(new TextEncoder().encode(`exported as ${url.searchParams.get('mimeType')}`), url.searchParams.get('mimeType')!);
                 case 'POST /files':
                     return json({ id: 'new-file', ...JSON.parse(body) });
@@ -170,6 +180,21 @@ describe('Google Drive: downloading', () => {
         expect(Buffer.from(pdf.output.base64, 'base64').toString()).toBe('exported as application/pdf');
         const docx = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'd1', exportAs: 'docx' } });
         expect(docx.output).toMatchObject({ filename: 'Plan.docx', contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    });
+
+    it('refuses to download a folder, on the file field, without trying an export', async () => {
+        const { conduit, account, seen } = await setup();
+        const err = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'folder-a' } }).catch((e: unknown) => e);
+        expect(err).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.fileId', message: 'A folder has no contents to download' }] });
+        expect(seen.some((s) => s.url.pathname.endsWith('/export'))).toBe(false);
+    });
+
+    it('puts a file that cannot be downloaded on the file field, and a bad export format on its field', async () => {
+        const { conduit, account } = await setup();
+        const locked = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'locked' } }).catch((e: unknown) => e);
+        expect(locked).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.fileId', message: 'This file cannot be downloaded' }] });
+        const csv = await conduit.execute({ connector: 'google-drive', operation: 'download-file', account, inputs: { fileId: 'd1', exportAs: 'csv' } }).catch((e: unknown) => e);
+        expect(csv).toMatchObject({ kind: 'validation', issues: [{ path: 'inputs.exportAs', message: 'This file cannot be exported in that format' }] });
     });
 
     it('explains an export over Google’s size limit, though the error arrived as bytes', async () => {
