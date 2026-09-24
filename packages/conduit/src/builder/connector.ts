@@ -115,7 +115,7 @@ export interface StepDef extends RequestDef {
     maxIterations?: number;
 }
 
-/** What step templates can read: a `forEach` step adds `each` and `index`. */
+/** What step templates can read. `each` and `index` are typed for every step, but hold values only in a `forEach` step (validation rejects them elsewhere). */
 export type StepScope<I> = ResultScope<I> & { each: AnyRef; index: AnyRef };
 
 export interface ErrorRuleDef {

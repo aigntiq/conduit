@@ -108,7 +108,10 @@ class Collector {
             const p = `${path}[${i}]`;
             if (names.has(step.name)) this.error(`${p}.name`, 'duplicate_step', `step "${step.name}" is defined twice`);
             names.add(step.name);
-            const { when, output, forEach, maxIterations: _max, ...request } = step;
+            const { when, output, forEach, maxIterations, ...request } = step;
+            if (maxIterations !== undefined && forEach === undefined) {
+                this.warn(`${p}.maxIterations`, 'step_max_iterations_unused', 'maxIterations has no effect without forEach');
+            }
             let inStep = available;
             let inOutput = outputRoots;
             if (forEach !== undefined) {

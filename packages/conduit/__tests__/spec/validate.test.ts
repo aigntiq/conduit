@@ -225,6 +225,11 @@ describe('forEach steps', () => {
         expect(validateConnector(spec({})).diagnostics.map((d) => d.path)).toContain('operations[0].steps[0].url');
     });
 
+    it('warn about maxIterations without forEach', () => {
+        const found = validateConnector(spec({ url: '/p', maxIterations: 5 })).diagnostics.map((d) => [d.path, d.code, d.severity]);
+        expect(found).toContainEqual(['operations[0].steps[0].maxIterations', 'step_max_iterations_unused', 'warning']);
+    });
+
     it("refuse forEach in a custom auth method's steps", () => {
         const custom = [{ id: 'c', type: 'custom', steps: [{ name: 't', url: '/t', forEach: '{{[1, 2]}}' }], credentials: { token: '{{steps.t}}' }, apply: { headers: { Authorization: 'Bearer {{auth.token}}' } } }];
         const found = validateConnector(spec({ forEach: '{{[1]}}' }, custom)).diagnostics.map((d) => [d.path, d.code]);
