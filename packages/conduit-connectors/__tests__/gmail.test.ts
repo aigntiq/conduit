@@ -232,6 +232,12 @@ describe('Gmail: reading', () => {
         expect(calls[1]!.url.searchParams.get('pageToken')).toBe('p2');
     });
 
+    it('reads as many pages as the caller allows', async () => {
+        const { conduit, account } = await setup();
+        const { output, pages } = await conduit.execute({ connector: 'gmail', operation: 'search-messages', account, paging: { maxPages: 1 } });
+        expect([pages, output.map((m) => m.id)]).toEqual([1, ['a', 'b']]);
+    });
+
     it('maps a full message: headers, decoded bodies, attachments', async () => {
         const { conduit, account } = await setup();
         const { output } = await conduit.execute({ connector: 'gmail', operation: 'get-message', account, inputs: { id: 'm1' } });

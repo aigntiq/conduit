@@ -217,8 +217,7 @@ export default connector({
             inputs: {
                 query: string({ title: 'Search', placeholder: 'from:ada@example.com is:unread newer_than:7d' }).optional(),
                 labelIds: array(string(), { title: 'Labels', options: labelOptions }).optional(),
-                includeSpamTrash: boolean({ title: 'Include spam and trash', default: false, advanced: true }).optional(),
-                maxPages: integer({ title: 'Pages to read', description: 'Up to 100 messages per page.', default: 5, minimum: 1, maximum: 50, advanced: true }).optional()
+                includeSpamTrash: boolean({ title: 'Include spam and trash', default: false, advanced: true }).optional()
             },
             outputs: array(object({ id: string(), threadId: string() })),
             request: ({ inputs }) => ({

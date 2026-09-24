@@ -25,7 +25,7 @@ itself.
 | `send-email` | action | to/cc/bcc (at least one), subject, HTML or plain body, attachments, send-as alias, reply-to, optional thread. Bad recipients come back as a validation issue on the field |
 | `create-draft` | action | same fields as `send-email` |
 | `reply-to-message` | action | replies in the thread with correct `In-Reply-To`/`References`, to the sender's Reply-To (or From), optional reply-all |
-| `search-messages` | search | **read-only** — Gmail search syntax, label filter, up to 50 pages of 100 |
+| `search-messages` | search | **read-only** — Gmail search syntax, label filter; pages of 100, at most 50 (lower it with `execute({ paging: { maxPages } })`) |
 | `get-message` | action | **read-only** — headers, decoded text and HTML bodies, attachment list |
 | `get-thread` | action | **read-only** — the conversation's messages with their main headers |
 | `get-attachment` | action | **read-only** — returns a file value `{ filename, contentType, base64, size }`, ready to attach elsewhere |
