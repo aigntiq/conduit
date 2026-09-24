@@ -27,8 +27,8 @@ export interface Call extends Seen {
 export const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 export interface ScriptedHttpOptions {
-    /** `host/path` of the token endpoint, e.g. `oauth2.googleapis.com/token`. */
-    tokenEndpoint: string;
+    /** `host/path` of the token endpoint(s), e.g. `oauth2.googleapis.com/token`. */
+    tokenEndpoint: string | readonly string[];
     /** `host/path` of the revoke endpoint, if the provider has one. */
     revokeEndpoint?: string;
     /** The access token the token endpoint issues and the API requires. */
@@ -50,7 +50,7 @@ export function scriptedHttp(options: ScriptedHttpOptions) {
         seen.push(call);
         const endpoint = `${url.host}${url.pathname}`;
 
-        if (request.method === 'POST' && endpoint === options.tokenEndpoint) {
+        if (request.method === 'POST' && ([] as string[]).concat(options.tokenEndpoint).includes(endpoint)) {
             return json({ access_token: options.accessToken, refresh_token: 'refresh-token', expires_in: 3599, token_type: 'Bearer' });
         }
         if (request.method === 'POST' && endpoint === options.revokeEndpoint) return json({});

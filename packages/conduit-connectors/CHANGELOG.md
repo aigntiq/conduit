@@ -8,6 +8,10 @@ any connector a major. Each connector also carries its own `version`.
 
 ## [Unreleased]
 
+### Added
+
+- **Microsoft Outlook** 1.1.0 and **Microsoft Calendar** 1.1.0: app-only accounts (`app` method, OAuth client credentials) for automation without a signed-in user; each acts on one mailbox, and every operation and subscription uses `/users/<mailbox>`. Calendar's `find-meeting-times` stays delegated-only.
+
 ## [0.2.0] - 2026-09-24
 
 ### Added

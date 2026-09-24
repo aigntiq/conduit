@@ -30,7 +30,7 @@ import {
     type ErrorRuleDef,
     type Ref
 } from '@aigntiq/conduit/builder';
-import { GRAPH, graphPaging, graphRetry, graphSubscription, microsoftOAuth, microsoftSetup } from '../_shared/microsoft';
+import { GRAPH, graphFunctions, graphPaging, graphRetry, graphSubscription, ME, microsoftApp, microsoftAppSetup, microsoftOAuth, microsoftSetup } from '../_shared/microsoft';
 import { moment } from '../_shared/time';
 
 const SCOPES = ['Calendars.ReadWrite'];
@@ -45,14 +45,14 @@ const calendarOptions = { operation: 'list-calendars' };
 
 const calendarField = () => string({ title: 'Calendar', description: 'Default: your main calendar.', options: calendarOptions });
 
-/** `/me/calendar` (the default calendar) or `/me/calendars/<id>`. */
+/** `/me/calendar` (the default calendar) or `/me/calendars/<id>` — or the same under `/users/<mailbox>`. */
 function calendarPath(calendarId: Ref) {
-    return expr`isEmpty(${calendarId}) ? '/me/calendar' : '/me/calendars/' + urlEncode(${calendarId})`;
+    return expr`'/' + graphUser(account) + (isEmpty(${calendarId}) ? '/calendar' : '/calendars/' + urlEncode(${calendarId}))`;
 }
 
-/** `/me/events/<id>[suffix]`, encoded. */
+/** `/me/events/<id>[suffix]` (or `/users/<mailbox>/…`), encoded. */
 function eventUrl(id: Ref, suffix: unknown = '') {
-    return $`/me/events/${expr`urlEncode(${id})`}${suffix}`;
+    return $`${ME}/events/${expr`urlEncode(${id})`}${suffix}`;
 }
 
 const showAs = select({ free: 'Free', tentative: 'Tentative', busy: 'Busy', oof: 'Away', workingElsewhere: 'Working elsewhere' }, { title: 'Show as', advanced: true });
@@ -104,7 +104,7 @@ const eventOutput = object(eventFields);
 export default connector({
     id: 'microsoft-calendar',
     name: 'Microsoft Calendar',
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Find, create, update, answer and delete events in Outlook calendars, and find times that suit everyone.',
     categories: ['calendar', 'productivity'],
     brandColor: '#0f6cbd',
@@ -112,6 +112,7 @@ export default connector({
     helpUrl: 'https://learn.microsoft.com/graph/outlook-calendar-concept-overview',
     config: { baseUrl: GRAPH, tenant: 'common' },
     functions: {
+        ...graphFunctions,
         timeOf: {
             params: ['t', 'allDay'],
             description: 'A Graph time (UTC, as requested) as ISO text: a date for all-day events.',
@@ -174,6 +175,11 @@ export default connector({
             scopes: SCOPES,
             helpUrl: 'https://learn.microsoft.com/graph/permissions-reference',
             setup: microsoftSetup('microsoft-calendar', SCOPES)
+        }),
+        microsoftApp({
+            test: '/calendar',
+            helpUrl: 'https://learn.microsoft.com/graph/auth-v2-service',
+            setup: microsoftAppSetup('microsoft-calendar', SCOPES)
         })
     ],
     operations: [
@@ -181,7 +187,7 @@ export default connector({
             label: 'Calendars',
             readOnly: true,
             inputs: { writable: boolean({ title: 'Only calendars I can edit', default: true }).optional() },
-            request: { url: '/me/calendars', query: { $select: 'id,name,isDefaultCalendar,canEdit', $top: 100 } },
+            request: { url: `${ME}/calendars`, query: { $select: 'id,name,isDefaultCalendar,canEdit', $top: 100 } },
             paginate: ({ response }) => graphPaging(response, 5),
             output: ({ items, inputs }) =>
                 expr`${items}
@@ -363,9 +369,10 @@ export default connector({
 
         action('find-meeting-times', {
             label: 'Find meeting times',
-            description: 'Times within a window when the attendees (and you) are free, best first.',
+            description: 'Times within a window when the attendees (and you) are free, best first. Needs a signed-in user: Graph offers it to no app.',
             group: 'Availability',
             readOnly: true,
+            auth: ['oauth'],
             inputs: {
                 attendees: emails({ title: 'Attendees', minItems: 1 }),
                 from: datetime({ title: 'From' }),
@@ -380,7 +387,7 @@ export default connector({
             }),
             request: ({ inputs }) => ({
                 method: 'POST',
-                url: '/me/findMeetingTimes',
+                url: `${ME}/findMeetingTimes`,
                 body: {
                     attendees: expr`map(${inputs.attendees}, a => {type: 'required', emailAddress: {address: a}})`,
                     timeConstraint: {
@@ -417,7 +424,7 @@ export default connector({
             outputs: array(object({ address: string(), busy: array(object({ start: string(), end: string(), status: string() })), error: string().optional() })),
             request: ({ inputs }) => ({
                 method: 'POST',
-                url: '/me/calendar/getSchedule',
+                url: `${ME}/calendar/getSchedule`,
                 body: { schedules: inputs.addresses, startTime: expr`graphTime(${inputs.from}, false)`, endTime: expr`graphTime(${inputs.to}, false)`, availabilityViewInterval: 30 }
             }),
             output: ({ response }) =>
@@ -436,7 +443,7 @@ export default connector({
             inputs: { calendarId: calendarField().optional() },
             outputs: object({ id: string(), changeType: string(), subscriptionId: string() }),
             trigger: graphSubscription({
-                resource: ({ inputs }) => expr`isEmpty(${inputs.calendarId}) ? 'me/events' : 'me/calendars/' + urlEncode(${inputs.calendarId}) + '/events'`,
+                resource: ({ inputs }) => expr`graphUser(account) + (isEmpty(${inputs.calendarId}) ? '/events' : '/calendars/' + urlEncode(${inputs.calendarId}) + '/events')`,
                 changeType: 'created,updated,deleted',
                 // Event subscriptions live at most 10 080 minutes (7 days).
                 lifetimeMinutes: 4320,

@@ -6,7 +6,7 @@
  * Not a connector — `_shared` has no `index.ts`, so the generator and the
  * build skip it.
  */
-import { $, auth, expr, paging, type AuthScope, type Ref } from '@aigntiq/conduit/builder';
+import { $, auth, email, expr, paging, string, type AuthScope, type Ref } from '@aigntiq/conduit/builder';
 
 export const GRAPH = 'https://graph.microsoft.com/v1.0';
 
@@ -45,6 +45,58 @@ export function microsoftOAuth(def: MicrosoftOAuthDef) {
     }));
 }
 
+/**
+ * Graph's user segment for the account: `me` when a user signed in, and
+ * `users/<mailbox>` for an app account. Spread into a connector's `functions`.
+ */
+export const graphFunctions = {
+    graphUser: {
+        params: ['account'],
+        description: 'The Graph user segment: me (a signed-in user) or users/<mailbox> (an app account).',
+        body: "account.method == 'app' ? 'users/' + urlEncode(account.data.mailbox) : 'me'"
+    }
+};
+
+/** `/me` or `/users/<mailbox>`, as template text to start a request URL with. */
+export const ME = '/{{graphUser(account)}}';
+
+/** The per-connector part of an app-only sign-in. */
+export interface MicrosoftAppDef {
+    /** A cheap read inside the mailbox that proves access, after `/users/<mailbox>` — e.g. `/mailFolders/inbox`. */
+    test: string;
+    helpUrl?: string;
+    setup: string;
+}
+
+/**
+ * `Microsoft 365 app`, as the `app` auth method: OAuth client credentials,
+ * no signed-in user. The account names its tenant and the one mailbox it acts
+ * on; the app's Graph *application* permissions (admin-consented) decide what
+ * it may do there.
+ */
+export function microsoftApp(def: MicrosoftAppDef) {
+    return auth.oauth2('app', ({ inputs }) => ({
+        label: 'Microsoft 365 app (no signed-in user)',
+        grant: 'client_credentials',
+        tokenUrl: $`https://login.microsoftonline.com/${inputs.tenantId}/oauth2/v2.0/token`,
+        // Client credentials take the app's consented permissions as one scope.
+        tokenParams: { scope: 'https://graph.microsoft.com/.default' },
+        inputs: {
+            tenantId: string({ title: 'Tenant', description: 'The directory (tenant) id, or a verified domain such as contoso.onmicrosoft.com.' }),
+            mailbox: email({ title: 'Mailbox', description: 'The one mailbox this account acts on, e.g. shared@contoso.com.' })
+        },
+        // Named by the mailbox: reading the user object would need a directory permission.
+        identity: {
+            id: expr`lower(${inputs.mailbox})`,
+            name: expr`lower(${inputs.mailbox})`,
+            data: { mailbox: expr`lower(${inputs.mailbox})`, tenantId: inputs.tenantId }
+        },
+        test: { url: $`${GRAPH}/users/${expr`urlEncode(lower(${inputs.mailbox}))`}${def.test}` },
+        helpUrl: def.helpUrl,
+        setup: def.setup
+    }));
+}
+
 /** Graph throttles with 429 and Retry-After (which Conduit honours); 503/504 are transient. */
 export const graphRetry = { attempts: 3, initialDelayMs: 500, maxDelayMs: 30_000 };
 
@@ -54,6 +106,18 @@ export function graphPaging(response: Ref, maxPages = 20) {
 }
 
 /** The standard setup steps for a Microsoft 365 connector. `notes` follow after a blank line. */
+/** The setup steps for the app-only (`app`) method: application permissions, admin consent, a scoped mailbox. */
+export function microsoftAppSetup(id: string, scopes: readonly string[]): string {
+    const list = scopes.map((s) => `\`${s}\``).join(', ');
+    const key = /^[a-z_$][\w$]*$/i.test(id) ? id : `'${id}'`;
+    return [
+        '1. In the Microsoft Entra admin center, open **App registrations** and create (or reuse) a registration, with a **client secret** under **Certificates & secrets**.',
+        `2. Under **API permissions**, add the Microsoft Graph *application* permissions ${list}, then **Grant admin consent**.`,
+        '3. Application permissions reach every mailbox in the tenant. Limit the app to the mailboxes it should use, with RBAC for Applications in Exchange Online.',
+        `4. Give the client id and secret to Conduit (\`createConduit({ clients: { ${key}: { id, secret } } })\`), and connect an account with method \`app\` and inputs \`{ tenantId, mailbox }\`.`
+    ].join('\n');
+}
+
 export function microsoftSetup(id: string, scopes: readonly string[], notes: readonly string[] = []): string {
     const list = ['offline_access', 'User.Read', ...scopes].map((s) => `\`${s}\``).join(', ');
     const key = /^[a-z_$][\w$]*$/i.test(id) ? id : `'${id}'`;
@@ -68,7 +132,7 @@ export function microsoftSetup(id: string, scopes: readonly string[], notes: rea
 }
 
 export interface GraphSubscriptionDef {
-    /** The Graph resource to watch, e.g. `me/mailFolders('inbox')/messages`, built from the trigger's scope. */
+    /** The Graph resource to watch, e.g. `me/mailFolders('inbox')/messages`, built from the trigger's scope (start it with `graphUser(account)`). */
     resource: (scope: AuthScope) => unknown;
     /** `created`, `updated`, `deleted`, or a comma-separated mix. */
     changeType: string;

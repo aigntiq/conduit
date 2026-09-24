@@ -36,12 +36,16 @@ const m2 = { ...m1, id: 'AAMk-m2', subject: 'Lunch?', isRead: true, hasAttachmen
 
 function graphStub() {
     return scriptedHttp({
-        tokenEndpoint: 'login.microsoftonline.com/common/oauth2/v2.0/token',
+        tokenEndpoint: ['login.microsoftonline.com/common/oauth2/v2.0/token', 'login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/token'],
         accessToken: 'eyJ0eXAi.graph',
         hosts: ['graph.microsoft.com'],
         prefix: '/v1.0',
-        routes: ({ route, url, body, headers }) => {
+        routes: ({ route: asked, url, body, headers }) => {
+            // An app account's /users/<mailbox>/… answers as /me/… does.
+            const route = asked.replace('/users/shared%40contoso.example', '/me');
             switch (route) {
+                case 'GET /me/mailFolders/inbox':
+                    return json(inbox);
                 case 'GET /me':
                     return json({ id: 'user-object-id', displayName: 'Ada Lovelace', mail: null, userPrincipalName: 'ada@contoso.example' });
                 case 'POST /me/sendMail': {
@@ -97,6 +101,64 @@ async function setup() {
     const stub = graphStub();
     return { ...(await connect('microsoft-outlook', stub.http)), seen: stub.seen };
 }
+
+/** An app account: client credentials for the contoso tenant, acting on one shared mailbox. */
+async function connectApp(stub = graphStub()) {
+    const conduit = createConduit<CatalogOf<Connectors>>({
+        sources: connectorCatalog({ include: ['microsoft-outlook'] }),
+        secret: SECRET,
+        http: stub.http,
+        redirectUri: REDIRECT,
+        clients: { 'microsoft-outlook': { id: 'app-id', secret: 'app-secret' } }
+    });
+    const begun = await conduit.auth.begin({
+        connector: 'microsoft-outlook',
+        method: 'app',
+        owner: 'automation',
+        inputs: { tenantId: 'contoso.onmicrosoft.com', mailbox: 'Shared@contoso.example' }
+    });
+    if (begun.type !== 'connected') throw new Error('expected an immediate connection');
+    return { conduit, account: begun.account.id, seen: stub.seen };
+}
+
+describe('Microsoft Outlook: app-only accounts', () => {
+    it('connect with client credentials for the tenant and prove access to the mailbox', async () => {
+        const { conduit, account, seen } = await connectApp();
+        const token = last(seen, 'POST', /\/token$/);
+        expect(token.url.pathname).toBe('/contoso.onmicrosoft.com/oauth2/v2.0/token');
+        expect(Object.fromEntries(new URLSearchParams(token.body))).toMatchObject({
+            grant_type: 'client_credentials',
+            scope: 'https://graph.microsoft.com/.default',
+            client_id: 'app-id'
+        });
+        expect(last(seen, 'GET', /mailFolders\/inbox$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/mailFolders/inbox');
+        expect(await conduit.accounts.get(account)).toMatchObject({
+            method: 'app',
+            externalId: 'shared@contoso.example',
+            displayName: 'shared@contoso.example',
+            data: { mailbox: 'shared@contoso.example', tenantId: 'contoso.onmicrosoft.com' }
+        });
+    });
+
+    it('act on /users/<mailbox> instead of /me', async () => {
+        const { conduit, account, seen } = await connectApp();
+        await conduit.execute({ connector: 'microsoft-outlook', operation: 'send-email', account, inputs: { to: ['ada@example.com'], subject: 's', body: 'b' } });
+        expect(last(seen, 'POST', /sendMail$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/sendMail');
+        await conduit.execute({ connector: 'microsoft-outlook', operation: 'search-messages', account, inputs: { folderId: 'AAMk-inbox' }, paging: { maxPages: 1 } });
+        expect(last(seen, 'GET', /\/messages$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/mailFolders/AAMk-inbox/messages');
+        const { output } = await conduit.execute({ connector: 'microsoft-outlook', operation: 'get-message', account, inputs: { id: 'AAMk-m1' } });
+        expect(output).toMatchObject({ id: 'AAMk-m1' });
+        expect(last(seen, 'GET', /AAMk-m1$/).url.pathname).toBe('/v1.0/users/shared%40contoso.example/messages/AAMk-m1');
+        expect(await conduit.options({ connector: 'microsoft-outlook', operation: 'list-folders', account })).toHaveLength(3);
+    });
+
+    it('subscribe to the mailbox, not /me', async () => {
+        const account = { method: 'app', data: { mailbox: 'shared@contoso.example' } };
+        const subscription = { callbackUrl: 'https://app.example/hooks/x', secret: 's', data: { id: 'sub' } };
+        const created = (await (await renderWebhook(outlook, 'new-email', { account, subscription })).subscribe()) as { body: { resource: string } };
+        expect(created.body.resource).toBe("users/shared%40contoso.example/mailFolders('inbox')/messages");
+    });
+});
 
 describe('Microsoft Outlook: connecting', () => {
     it('signs in through the common tenant with offline access and identifies the account by object id', async () => {

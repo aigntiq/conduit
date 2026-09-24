@@ -33,6 +33,30 @@ Events come back flat: `{ id, subject, preview, start, end, allDay, location,
 organizer, attendees, onlineMeeting, joinUrl, showAs, cancelled, myResponse,
 webLink, seriesMasterId, type, categories, importance, created, updated }`.
 
+## Without a signed-in user
+
+For automation on a shared or service mailbox, connect an account with the
+`app` method instead: OAuth client credentials, no user present. Each such
+account acts on one mailbox.
+
+```ts
+await conduit.auth.begin({
+    connector: 'microsoft-calendar',
+    method: 'app',
+    owner,
+    inputs: { tenantId: 'contoso.onmicrosoft.com', mailbox: 'shared@contoso.com' }
+});
+```
+
+1. Use the same app registration and client secret, or a separate one.
+2. Under **API permissions**, add the Microsoft Graph *application* permissions `Calendars.ReadWrite`, then **Grant admin consent**.
+3. Application permissions reach every mailbox in the tenant. Limit the app to the mailboxes it should use with [RBAC for Applications in Exchange Online](https://learn.microsoft.com/exchange/permissions-exo/application-rbac).
+
+Connecting mints a token for the tenant (`https://graph.microsoft.com/.default`)
+and reads its calendar to prove access. There is no redirect, and a new token is
+minted whenever the old one expires. The account is named by its mailbox, and
+every operation acts on `/users/<mailbox>` instead of `/me`. `find-meeting-times` needs a signed-in user, because Graph offers it to no app, so it refuses app accounts.
+
 ## Operations
 
 | Operation | Kind | Notes |
@@ -44,12 +68,11 @@ webLink, seriesMasterId, type, categories, importance, created, updated }`.
 | `update-event` | action | only the fields given; attendees, when given, replace the list |
 | `delete-event` | action | **destructive**. A meeting you organize is cancelled for its attendees; a series goes as a whole |
 | `respond-to-event` | action | accept, tentatively accept or decline, with an optional note |
-| `find-meeting-times` | action | **read-only**. Slots of a given length in a window when the attendees are free, best first, with each attendee's availability |
+| `find-meeting-times` | action | **read-only**. Slots of a given length in a window when the attendees are free, best first, with each attendee's availability. Signed-in users only |
 | `get-schedule` | action | **read-only**. Busy times of people or rooms between two times |
 | `event-changed` | trigger (webhook) | **read-only**. A Graph subscription on a calendar (your main one by default) for created, changed and deleted events. Each event is `{ id, changeType, subscriptionId }`; get the event for the rest. The subscription is renewed every 2 days; only notifications carrying its secret `clientState` are accepted. The trigger is defined, but the trigger runtime is not released yet |
 
 ## Limits
 
 Graph throttles per mailbox and per app, answering `429` with `Retry-After`.
-Conduit waits and retries. Group calendars, and app-only access without a
-signed-in user, are not supported yet.
+Conduit waits and retries. Group calendars are not supported yet.

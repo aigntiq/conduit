@@ -28,7 +28,7 @@ import {
     type ErrorRuleDef,
     type Ref
 } from '@aigntiq/conduit/builder';
-import { GRAPH, graphPaging, graphRetry, graphSubscription, microsoftOAuth, microsoftSetup } from '../_shared/microsoft';
+import { GRAPH, graphFunctions, graphPaging, graphRetry, graphSubscription, ME, microsoftApp, microsoftAppSetup, microsoftOAuth, microsoftSetup } from '../_shared/microsoft';
 
 const SCOPES = ['Mail.ReadWrite', 'Mail.Send'];
 
@@ -85,9 +85,9 @@ function message(inputs: Ref<Compose>) {
     };
 }
 
-/** `/me/messages/<id>[suffix]`, encoded. */
+/** `/me/messages/<id>[suffix]` (or `/users/<mailbox>/…`), encoded. */
 function messageUrl(id: Ref, suffix: unknown = '') {
-    return $`/me/messages/${expr`urlEncode(${id})`}${suffix}`;
+    return $`${ME}/messages/${expr`urlEncode(${id})`}${suffix}`;
 }
 
 function notFound(response: Ref, field: string, what = 'message'): ErrorRuleDef {
@@ -133,7 +133,7 @@ const messageOutput = object({
 export default connector({
     id: 'microsoft-outlook',
     name: 'Microsoft Outlook',
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Send, draft, reply, forward, search, read, file and delete email in Outlook (Microsoft 365 and Outlook.com).',
     categories: ['email', 'productivity'],
     brandColor: '#0f6cbd',
@@ -141,6 +141,7 @@ export default connector({
     helpUrl: 'https://learn.microsoft.com/graph/outlook-mail-concept-overview',
     config: { baseUrl: GRAPH, tenant: 'common' },
     functions: {
+        ...graphFunctions,
         recipients: {
             params: ['list'],
             description: 'Graph recipients from addresses; "Name <address>" keeps the name.',
@@ -192,6 +193,11 @@ export default connector({
             scopes: SCOPES,
             helpUrl: 'https://learn.microsoft.com/graph/permissions-reference',
             setup: microsoftSetup('microsoft-outlook', SCOPES, ['Personal Outlook.com accounts work too when the app registration allows personal accounts.'])
+        }),
+        microsoftApp({
+            test: '/mailFolders/inbox',
+            helpUrl: 'https://learn.microsoft.com/graph/auth-v2-service',
+            setup: microsoftAppSetup('microsoft-outlook', SCOPES)
         })
     ],
     operations: [
@@ -202,7 +208,7 @@ export default connector({
             inputs: composeFields,
             rules: [recipientsRule],
             outputs: object({ sent: boolean() }),
-            request: ({ inputs }) => ({ method: 'POST', url: '/me/sendMail', body: { message: message(inputs), saveToSentItems: true } }),
+            request: ({ inputs }) => ({ method: 'POST', url: `${ME}/sendMail`, body: { message: message(inputs), saveToSentItems: true } }),
             errors: ({ response }) => recipientErrors(response),
             output: () => ({ sent: true })
         }),
@@ -213,7 +219,7 @@ export default connector({
             group: 'Messages',
             inputs: composeFields,
             outputs: messageOutput,
-            request: ({ inputs }) => ({ method: 'POST', url: '/me/messages', body: message(inputs) }),
+            request: ({ inputs }) => ({ method: 'POST', url: `${ME}/messages`, body: message(inputs) }),
             errors: ({ response }) => recipientErrors(response),
             output: ({ response }) => expr`messageOf(${response.body})`
         }),
@@ -261,7 +267,7 @@ export default connector({
             // Graph can't combine $search with $filter or $orderby: with search
             // text, unread is filtered from the results instead.
             request: ({ inputs }) => ({
-                url: expr`isEmpty(${inputs.folderId}) ? '/me/messages' : '/me/mailFolders/' + urlEncode(${inputs.folderId}) + '/messages'`,
+                url: expr`'/' + graphUser(account) + (isEmpty(${inputs.folderId}) ? '/messages' : '/mailFolders/' + urlEncode(${inputs.folderId}) + '/messages')`,
                 query: {
                     $search: expr`isEmpty(${inputs.query}) ? undefined : '"' + replace(${inputs.query}, '"', '\\\\"') + '"'`,
                     $filter: expr`isEmpty(${inputs.query}) && ${inputs.unreadOnly} ? 'isRead eq false' : undefined`,
@@ -340,7 +346,7 @@ export default connector({
             label: 'Mail folders',
             readOnly: true,
             inputs: { query: string({ title: 'Search' }).optional() },
-            request: { url: '/me/mailFolders', query: { $top: 100, $select: 'id,displayName,wellKnownName' } },
+            request: { url: `${ME}/mailFolders`, query: { $top: 100, $select: 'id,displayName,wellKnownName' } },
             paginate: ({ response }) => graphPaging(response, 5),
             // Top-level folders, the well-known ones (Inbox, Sent Items, …) first.
             output: ({ items, inputs }) =>
@@ -416,7 +422,7 @@ export default connector({
             inputs: { folderId: string({ title: 'Folder', description: 'Default: Inbox.', options: folderOptions }).optional() },
             outputs: object({ id: string(), changeType: string(), subscriptionId: string() }),
             trigger: graphSubscription({
-                resource: ({ inputs }) => $`me/mailFolders('${expr`default(${inputs.folderId}, 'inbox')`}')/messages`,
+                resource: ({ inputs }) => $`{{graphUser(account)}}/mailFolders('${expr`default(${inputs.folderId}, 'inbox')`}')/messages`,
                 changeType: 'created',
                 // Mail subscriptions live at most 10 080 minutes (7 days).
                 lifetimeMinutes: 4320,
