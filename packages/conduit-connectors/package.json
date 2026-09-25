@@ -1,6 +1,6 @@
 {
     "name": "@aigntiq/conduit-connectors",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Ready-made Conduit connectors in one package — pick the ones you use",
     "type": "module",
     "main": "./dist/index.js",
@@ -96,7 +96,7 @@
         "url": "https://github.com/aigntiq/conduit/issues"
     },
     "peerDependencies": {
-        "@aigntiq/conduit": "^0.2.0"
+        "@aigntiq/conduit": "^0.3.0"
     },
     "devDependencies": {
         "@aigntiq/conduit": "workspace:*",
