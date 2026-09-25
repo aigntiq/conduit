@@ -8,10 +8,16 @@ any connector a major. Each connector also carries its own `version`.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-25
+
 ### Added
 
 - **Microsoft Outlook** 1.1.0 and **Microsoft Calendar** 1.1.0: app-only accounts (`app` method, OAuth client credentials) for automation without a signed-in user; each acts on one mailbox, and every operation and subscription uses `/users/<mailbox>`. Calendar's `find-meeting-times` stays delegated-only.
 - **Microsoft Outlook** 1.2.0: attachments over 3 MB (up to the 150 MB a message holds) go through Graph upload sessions: the message is saved as a draft, each large attachment is uploaded in parts, and the draft is sent (`send-email`) or returned (`create-draft`). Needs `@aigntiq/conduit` with step `forEach` and `chunks()`.
+
+### Changed
+
+- Peers on `@aigntiq/conduit` `^0.3.0`: Outlook's upload sessions use step `forEach` and `chunks()`.
 
 ## [0.2.0] - 2026-09-24
 

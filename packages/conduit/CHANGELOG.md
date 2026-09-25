@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/) (pre-1.0: minor = breaking
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-25
+
 ### Added
 
 - Steps can repeat over a list: `forEach` runs a step once per item (with `each` and `index` in scope), collecting `steps.<name>` as a list; `maxIterations` (default 100) bounds it. Operation steps only.
