@@ -6,6 +6,6 @@
     "type": "module",
     "dependencies": {
         "@aigntiq/conduit": "workspace:*",
-        "hono": "^4.13.8"
+        "hono": "^4.13.9"
     }
 }
